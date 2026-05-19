@@ -67,10 +67,50 @@ partial AOSP checkout and some cross-module deps in external/ are broken.
 
 ---
 
-## Up next — Phase 1: GLES Rendering Port
+## 2026-05-19 — Phase 1 T1+T2 Complete
 
-Port JNI modules from `src/jni/` into Soong (`libnova_android/`), build
-nova-framework via Soong `java_library`, run gles3jni at 60 FPS from the
-Soong-built binary.
+### Summary
 
-See plan-v7.md Phase 1 for the full task list.
+JNI modules ported to Soong (`libnova_jni/`) and Java framework overlay
+built as Soong `java_library` (`nova-framework/`).
+
+### New Soong modules
+
+| Module | Type | Notes |
+|--------|------|-------|
+| `libnova_jni` | `cc_library_host_shared` | 17 JNI modules + softgfx + canvas_render |
+| `nova-framework-host` | `java_library` (hostdex) | 184 Java sources → nova-framework-hostdex.jar |
+| `libGLESv2-nova` | `cc_prebuilt_library_shared` | staged from /usr/lib |
+| `libpng16-nova` | `cc_prebuilt_library_shared` | staged from /usr/lib |
+| `nova-sdk-android` | `java_import` | prebuilts/sdk/35/module-lib/android.jar |
+| `nova-sdk-art` | `java_import` | prebuilts/sdk/35/module-lib/art.jar |
+| `nova-sdk-framework-graphics` | `java_import` | prebuilts/sdk/35/module-lib/framework-graphics.jar |
+
+### Gate test results
+
+- ✅ `m nova` builds successfully (libnova_jni linked)
+- ✅ `m nova-framework-host` builds successfully (467 classes compiled)
+- ✅ `nova-framework-hostdex.jar` at `out/host/linux-x86/framework/` (204KB DEX)
+- ✅ `nova` binary reports "Usage: nova [options] <apk_path>" when run without args
+
+### Key fixes
+
+1. `memfd_create` not in AOSP glibc 2.17 sysroot → use `syscall(__NR_memfd_create, ...)` wrapper
+2. `android_runtime.c` needed `#include <stddef.h>` + `<stdio.h>` (missing with `-std=gnu23`)
+3. Soong Java: `sdk_version: "none"` requires `system_modules: "core-public-stubs-system-modules"`
+4. Dexpreopt disabled via `dex_preopt: { enabled: false }` — `boot-image-profile.txt` absent in master-art
+5. `nova-sdk-*` java_import stubs declared in `prebuilts/sdk/35/module-lib/Android.bp` to supply classpath
+6. `art.c` updated: framework jar path changed to `framework/nova-framework-hostdex.jar`
+
+### GitHub remote
+
+`vendor/nova` → `https://github.com/eramax/android_nova` (branch: `main`)
+AOSP local manifest: `.repo/local_manifests/nova.xml`
+
+---
+
+## Up next — Phase 1 T3-T5 + Gate Test
+
+- T3: gles3jni native lib into Soong (port `third_party/gles3jni/` → `libnova_gles3jni/`)
+- T4/T5: host shim libs (libandroid, libOpenSLES) into Soong
+- Gate test: launch gles3jni.apk, triangle renders at 60 FPS
