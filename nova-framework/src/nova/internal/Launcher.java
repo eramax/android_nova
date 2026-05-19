@@ -409,9 +409,15 @@ public final class Launcher {
             return;
         }
 
+        // Soong installs 64-bit host libs to lib64/, meson prototype used lib/.
+        // Try lib64/ first so we get the right architecture.
+        File hostLibDir64 = new File(outputRoot, "lib64");
         File hostLibDir = new File(outputRoot, "lib");
         for (String libraryName : HOST_SUPPORT_LIBRARIES) {
-            File source = new File(hostLibDir, libraryName);
+            File source = new File(hostLibDir64, libraryName);
+            if (!source.isFile()) {
+                source = new File(hostLibDir, libraryName);
+            }
             if (!source.isFile()) {
                 continue;
             }

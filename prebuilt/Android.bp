@@ -70,3 +70,21 @@ cc_prebuilt_library_shared {
     },
     export_include_dirs: ["include"],
 }
+
+// libGLESv3.so — Mesa libGLESv2.so with GLES3 entry points, needed by APK
+// native libs that dlopen("libGLESv3.so") at runtime.
+// libGLESv3.so — Mesa libGLESv2.so copy with GLES3 entry points, needed by APK
+// native libs that dlopen("libGLESv3.so") at runtime (e.g. gl3stubInit).
+cc_prebuilt_library_shared {
+    name: "libGLESv3-nova",
+    stem: "libGLESv3",
+    host_supported: true,
+    device_supported: false,
+    stl: "none",
+    target: {
+        linux_glibc_x86_64: {
+            srcs: ["lib64/libGLESv3.so"],
+        },
+    },
+    export_include_dirs: ["include"],
+}

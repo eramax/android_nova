@@ -1,1 +1,3 @@
 prebuilt/lib64/
+apks/**/*.apk
+apks/**/*.xapk

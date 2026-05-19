@@ -1,0 +1,34 @@
+// Host shim libraries needed at APK runtime.
+// - libandroid-nova: minimal stub for APKs that link against libandroid
+// - libOpenSLES-nova: minimal stub for APKs that link against libOpenSLES
+// - liblog-nova: __android_log_print implementation (routes to stderr/stdout)
+// - libdeepbind_wrapper: dlopen interceptor that adds RTLD_DEEPBIND for APK
+//   native libs to prevent host GL symbols from clobbering APK function pointers
+
+package {
+    default_applicable_licenses: ["vendor_nova_license"],
+}
+
+cc_library_host_shared {
+    name: "libandroid-nova",
+    stem: "libandroid",
+    srcs: ["libandroid.c"],
+    cflags: ["-Wall", "-D_GNU_SOURCE"],
+    stl: "none",
+}
+
+cc_library_host_shared {
+    name: "libOpenSLES-nova",
+    stem: "libOpenSLES",
+    srcs: ["libOpenSLES.c"],
+    cflags: ["-Wall", "-D_GNU_SOURCE"],
+    stl: "none",
+}
+
+cc_library_host_shared {
+    name: "libdeepbind_wrapper",
+    srcs: ["deepbind_wrapper.c"],
+    cflags: ["-Wall", "-D_GNU_SOURCE"],
+    host_ldlibs: ["-ldl"],
+    stl: "none",
+}

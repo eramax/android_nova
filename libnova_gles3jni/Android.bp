@@ -1,0 +1,42 @@
+// Host-native libgles3jni.so built from source, linked against system Mesa.
+// This replaces the Android/Bionic binary extracted from the APK at runtime.
+// The Nova Launcher stages this over the APK's copy before the GL thread starts.
+
+package {
+    default_applicable_licenses: ["vendor_nova_license"],
+}
+
+cc_library_host_shared {
+    name: "libgles3jni-nova",
+    stem: "libgles3jni",
+    srcs: [
+        "gles3jni.cpp",
+        "RendererES2.cpp",
+        "RendererES3.cpp",
+        "gl3stub.c",
+        "host_android_log.c",
+    ],
+    export_include_dirs: ["."],
+    shared_libs: [
+        "libnova_android",
+        "libEGL-nova",
+        "libGLESv2-nova",
+    ],
+    cflags: [
+        "-DDYNAMIC_ES3=1",
+        "-Wall",
+        "-Wno-unused-parameter",
+        "-D_GNU_SOURCE",
+    ],
+    cppflags: [
+        "-DDYNAMIC_ES3=1",
+        "-std=c++17",
+        "-Wall",
+        "-Wno-unused-parameter",
+    ],
+    host_ldlibs: ["-ldl", "-lm"],
+    stl: "libc++",
+    allow_undefined_symbols: true,
+    // Only 64-bit host; prebuilt EGL/GLES2 libs are x86_64 only
+    compile_multilib: "64",
+}

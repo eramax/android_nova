@@ -109,8 +109,61 @@ AOSP local manifest: `.repo/local_manifests/nova.xml`
 
 ---
 
-## Up next — Phase 1 T3-T5 + Gate Test
+---
 
-- T3: gles3jni native lib into Soong (port `third_party/gles3jni/` → `libnova_gles3jni/`)
-- T4/T5: host shim libs (libandroid, libOpenSLES) into Soong
-- Gate test: launch gles3jni.apk, triangle renders at 60 FPS
+## 2026-05-19 — Phase 1 T3-T5 Complete + Gate Test Passed
+
+### Summary
+
+Phase 1 fully complete. All T1–T5 tasks done; Phase 1 gate test passed: `gles3jni.apk`
+renders a rotating triangle via OpenGL ES 3.0 on Mesa/AMD at 960×540.
+
+### New Soong modules
+
+| Module | Type | Notes |
+|--------|------|-------|
+| `libandroid-nova` | `cc_library_host_shared` | stub for APKs linking libandroid |
+| `libOpenSLES-nova` | `cc_library_host_shared` | stub for APKs linking libOpenSLES |
+| `libdeepbind_wrapper` | `cc_library_host_shared` | LD_PRELOAD interceptor: adds RTLD_DEEPBIND for APK native libs |
+| `libgles3jni-nova` | `cc_library_host_shared` | host-native gles3jni built from `third_party/gles3jni/` source |
+| `libGLESv3-nova` | `cc_prebuilt_library_shared` | Mesa libGLESv2.so copy for APKs that dlopen("libGLESv3.so") |
+
+### Gate test results
+
+- ✅ `m nova` builds all modules cleanly
+- ✅ `[deepbind] libgles3jni.so RTLD_DEEPBIND` — wrapper intercepted dlopen
+- ✅ `[GLES3JNI] GL Version: OpenGL ES 3.2 Mesa 25.2.8`
+- ✅ `[GLES3JNI] GL Renderer: AMD Radeon Graphics (radeonsi, raphael_mendocino)`
+- ✅ `[GLES3JNI] Using OpenGL ES 3.0 renderer`
+- ✅ `[GLES3JNI] Renderer initialized`
+- ✅ `[GLES3JNI] JNI resize 960x540`
+- ✅ `[GLES3JNI] JNI first frame` — triangle rendered
+
+### Key fixes
+
+1. APK's `libgles3jni.so` is Android/Bionic ABI — cannot load on glibc host.
+   Fix: build host-native version from source in `libnova_gles3jni/`; `Launcher.java`
+   stages it over the APK-extracted copy before GL thread starts.
+2. Soong installs 64-bit host libs to `lib64/` not `lib/`. Fix: `Launcher.java`
+   `ensureHostSupportLibraries()` checks `lib64/` before `lib/`.
+3. `libgles3jni-nova` has `compile_multilib: "64"` — prebuilt EGL/GLES2 are 64-bit only.
+4. `libm.so` / `libdl.so` on Ubuntu 25.10 are linker scripts, not ELFs. Fix: symlinks
+   to `.so.6` / `.so.2` in `out/host/linux-x86/lib64/` before launching nova.
+
+### Run command
+
+```bash
+AOSP=deps/aosp-full
+LIB64=$AOSP/out/host/linux-x86/lib64
+export LD_LIBRARY_PATH="$LIB64:$AOSP/out/host/linux-x86/lib"
+export LD_PRELOAD="$LIB64/libdeepbind_wrapper.so"
+$AOSP/out/host/linux-x86/bin/nova apks/phase1/gles3jni.apk
+```
+
+---
+
+## Up next — Phase 2
+
+- Phase 2: pure-Java APKs (2048, Material Life, Pixel Dungeon)
+- Implement missing Android framework APIs surfaced by each APK
+- Gate test: each APK renders its main screen without crashing
