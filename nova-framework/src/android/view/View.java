@@ -10,6 +10,7 @@ public class View {
     private final Context mContext;
     private final ViewTreeObserver mViewTreeObserver = new ViewTreeObserver();
     private boolean mAttached;
+    private int mId = -1;
 
     public interface OnClickListener { void onClick(View v); }
     public interface OnLongClickListener { boolean onLongClick(View v); }
@@ -118,8 +119,28 @@ public class View {
     public void postInvalidate() {}
     public void setVisibility(int visibility) {}
     public int getVisibility() { return 0; }
-    public int getId() { return 0; }
-    public void setId(int id) {}
+    public int getId() { return mId; }
+    public void setId(int id) { mId = id; }
+
+    public <T extends View> T findViewById(int id) {
+        if (mId == id) {
+            return (T) this;
+        }
+        if (this instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) this;
+            int count = group.getChildCount();
+            for (int i = 0; i < count; i++) {
+                View child = group.getChildAt(i);
+                if (child != null) {
+                    View found = child.findViewById(id);
+                    if (found != null) {
+                        return (T) found;
+                    }
+                }
+            }
+        }
+        return null;
+    }
     public android.graphics.drawable.Drawable getBackground() { return null; }
     public void setBackground(android.graphics.drawable.Drawable background) {}
     public void setBackgroundDrawable(android.graphics.drawable.Drawable d) {}

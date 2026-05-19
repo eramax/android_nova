@@ -77,7 +77,7 @@ public final class Launcher {
         logClass("com.android.gles3jni.GLES3JNILib", loader);
 
         /* Initialize the APK's Application subclass before creating the Activity */
-        initApplication(apkPath, loader);
+        Object app = initApplication(apkPath, loader);
 
         Class<?> activityType = Class.forName(activityClass, true, loader);
         System.out.println("[NovaLauncher] Loaded=" + activityType.getName());
@@ -89,6 +89,14 @@ public final class Launcher {
         ctor.setAccessible(true);
         Object instance = ctor.newInstance();
         System.out.println("[NovaLauncher] Instance=" + instance.getClass().getName());
+
+        try {
+            Method setAppMethod = activityType.getMethod("setApplication", Class.forName("android.app.Application", false, loader));
+            setAppMethod.invoke(instance, app);
+            System.out.println("[NovaLauncher] Attached Application to Activity");
+        } catch (Exception e) {
+            System.out.println("[NovaLauncher] Failed to attach Application: " + e);
+        }
 
         invokeLifecycle(activityType, instance, "onCreate",
                 new Class<?>[] { Class.forName("android.os.Bundle") },
@@ -167,40 +175,38 @@ public final class Launcher {
         return false;
     }
 
-    private static void initApplication(String apkPath, ClassLoader loader) {
+    private static Object initApplication(String apkPath, ClassLoader loader) {
         String appClassName = findApplicationClassName(apkPath);
-        if (appClassName == null || appClassName.isEmpty()) {
-            return;
-        }
+        Object appInstance = null;
         try {
-            Class<?> appClass = Class.forName(appClassName, true, loader);
             Class<?> androidAppClass = Class.forName("android.app.Application", false, loader);
-            if (!androidAppClass.isAssignableFrom(appClass)) {
-                System.out.println("[NovaLauncher] " + appClassName + " is not Application subclass, skipping");
-                return;
+            if (appClassName != null && !appClassName.isEmpty()) {
+                Class<?> appClass = Class.forName(appClassName, true, loader);
+                if (androidAppClass.isAssignableFrom(appClass)) {
+                    Constructor<?> ctor = appClass.getDeclaredConstructor();
+                    ctor.setAccessible(true);
+                    appInstance = ctor.newInstance();
+                    System.out.println("[NovaLauncher] Application=" + appInstance.getClass().getName());
+                    trySetStaticSingleton(appClass, appInstance);
+                    try {
+                        Method onCreate = appClass.getMethod("onCreate");
+                        onCreate.invoke(appInstance);
+                        System.out.println("[NovaLauncher] Application.onCreate() done");
+                    } catch (NoSuchMethodException e) {
+                        // no custom onCreate, fine
+                    } catch (Exception e) {
+                        System.out.println("[NovaLauncher] Application.onCreate() failed (non-fatal): " + e.getCause());
+                    }
+                }
             }
-            Constructor<?> ctor = appClass.getDeclaredConstructor();
-            ctor.setAccessible(true);
-            Object appInstance = ctor.newInstance();
-            System.out.println("[NovaLauncher] Application=" + appInstance.getClass().getName());
-            /*
-             * Try to set static singleton fields to this instance before calling onCreate,
-             * so any code that accesses getInstance() from within onCreate() finds the
-             * value.
-             */
-            trySetStaticSingleton(appClass, appInstance);
-            try {
-                Method onCreate = appClass.getMethod("onCreate");
-                onCreate.invoke(appInstance);
-                System.out.println("[NovaLauncher] Application.onCreate() done");
-            } catch (NoSuchMethodException e) {
-                // no custom onCreate, fine
-            } catch (Exception e) {
-                System.out.println("[NovaLauncher] Application.onCreate() failed (non-fatal): " + e.getCause());
+            if (appInstance == null) {
+                appInstance = androidAppClass.getDeclaredConstructor().newInstance();
+                System.out.println("[NovaLauncher] Created default Application instance");
             }
         } catch (Exception e) {
             System.out.println("[NovaLauncher] Application init failed: " + e);
         }
+        return appInstance;
     }
 
     /*

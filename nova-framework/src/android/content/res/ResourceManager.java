@@ -77,13 +77,54 @@ public class ResourceManager {
         return null;
     }
 
+    private String resolveLayoutPath(int resourceId) {
+        if (mResourceIdMap.containsKey(resourceId)) {
+            return mResourceIdMap.get(resourceId);
+        }
+
+        String hexId = String.format("0x%08x", resourceId);
+        try {
+            String[] cmd = {"/usr/bin/aapt", "dump", "resources", mApkPath};
+            ProcessBuilder pb = new ProcessBuilder(cmd);
+            Process process = pb.start();
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    if (line.contains(hexId) && line.contains(":layout/")) {
+                        int layoutIdx = line.indexOf(":layout/");
+                        if (layoutIdx != -1) {
+                            String suffix = line.substring(layoutIdx + 8);
+                            int colonOrSpace = suffix.indexOf(':');
+                            if (colonOrSpace == -1) colonOrSpace = suffix.indexOf(' ');
+                            if (colonOrSpace != -1) {
+                                suffix = suffix.substring(0, colonOrSpace);
+                            }
+                            String path = "res/layout/" + suffix.trim() + ".xml";
+                            mResourceIdMap.put(resourceId, path);
+                            System.out.println("[ResourceManager] Resolved layout " + hexId + " to path: " + path);
+                            return path;
+                        }
+                    }
+                }
+            }
+            process.waitFor();
+        } catch (Exception e) {
+            System.err.println("[ResourceManager] Failed to resolve layout path for " + hexId + ": " + e.getMessage());
+        }
+
+        return "res/layout/activity_main.xml";
+    }
+
     public String dumpLayoutWithAapt(int resourceId) {
         if (mApkPath == null) {
             return null;
         }
 
+        String layoutPath = resolveLayoutPath(resourceId);
+        System.out.println("[ResourceManager] Dumping layout XML tree for: " + layoutPath);
+
         try {
-            String[] cmd = {"/usr/bin/aapt", "dump", "xmltree", mApkPath, "res/layout/activity_main.xml"};
+            String[] cmd = {"/usr/bin/aapt", "dump", "xmltree", mApkPath, layoutPath};
             ProcessBuilder pb = new ProcessBuilder(cmd);
             pb.redirectError(ProcessBuilder.Redirect.PIPE);
             Process process = pb.start();

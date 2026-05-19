@@ -12,6 +12,8 @@ public abstract class FragmentManager {
     public abstract int getBackStackEntryCount();
     public abstract BackStackEntry getBackStackEntryAt(int index);
 
+    public abstract boolean executePendingTransactions();
+
     public static final int POP_BACK_STACK_INCLUSIVE = 1;
 
     public interface OnBackStackChangedListener {
@@ -37,5 +39,6 @@ public abstract class FragmentManager {
         @Override public boolean popBackStackImmediate(String name, int flags) { return false; }
         @Override public int getBackStackEntryCount() { return 0; }
         @Override public BackStackEntry getBackStackEntryAt(int index) { return null; }
+        @Override public boolean executePendingTransactions() { return false; }
     }
 }

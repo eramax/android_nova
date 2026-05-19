@@ -1,6 +1,18 @@
 package android.widget;
 
-public class AutoCompleteTextView {
+public class AutoCompleteTextView extends EditText {
+    public AutoCompleteTextView(android.content.Context context) {
+        super(context);
+    }
+
+    public AutoCompleteTextView(android.content.Context context, android.util.AttributeSet attrs) {
+        super(context, attrs);
+    }
+
+    public AutoCompleteTextView(android.content.Context context, android.util.AttributeSet attrs, int defStyleAttr) {
+        super(context, attrs);
+    }
+
     public void addTextChangedListener(android.text.TextWatcher p0) {}
     public void clearFocus() {}
     public void clearListSelection() {}
@@ -60,9 +72,9 @@ public class AutoCompleteTextView {
     public void onWindowFocusChanged(boolean p0) {}
     public void performCompletion() {}
     public void performFiltering(java.lang.CharSequence p0, int p1) {}
-    public boolean post(java.lang.Runnable p0) { return false; }
+    
     public void refreshAutoCompleteResults() {}
-    public boolean removeCallbacks(java.lang.Runnable p0) { return false; }
+    
     public void removeTextChangedListener(android.text.TextWatcher p0) {}
     public boolean requestFocus() { return false; }
     public boolean requestFocus(int p0, android.graphics.Rect p1) { return false; }

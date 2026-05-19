@@ -64,4 +64,58 @@ public class Application extends ContextWrapper implements ComponentCallbacks2 {
     public void unregisterComponentCallbacks(ComponentCallbacks callback) {}
 
     @Override public Context getApplicationContext() { return this; }
+
+    @Override
+    public android.content.res.Resources getResources() {
+        return new android.content.res.Resources();
+    }
+
+    @Override
+    public android.content.res.AssetManager getAssets() {
+        return new android.content.res.AssetManager();
+    }
+
+    @Override
+    public String getPackageName() {
+        return android.content.Context.novaGetCurrentPackageName();
+    }
+
+    @Override
+    public android.content.pm.ApplicationInfo getApplicationInfo() {
+        android.content.pm.PackageInfo pi = android.content.pm.NovaPackageManager.getInstance().getCurrentPackageInfo();
+        return pi != null ? pi.applicationInfo : new android.content.pm.ApplicationInfo();
+    }
+
+    @Override
+    public android.content.pm.PackageManager getPackageManager() {
+        return android.content.pm.NovaPackageManager.getInstance();
+    }
+
+    @Override
+    public android.content.SharedPreferences getSharedPreferences(String name, int mode) {
+        return new android.content.NovaSharedPreferences(name);
+    }
+
+    @Override
+    public java.io.File getFilesDir() {
+        return new java.io.File("/tmp/novaart/files");
+    }
+
+    @Override
+    public java.io.File getCacheDir() {
+        return new java.io.File("/tmp/novaart/cache");
+    }
+
+    @Override
+    public java.io.File getDir(String name, int mode) {
+        return new java.io.File("/tmp/novaart/" + name);
+    }
+
+    @Override
+    public Object getSystemService(String name) {
+        if (Context.LAYOUT_INFLATER_SERVICE.equals(name)) {
+            return android.view.LayoutInflater.from(this);
+        }
+        return null;
+    }
 }

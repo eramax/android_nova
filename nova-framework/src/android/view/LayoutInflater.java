@@ -56,7 +56,7 @@ public class LayoutInflater {
     public LayoutInflater cloneInContext(Context newContext) { return new LayoutInflater(newContext); }
 
     public View inflate(int layoutResId, ViewGroup parent) {
-        String layoutXml = loadLayoutXmlFromApk();
+        String layoutXml = loadLayoutXmlFromApk(layoutResId);
         if (layoutXml == null) {
             System.err.println("[LayoutInflater] Failed to load layout XML");
             return fallbackView();
@@ -71,9 +71,9 @@ public class LayoutInflater {
         }
     }
 
-    private String loadLayoutXmlFromApk() {
+    private String loadLayoutXmlFromApk(int layoutResId) {
         ResourceManager rm = ResourceManager.getInstance();
-        String dumpedXml = rm.dumpLayoutWithAapt(0);
+        String dumpedXml = rm.dumpLayoutWithAapt(layoutResId);
         if (dumpedXml != null) {
             System.out.println("[LayoutInflater] Loaded layout via aapt dump");
             return dumpedXml;
@@ -137,18 +137,37 @@ public class LayoutInflater {
         View rootView = null;
         ViewGroup rootParent = null;
         int rootIndent = -1;
+        View currentView = null;
 
         for (String rawLine : lines) {
-            if (rawLine.isEmpty() || rawLine.trim().startsWith("N:") || rawLine.trim().startsWith("A:")) {
+            String trimmed = rawLine.trim();
+            if (trimmed.startsWith("A:") && currentView != null) {
+                if (trimmed.startsWith("A: android:id") || trimmed.contains("0x010100d0")) {
+                    Pattern idPattern = Pattern.compile("=@0x([0-9a-fA-F]+)");
+                    Matcher matcher = idPattern.matcher(trimmed);
+                    if (matcher.find()) {
+                        try {
+                            int idVal = (int) Long.parseLong(matcher.group(1), 16);
+                            currentView.setId(idVal);
+                            System.out.println("[LayoutInflater] Set ID " + String.format("0x%08x", idVal) + " on view: " + currentView.getClass().getName());
+                        } catch (NumberFormatException e) {
+                            // ignore
+                        }
+                    }
+                }
                 continue;
             }
 
-            if (!rawLine.trim().startsWith("E:")) {
+            if (rawLine.isEmpty() || trimmed.startsWith("N:") || trimmed.startsWith("A:")) {
+                continue;
+            }
+
+            if (!trimmed.startsWith("E:")) {
                 continue;
             }
 
             int indent = getIndentation(rawLine);
-            String elementName = extractElementName(rawLine.trim());
+            String elementName = extractElementName(trimmed);
             if (elementName == null || elementName.isEmpty()) {
                 continue;
             }
@@ -157,6 +176,7 @@ public class LayoutInflater {
             if (view == null) {
                 continue;
             }
+            currentView = view;
 
             if (rootView == null) {
                 rootView = view;
@@ -207,20 +227,31 @@ public class LayoutInflater {
 
         Class<?> viewClass = VIEW_CLASSES.get(className);
 
-        if (viewClass == null && !className.contains(".")) {
-            viewClass = VIEW_CLASSES.get("android.widget." + className);
-        }
-        if (viewClass == null && !className.contains(".")) {
-            viewClass = VIEW_CLASSES.get("android.view." + className);
+        if (viewClass == null) {
+            if (!className.contains(".")) {
+                try {
+                    viewClass = Class.forName("android.widget." + className);
+                } catch (ClassNotFoundException ignored) {}
+                if (viewClass == null) {
+                    try {
+                        viewClass = Class.forName("android.view." + className);
+                    } catch (ClassNotFoundException ignored) {}
+                }
+                if (viewClass == null) {
+                    try {
+                        viewClass = Class.forName("android.webkit." + className);
+                    } catch (ClassNotFoundException ignored) {}
+                }
+            } else {
+                try {
+                    viewClass = Class.forName(className);
+                } catch (ClassNotFoundException ignored) {}
+            }
         }
 
         if (viewClass == null) {
-            try {
-                viewClass = Class.forName(className);
-            } catch (ClassNotFoundException e) {
-                System.err.println("[LayoutInflater] Unknown view class: " + className);
-                return null;
-            }
+            System.err.println("[LayoutInflater] Unknown view class: " + className);
+            return null;
         }
 
         try {

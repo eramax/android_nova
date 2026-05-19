@@ -1,5 +1,5 @@
 package android.view.animation;
 
-public interface Interpolator {
+public interface Interpolator extends android.animation.TimeInterpolator {
     float getInterpolation(float input);
 }

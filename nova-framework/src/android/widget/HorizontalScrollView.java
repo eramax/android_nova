@@ -1,6 +1,18 @@
 package android.widget;
 
-public class HorizontalScrollView {
+public class HorizontalScrollView extends FrameLayout {
+    public HorizontalScrollView(android.content.Context context) {
+        super(context);
+    }
+
+    public HorizontalScrollView(android.content.Context context, android.util.AttributeSet attrs) {
+        super(context, attrs);
+    }
+
+    public HorizontalScrollView(android.content.Context context, android.util.AttributeSet attrs, int defStyleAttr) {
+        super(context, attrs);
+    }
+
     public void addView(android.view.View p0, int p1, android.view.ViewGroup.LayoutParams p2) {}
     public void addView(android.view.View p0, android.view.ViewGroup.LayoutParams p1) {}
     public void addView(android.view.View p0) {}
@@ -42,8 +54,8 @@ public class HorizontalScrollView {
     public void onSizeChanged(int p0, int p1, int p2, int p3) {}
     public boolean onTouchEvent(android.view.MotionEvent p0) { return false; }
     public void onVisibilityChanged(android.view.View p0, int p1) {}
-    public boolean post(java.lang.Runnable p0) { return false; }
-    public boolean removeCallbacks(java.lang.Runnable p0) { return false; }
+    
+    
     public void removeView(android.view.View p0) {}
     public void requestLayout() {}
     public void scrollTo(int p0, int p1) {}

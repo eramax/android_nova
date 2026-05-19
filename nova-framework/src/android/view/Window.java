@@ -83,7 +83,10 @@ public class Window {
 
     public android.content.res.Resources getResources() { return mContext != null ? mContext.getResources() : null; }
     public View getCurrentFocus() { return null; }
-    public View findViewById(int id) { return null; }
+    public View findViewById(int id) {
+        if (mDecorView == null) return null;
+        return mDecorView.findViewById(id);
+    }
     public <T extends View> T requireViewById(int id) { return null; }
     public boolean performContextMenuIdentifierAction(int id, int flags) { return false; }
     public boolean performPanelIdentifierAction(int featureId, int id, int flags) { return false; }

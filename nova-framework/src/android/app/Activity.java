@@ -37,6 +37,11 @@ public class Activity extends ContextWrapper {
         return mApplication;
     }
 
+    public void setApplication(Application application) {
+        mApplication = application;
+        attachBaseContext(application);
+    }
+
     public Intent getIntent() {
         return mIntent;
     }
@@ -230,7 +235,8 @@ public class Activity extends ContextWrapper {
     }
 
     public <T extends View> T findViewById(int id) {
-        return (T) mContentView;
+        if (mContentView == null) return null;
+        return mContentView.findViewById(id);
     }
 
     public View getContentView() {

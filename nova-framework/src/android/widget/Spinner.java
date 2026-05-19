@@ -1,6 +1,20 @@
 package android.widget;
 
-public class Spinner {
+import android.view.ViewGroup;
+
+public class Spinner extends ViewGroup {
+    public Spinner(android.content.Context context) {
+        super(context);
+    }
+
+    public Spinner(android.content.Context context, android.util.AttributeSet attrs) {
+        super(context);
+    }
+
+    public Spinner(android.content.Context context, android.util.AttributeSet attrs, int defStyleAttr) {
+        super(context);
+    }
+
     public void drawableStateChanged() {}
     public android.widget.SpinnerAdapter getAdapter() { return null; }
     public android.graphics.drawable.Drawable getBackground() { return null; }
