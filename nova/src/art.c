@@ -18,8 +18,8 @@ typedef jint (*JNI_CreateJavaVM_t)(JavaVM **pvm, void **penv, JavaVMInitArgs *ar
 #endif
 
 /* Path to nova-framework DEX jar relative to host_out (out/host/linux-x86/).
- * Soong java_library outputs go to out/host/linux-x86/framework/. */
-#define NOVA_FRAMEWORK_REL "framework/nova-framework-dex.jar"
+ * Soong java_library with hostdex:true produces <name>-hostdex.jar in framework/. */
+#define NOVA_FRAMEWORK_REL "framework/nova-framework-hostdex.jar"
 
 static const char *kGlesV2Candidates[] = {
     "/lib/x86_64-linux-gnu/libGLESv2.so.2",

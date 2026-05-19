@@ -6,4 +6,4 @@ PRODUCT_MANUFACTURER := Nova
 PRODUCT_BRAND := Nova
 PRODUCT_MODEL := Nova Linux Android Runtime
 
-PRODUCT_HOST_PACKAGES := nova
+PRODUCT_HOST_PACKAGES := nova nova-framework-host

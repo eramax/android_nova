@@ -7,11 +7,11 @@ cc_binary_host {
     srcs: [
         "src/main.c",
         "src/art.c",
-        "src/jni_stubs_stub.c",
     ],
     shared_libs: [
         "libnova_android",
         "libnova_egl",
+        "libnova_jni",
     ],
     cflags: [
         "-Wall",

@@ -1,0 +1,48 @@
+package {
+    default_applicable_licenses: ["vendor_nova_license"],
+}
+
+cc_library_host_shared {
+    name: "libnova_jni",
+    srcs: [
+        "android_runtime.c",
+        "core_jni_helpers.c",
+        "android_os_SystemProperties.c",
+        "android_os_SystemClock.c",
+        "android_os_Binder.c",
+        "android_os_Process.c",
+        "android_view_KeyEvent.c",
+        "android_view_MotionEvent.c",
+        "android_graphics_Canvas.c",
+        "android_graphics_Paint.c",
+        "android_graphics_Bitmap.c",
+        "android_graphics_BitmapFactory.c",
+        "android_opengl_GLES20.c",
+        "android_opengl_GLUtils.c",
+        "com_android_internal_graphics_NativeUtils.c",
+        "com_google_android_gles_jni_EGLImpl.c",
+        "com_google_android_gles_jni_GLImpl.c",
+        "nova_canvas_render.c",
+        "softgfx.c",
+        "canvas_render.c",
+    ],
+    export_include_dirs: ["."],
+    shared_libs: [
+        "libnova_android",
+        "libnova_egl",
+        "libEGL-nova",
+        "libGLESv2-nova",
+        "libpng16-nova",
+    ],
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Wno-unused-parameter",
+        "-Wno-sign-compare",
+        "-D_GNU_SOURCE",
+        "-D_POSIX_C_SOURCE=200809L",
+    ],
+    host_ldlibs: ["-ldl", "-lm"],
+    stl: "none",
+    allow_undefined_symbols: true,
+}

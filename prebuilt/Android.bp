@@ -44,3 +44,29 @@ cc_prebuilt_library_shared {
     },
     export_include_dirs: ["include"],
 }
+
+cc_prebuilt_library_shared {
+    name: "libGLESv2-nova",
+    host_supported: true,
+    device_supported: false,
+    stl: "none",
+    target: {
+        linux_glibc_x86_64: {
+            srcs: ["lib64/libGLESv2.so"],
+        },
+    },
+    export_include_dirs: ["include"],
+}
+
+cc_prebuilt_library_shared {
+    name: "libpng16-nova",
+    host_supported: true,
+    device_supported: false,
+    stl: "none",
+    target: {
+        linux_glibc_x86_64: {
+            srcs: ["lib64/libpng16.so"],
+        },
+    },
+    export_include_dirs: ["include"],
+}

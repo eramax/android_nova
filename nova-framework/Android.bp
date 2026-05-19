@@ -1,0 +1,30 @@
+package {
+    default_applicable_licenses: ["vendor_nova_license"],
+}
+
+java_library {
+    name: "nova-framework-host",
+    installable: true,
+    hostdex: true,
+
+    // stem controls the installed filename: <stem>-hostdex.jar
+    stem: "nova-framework",
+
+    sdk_version: "none",
+    system_modules: "core-public-stubs-system-modules",
+
+    srcs: ["src/**/*.java"],
+
+    // Disable dexpreopt — boot-image-profile.txt not available in master-art partial checkout
+    dex_preopt: {
+        enabled: false,
+    },
+
+    libs: [
+        "nova-sdk-android",
+        "nova-sdk-art",
+        "nova-sdk-framework-graphics",
+    ],
+
+    visibility: ["//vendor/nova:__subpackages__"],
+}
