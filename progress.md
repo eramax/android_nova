@@ -162,8 +162,122 @@ $AOSP/out/host/linux-x86/bin/nova apks/phase1/gles3jni.apk
 
 ---
 
+---
+
+## 2026-05-19 — Phase 2 Architecture Established
+
+### Summary
+
+Core architectural decision made for Phase 2: **use AOSP SDK stubs as runtime fallback**
+instead of hand-writing stub classes in nova-framework for generic Android API classes.
+
+### Android-stubs-dex approach
+
+The `prebuilts/sdk/35/module-lib/android.jar` (39 MB) was DEXed to a 1.9 MB
+`android-stubs-dex.jar` covering all 6317 public Android API classes. Method bodies
+throw `RuntimeException("Stub!")` when called — this is the correct signal for what
+needs a real implementation.
+
+**Build command (manual, one-time):**
+```bash
+cd deps/aosp-full
+java -cp out/host/linux-x86/framework/d8.jar com.android.tools.r8.D8 \
+    --min-api 21 \
+    --output out/host/linux-x86/framework/android-stubs-dex.jar \
+    prebuilts/sdk/35/module-lib/android.jar
+```
+
+**Class loading order** (nova wins, SDK stubs are fallback):
+```
+nova-framework-hostdex.jar : android-stubs-dex.jar
+```
+
+`art.c` (`nova_art_init()`) sets `-Djava.class.path` to both jars in this order.
+
+### Architecture principle
+
+- `nova-framework/src/` contains **only Linux-specific adaptation classes**:
+  EGL/GLES wrappers, Wayland surface/window management, real asset loading,
+  Looper/Handler threading, real audio/video.
+- Generic Android API stubs (LinearLayout, TextView, Menu, etc.) are **removed**
+  from nova-framework once `android-stubs-dex.jar` covers them.
+- Reactive workflow: run APK → see which stub methods throw `RuntimeException("Stub!")`
+  → implement only those in nova-framework with real Linux logic.
+
+### gen-stubs.py status
+
+Not needed. The `android-stubs-dex.jar` approach supersedes it. The 6317-class SDK
+stubs jar eliminates `NoClassDefFoundError` chains without generating code.
+
+### Phase 2 APK status
+
+| APK | Status | Current blocker |
+|-----|--------|----------------|
+| `com.watabou.pixeldungeon` | ✅ Window opens (Phase 1 GL pipeline works) | — |
+| `2048.apk` | 🔧 In progress | `Dialog.<init>` Stub! from ChangeLog library |
+| `Material Life` | ⏳ Not started | — |
+
+### Current issue: 2048 Dialog stub
+
+**Root cause:** `de.cketti.library.changelog.ChangeLog.getLogDialog()` is called in
+`MainActivity.onCreate()` at line 81. It creates `AlertDialog.Builder`, which calls
+`AlertDialog → Dialog.<init>`. Even though `Dialog.java` was added to nova-framework,
+the DEX rebuild pipeline needs fixing.
+
+**Problem in the manual build:** After running `d8 --output <dir>`, it writes `classes.dex`
+into the directory. The `nova-framework.jar` in the same dir is a separate artifact
+(pre-existing from Soong). Copying the old `nova-framework.jar` installed the old DEX.
+The correct fix is to pack the new `classes.dex` into a fresh jar.
+
+**Fix needed:**
+```bash
+AOSP=deps/aosp-full
+DEX_DIR=$AOSP/out/soong/.intermediates/vendor/nova/nova-framework/nova-framework-host/android_common/dex
+
+# After d8 runs, classes.dex is in DEX_DIR — pack it into the hostdex jar:
+cd "$DEX_DIR"
+jar cf /tmp/nova-framework-hostdex-new.jar classes.dex
+cp /tmp/nova-framework-hostdex-new.jar $AOSP/out/host/linux-x86/framework/nova-framework-hostdex.jar
+```
+
+Alternatively, re-run the full Soong build:
+```bash
+SOONG_ALLOW_MISSING_DEPENDENCIES=true m nova-framework-host
+```
+(requires `lunch nova-trunk_staging-eng` which currently fails with product config error).
+
+### Manual build recipe (working when Soong lunch fails)
+
+```bash
+AOSP=/mnt/mydata/projects2/qos/deps/NovaART/deps/aosp-full
+JAVAC=prebuilts/jdk/jdk21/linux-x86/bin/javac
+SYSTEM=out/soong/.intermediates/build/soong/java/core-libraries/core-public-stubs-system-modules/android_common/system
+CLASSPATH="out/soong/.intermediates/prebuilts/sdk/35/module-lib/nova-sdk-android/android_common/local-combined/nova-sdk-android.jar:out/soong/.intermediates/prebuilts/sdk/35/module-lib/nova-sdk-art/android_common/local-combined/nova-sdk-art.jar:out/soong/.intermediates/prebuilts/sdk/35/module-lib/nova-sdk-framework-graphics/android_common/local-combined/nova-sdk-framework-graphics.jar"
+CLASSES_DIR=out/soong/.intermediates/vendor/nova/nova-framework/nova-framework-host/android_common/javac/classes
+JAVAC_JAR=out/soong/.intermediates/vendor/nova/nova-framework/nova-framework-host/android_common/javac/nova-framework.jar
+DEX_DIR=out/soong/.intermediates/vendor/nova/nova-framework/nova-framework-host/android_common/dex
+LIB_CORE=out/soong/.intermediates/build/soong/java/core-libraries/core-current-stubs-for-system-modules-no-annotations/android_common/jarjar/turbine/core-current-stubs-for-system-modules-no-annotations.jar
+
+# 1. Compile new .java file
+$JAVAC --system "$SYSTEM" -classpath "$CLASSPATH" -proc:none -d "$CLASSES_DIR" <NewFile.java>
+
+# 2. Update javac jar
+cd "$CLASSES_DIR" && jar uf "$AOSP/$JAVAC_JAR" <path/to/New.class>
+
+# 3. Re-DEX
+java -cp "$AOSP/out/host/linux-x86/framework/d8.jar" com.android.tools.r8.D8 \
+    --debug --min-api 35 --android-platform-build \
+    --lib "$AOSP/$LIB_CORE" \
+    --lib "$AOSP/out/soong/.intermediates/prebuilts/sdk/35/module-lib/nova-sdk-android/android_common/combined/nova-sdk-android.jar" \
+    --output "$AOSP/$DEX_DIR" "$AOSP/$JAVAC_JAR"
+
+# 4. Pack new DEX into hostdex jar
+cd "$AOSP/$DEX_DIR" && jar cf "$AOSP/out/host/linux-x86/framework/nova-framework-hostdex.jar" classes.dex
+```
+
 ## Up next — Phase 2
 
-- Phase 2: pure-Java APKs (2048, Material Life, Pixel Dungeon)
-- Implement missing Android framework APIs surfaced by each APK
-- Gate test: each APK renders its main screen without crashing
+- Fix Dialog DEX install (pack new classes.dex into fresh jar, not copy old nova-framework.jar)
+- Get 2048 past the ChangeLog dialog → main game screen renders
+- Run Material Life — find and fix whatever blocks it
+- Gate test: all three Phase 2 APKs render their main screens without crashing

@@ -10,6 +10,7 @@ public class NovaSharedPreferences implements SharedPreferences {
     private final Map<String, Object> mData = new HashMap<>();
 
     public NovaSharedPreferences(String name) {}
+    public NovaSharedPreferences(Context context, String name) {}
 
     @Override public Map<String, ?> getAll() { return Collections.unmodifiableMap(mData); }
     @Override public String getString(String key, String defValue) { return defValue; }

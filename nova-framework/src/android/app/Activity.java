@@ -64,6 +64,9 @@ public class Activity extends ContextWrapper {
         if (Context.LAYOUT_INFLATER_SERVICE.equals(name)) {
             return android.view.LayoutInflater.from(this);
         }
+        if (Context.VIBRATOR_SERVICE.equals(name)) {
+            return new android.os.NovaVibrator();
+        }
         if (Context.POWER_SERVICE.equals(name) || Context.DISPLAY_SERVICE.equals(name)) {
             return null;
         }

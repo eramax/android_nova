@@ -46,7 +46,7 @@ public class Resources {
     }
 
     public XmlResourceParser getXml(int id) {
-        return null;
+        return new NovaXmlResourceParser();
     }
 
     public java.io.InputStream openRawResource(int id) {

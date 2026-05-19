@@ -30,25 +30,22 @@ public class AssetManager {
             throw new IOException("No APK path set for AssetManager");
         }
 
-        ZipFile zip = new ZipFile(apkPath);
-        ZipEntry entry = zip.getEntry("assets/" + fileName);
-        if (entry == null) {
-            entry = zip.getEntry(fileName);
-        }
-        if (entry == null) {
-            zip.close();
-            throw new IOException("Asset not found: " + fileName);
-        }
-
-        final ZipFile zipRef = zip;
-        final InputStream rawStream = zip.getInputStream(entry);
-        return new java.io.FilterInputStream(rawStream) {
-            @Override
-            public void close() throws IOException {
-                super.close();
-                zipRef.close();
+        try (ZipFile zip = new ZipFile(apkPath)) {
+            ZipEntry entry = zip.getEntry("assets/" + fileName);
+            if (entry == null) {
+                entry = zip.getEntry(fileName);
             }
-        };
+            if (entry == null) {
+                throw new IOException("Asset not found: " + fileName);
+            }
+            try (InputStream raw = zip.getInputStream(entry)) {
+                java.io.ByteArrayOutputStream buf = new java.io.ByteArrayOutputStream((int) Math.max(entry.getSize(), 0));
+                byte[] chunk = new byte[8192];
+                int n;
+                while ((n = raw.read(chunk)) != -1) buf.write(chunk, 0, n);
+                return new java.io.ByteArrayInputStream(buf.toByteArray());
+            }
+        }
     }
 
     public String[] list(String path) throws IOException {

@@ -20,6 +20,10 @@ typedef jint (*JNI_CreateJavaVM_t)(JavaVM **pvm, void **penv, JavaVMInitArgs *ar
 /* Path to nova-framework DEX jar relative to host_out (out/host/linux-x86/).
  * Soong java_library with hostdex:true produces <name>-hostdex.jar in framework/. */
 #define NOVA_FRAMEWORK_REL "framework/nova-framework-hostdex.jar"
+/* SDK API stubs (android.jar DEXed) — fallback for any android.* class not
+ * overridden by nova-framework.  nova-framework is listed first so its classes
+ * take priority; stubs are only consulted for classes we have not implemented. */
+#define ANDROID_STUBS_REL  "framework/android-stubs-dex.jar"
 
 static const char *kGlesV2Candidates[] = {
     "/lib/x86_64-linux-gnu/libGLESv2.so.2",
@@ -346,11 +350,24 @@ int nova_art_init(struct nova_state *state, int argc, char *argv[]) {
     snprintf(arg, sizeof(arg), "-Xbootclasspath-locations:%s", bootclasspath_locations);
     if (append_option(options, &option_count, arg) != 0) goto opt_fail;
 
-    if (file_exists(framework_jar)) {
-        snprintf(arg, sizeof(arg), "-Djava.class.path=%s", framework_jar);
-        if (append_option(options, &option_count, arg) != 0) goto opt_fail;
-    } else {
-        fprintf(stderr, "[Nova] WARNING: nova-framework jar not found at %s\n", framework_jar);
+    {
+        char stubs_jar[PATH_MAX];
+        snprintf(stubs_jar, sizeof(stubs_jar), "%s/" ANDROID_STUBS_REL, host_out);
+
+        if (file_exists(framework_jar) && file_exists(stubs_jar)) {
+            /* nova-framework first — its classes shadow the SDK stubs */
+            snprintf(arg, sizeof(arg), "-Djava.class.path=%s:%s", framework_jar, stubs_jar);
+        } else if (file_exists(framework_jar)) {
+            snprintf(arg, sizeof(arg), "-Djava.class.path=%s", framework_jar);
+        } else if (file_exists(stubs_jar)) {
+            snprintf(arg, sizeof(arg), "-Djava.class.path=%s", stubs_jar);
+        } else {
+            fprintf(stderr, "[Nova] WARNING: no framework jars found\n");
+            arg[0] = '\0';
+        }
+        if (arg[0] && append_option(options, &option_count, arg) != 0) goto opt_fail;
+        if (!file_exists(framework_jar))
+            fprintf(stderr, "[Nova] WARNING: nova-framework jar not found at %s\n", framework_jar);
     }
 
     {
