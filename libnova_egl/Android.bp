@@ -1,0 +1,24 @@
+package {
+    default_applicable_licenses: ["vendor_nova_license"],
+}
+
+cc_library_host_shared {
+    name: "libnova_egl",
+    srcs: [
+        "nova_egl.c",
+    ],
+    export_include_dirs: ["."],
+    shared_libs: [
+        "libnova_android",
+        "libwayland-egl",
+        "libEGL-nova",
+    ],
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Wno-unused-parameter",
+        "-D_GNU_SOURCE",
+    ],
+    stl: "none",
+    allow_undefined_symbols: true,
+}

@@ -1,0 +1,13 @@
+// Nova — Linux-native Android application runtime
+// vendor/nova root blueprint: declares subpackages
+
+package {
+    default_applicable_licenses: ["vendor_nova_license"],
+}
+
+license {
+    name: "vendor_nova_license",
+    visibility: [":__subpackages__"],
+    license_kinds: ["SPDX-license-identifier-Apache-2.0"],
+    license_text: [],
+}

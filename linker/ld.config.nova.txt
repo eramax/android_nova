@@ -1,0 +1,12 @@
+# Nova linker namespace configuration.
+# Effective when running with the Android linker (Phase 4+).
+# In Phases 0-3 the same effect is achieved via LD_LIBRARY_PATH.
+
+[nova_app]
+additional.namespaces = nova_platform
+
+namespace.default.links = nova_platform
+namespace.default.link.nova_platform.shared_libs = libvulkan.so:libandroid.so:libOpenSLES.so:libEGL.so
+
+namespace.nova_platform.isolated = true
+namespace.nova_platform.search.paths = /out/host/linux-x86/lib64/nova

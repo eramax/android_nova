@@ -1,0 +1,34 @@
+package {
+    default_applicable_licenses: ["vendor_nova_license"],
+}
+
+cc_library_host_shared {
+    name: "libnova_android",
+    srcs: [
+        "nova_wayland.c",
+        "xdg-shell-protocol.c",
+        "xdg-decoration-unstable-v1-protocol.c",
+    ],
+    export_include_dirs: ["."],
+    shared_libs: [
+        "libwayland-client",
+        "libwayland-egl",
+        "libEGL-nova",
+    ],
+    header_libs: ["jni_headers"],
+    export_shared_lib_headers: [
+        "libwayland-client",
+        "libwayland-egl",
+        "libEGL-nova",
+    ],
+    export_header_lib_headers: ["jni_headers"],
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Wno-unused-parameter",
+        "-D_GNU_SOURCE",
+    ],
+    host_ldlibs: ["-ldl"],
+    stl: "none",
+    allow_undefined_symbols: true,
+}

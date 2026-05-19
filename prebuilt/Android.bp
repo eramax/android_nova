@@ -1,0 +1,46 @@
+// Prebuilt system libraries required by Nova (Wayland, EGL).
+// These are copied from the host system and declared as Soong prebuilts so that
+// libnova_android and libnova_egl can depend on them without using host_ldlibs.
+
+package {
+    default_applicable_licenses: ["vendor_nova_license"],
+}
+
+cc_prebuilt_library_shared {
+    name: "libwayland-client",
+    host_supported: true,
+    device_supported: false,
+    stl: "none",
+    target: {
+        linux_glibc_x86_64: {
+            srcs: ["lib64/libwayland-client.so"],
+        },
+    },
+    export_include_dirs: ["include"],
+}
+
+cc_prebuilt_library_shared {
+    name: "libwayland-egl",
+    host_supported: true,
+    device_supported: false,
+    stl: "none",
+    target: {
+        linux_glibc_x86_64: {
+            srcs: ["lib64/libwayland-egl.so"],
+        },
+    },
+    export_include_dirs: ["include"],
+}
+
+cc_prebuilt_library_shared {
+    name: "libEGL-nova",
+    host_supported: true,
+    device_supported: false,
+    stl: "none",
+    target: {
+        linux_glibc_x86_64: {
+            srcs: ["lib64/libEGL.so"],
+        },
+    },
+    export_include_dirs: ["include"],
+}

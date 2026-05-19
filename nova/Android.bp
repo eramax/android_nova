@@ -1,0 +1,28 @@
+package {
+    default_applicable_licenses: ["vendor_nova_license"],
+}
+
+cc_binary_host {
+    name: "nova",
+    srcs: [
+        "src/main.c",
+        "src/art.c",
+        "src/jni_stubs_stub.c",
+    ],
+    shared_libs: [
+        "libnova_android",
+        "libnova_egl",
+    ],
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Wno-unused-parameter",
+        "-D_GNU_SOURCE",
+        "-D_POSIX_C_SOURCE=200809L",
+    ],
+    host_ldlibs: [
+        "-ldl",
+        "-lm",
+    ],
+    stl: "none",
+}
