@@ -18,6 +18,7 @@
   <extend-project name="platform/external/apache-xml" path="external/apache-xml" revision="android16-qpr2-release" />
   <extend-project name="platform/external/auto" path="external/auto" revision="android16-qpr2-release" />
   <extend-project name="platform/external/avb" path="external/avb" revision="android16-qpr2-release" />
+  <project name="platform/external/abseil-cpp" path="external/abseil-cpp" revision="android16-qpr2-release" />
   <extend-project name="platform/external/bcc" path="external/bcc" revision="android16-qpr2-release" />
   <extend-project name="platform/external/boringssl" path="external/boringssl" revision="android16-qpr2-release" />
   <extend-project name="platform/external/bouncycastle" path="external/bouncycastle" revision="android16-qpr2-release" />

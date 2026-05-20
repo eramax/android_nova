@@ -329,10 +329,11 @@ public class ViewGroup extends View implements ViewParent {
             params = new MarginLayoutParams(params);
         }
         child.setLayoutParams(params);
-        params.leftMargin = child.novaGetLayoutMarginLeft();
-        params.topMargin = child.novaGetLayoutMarginTop();
-        params.rightMargin = child.novaGetLayoutMarginRight();
-        params.bottomMargin = child.novaGetLayoutMarginBottom();
+        MarginLayoutParams mlp = (MarginLayoutParams) params;
+        mlp.leftMargin = child.novaGetLayoutMarginLeft();
+        mlp.topMargin = child.novaGetLayoutMarginTop();
+        mlp.rightMargin = child.novaGetLayoutMarginRight();
+        mlp.bottomMargin = child.novaGetLayoutMarginBottom();
         return (MarginLayoutParams) params;
     }
 

@@ -20,5 +20,11 @@ java_library {
         enabled: false,
     },
 
+    libs: [
+        "nova-sdk-android",
+        "nova-sdk-art",
+        "nova-sdk-framework-graphics",
+    ],
+
     visibility: ["//vendor/nova:__subpackages__"],
 }

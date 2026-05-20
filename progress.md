@@ -4,6 +4,47 @@ Hand-maintained engineering log. Entries record completed and verified milestone
 
 ---
 
+## 2026-05-20 — Build Repair: make all passes
+
+### Summary
+
+Fixed two blockers that prevented `make -f vendor/nova/Makefile all` from succeeding
+after the repo-sync/checkout repair:
+
+1. **Missing `external/abseil-cpp`** — `aprotoc` depends on `absl_log_initialize` but
+   the abseil-cpp working tree was not checked out. Added to `nova.xml` local manifest
+   and synced from `android16-qpr2-release` branch.
+
+2. **Lost `prebuilts/sdk/35/module-lib/Android.bp`** — The `nova-sdk-*` java_import
+   stubs were defined in this file, which was never committed to git and was lost
+   during the checkout repair. Recreated with three modules:
+   - `nova-sdk-android` → `android.jar`
+   - `nova-sdk-art` → `art.jar`
+   - `nova-sdk-framework-graphics` → `framework-graphics.jar`
+   Restored `libs:` reference in `nova-framework/Android.bp`.
+
+3. **Lost `vendor/nova/prebuilt/lib64/` symlinks** — The directory is gitignored.
+   Recreated symlinks to host system Wayland/EGL/GLES/png libraries.
+
+4. **`ViewGroup.java` margin field compilation fix** — Cast to `MarginLayoutParams`
+   before accessing `leftMargin`/`topMargin`/`rightMargin`/`bottomMargin` fields.
+
+### Verified build result
+
+- `make -f vendor/nova/Makefile all` → **BUILD SUCCESS**
+- `make -f vendor/nova/Makefile test-ipc` → All tests PASSED
+- Output artifacts:
+  - `out/host/linux-x86/bin/nova` (79 KB)
+  - `out/host/linux-x86/bin/nova-daemon` (33 KB)
+  - `out/host/linux-x86/framework/nova-framework-hostdex.jar` (274 KB)
+
+### Manifest changes
+
+- Added `<project name="platform/external/abseil-cpp" ...>` to `.repo/local_manifests/nova.xml`
+- Created `prebuilts/sdk/35/module-lib/Android.bp` (nova-sdk java_import stubs)
+
+---
+
 ## 2026-05-20 — Manifest Reproducibility + Nova Build Repair
 
 ### Summary
