@@ -83,6 +83,7 @@
   <extend-project name="platform/external/okhttp" path="external/okhttp" revision="android16-qpr2-release" />
   <extend-project name="platform/external/okio" path="external/okio" revision="android16-qpr2-release" />
   <extend-project name="platform/external/ow2-asm" path="external/ow2-asm" revision="android16-qpr2-release" />
+  <project name="platform/external/pogreb" path="external/pogreb" revision="android16-qpr2-release" />
   <extend-project name="platform/external/pcre" path="external/pcre" revision="android16-qpr2-release" />
   <extend-project name="platform/external/perfetto" path="external/perfetto" revision="android16-qpr2-release" />
   <extend-project name="platform/external/protobuf" path="external/protobuf" revision="android16-qpr2-release" />
