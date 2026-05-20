@@ -18,6 +18,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+import nova.internal.NovaTrace;
 
 public class LayoutInflater {
     private static final String TAG = "LayoutInflater";
@@ -71,6 +72,17 @@ public class LayoutInflater {
             e.printStackTrace();
             return fallbackView();
         }
+    }
+
+    public View inflate(int layoutResId, ViewGroup parent, boolean attachToRoot) {
+        View view = inflate(layoutResId, parent);
+        if (attachToRoot && parent != null && view != null && view.getParent() != parent) {
+            parent.addView(view);
+        }
+        if (attachToRoot && parent != null) {
+            return parent;
+        }
+        return view;
     }
 
     private String loadLayoutXmlFromApk(int layoutResId) {
@@ -178,6 +190,7 @@ public class LayoutInflater {
                     View parentView = stack.get(stack.size() - 1).view;
                     if (parentView instanceof ViewGroup) {
                         ((ViewGroup) parentView).addView(view);
+                        NovaTrace.recordInflation(view.getClass().getName(), parentView.getClass().getName());
                         System.out.println("[LayoutInflater] Added child: " + elementName);
                     }
                 }
@@ -193,7 +206,21 @@ public class LayoutInflater {
             return fallbackView();
         }
 
+        notifyFinishInflate(rootView);
         return rootView;
+    }
+
+    private void notifyFinishInflate(View view) {
+        if (view == null) {
+            return;
+        }
+        if (view instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) view;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                notifyFinishInflate(group.getChildAt(i));
+            }
+        }
+        view.onFinishInflate();
     }
 
     private int getIndentation(String line) {
@@ -257,7 +284,7 @@ public class LayoutInflater {
         if (trimmed.startsWith("A: android:visibility") || trimmed.contains("0x010100dc")) {
             Integer visibility = extractTypedIntValue(trimmed);
             if (visibility != null) {
-                currentView.setVisibility(visibility);
+                currentView.setVisibility(mapVisibilityValue(visibility));
             }
             return;
         }
@@ -266,6 +293,7 @@ public class LayoutInflater {
             Integer width = extractLayoutSizeValue(trimmed);
             if (width != null) {
                 currentView.novaSetLayoutWidth(width);
+                syncLayoutParams(currentView);
             }
             return;
         }
@@ -274,6 +302,7 @@ public class LayoutInflater {
             Integer height = extractLayoutSizeValue(trimmed);
             if (height != null) {
                 currentView.novaSetLayoutHeight(height);
+                syncLayoutParams(currentView);
             }
             return;
         }
@@ -281,6 +310,42 @@ public class LayoutInflater {
         if (trimmed.startsWith("A: android:layout_alignParentBottom") || trimmed.contains("0x0101018e")) {
             Integer alignParentBottom = extractBooleanTrue(trimmed);
             currentView.novaSetAlignParentBottom(alignParentBottom != null && alignParentBottom != 0);
+            syncLayoutParams(currentView);
+            return;
+        }
+
+        if (trimmed.startsWith("A: android:gravity") || trimmed.contains("0x010100af")) {
+            Integer gravity = extractHexIntValue(trimmed);
+            if (gravity == null) {
+                gravity = extractTypedIntValue(trimmed);
+            }
+            if (gravity != null) {
+                currentView.novaSetGravity(gravity);
+                if (currentView instanceof android.widget.LinearLayout) {
+                    ((android.widget.LinearLayout) currentView).setGravity(gravity);
+                }
+            }
+            return;
+        }
+
+        if (trimmed.startsWith("A: android:layout_gravity") || trimmed.contains("0x010100b3")) {
+            Integer layoutGravity = extractHexIntValue(trimmed);
+            if (layoutGravity == null) {
+                layoutGravity = extractTypedIntValue(trimmed);
+            }
+            if (layoutGravity != null) {
+                currentView.novaSetLayoutGravity(layoutGravity);
+                syncLayoutParams(currentView);
+            }
+            return;
+        }
+
+        if (trimmed.startsWith("A: android:layout_weight") || trimmed.contains("0x01010181")) {
+            Float weight = extractFloatValue(trimmed);
+            if (weight != null) {
+                currentView.novaSetLayoutWeight(weight);
+                syncLayoutParams(currentView);
+            }
             return;
         }
 
@@ -360,6 +425,56 @@ public class LayoutInflater {
         return null;
     }
 
+    private Float extractFloatValue(String trimmed) {
+        Pattern floatPattern = Pattern.compile("\\(type 0x4\\)0x([0-9a-fA-F]+)");
+        Matcher matcher = floatPattern.matcher(trimmed);
+        if (matcher.find()) {
+            try {
+                return Float.intBitsToFloat((int) Long.parseLong(matcher.group(1), 16));
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return null;
+    }
+
+    private int mapVisibilityValue(int xmlVisibility) {
+        if (xmlVisibility == 1) {
+            return View.INVISIBLE;
+        }
+        if (xmlVisibility == 2) {
+            return View.GONE;
+        }
+        return View.VISIBLE;
+    }
+
+    private void syncLayoutParams(View view) {
+        if (view == null) {
+            return;
+        }
+        ViewGroup.LayoutParams params = view.getLayoutParams();
+        if (params == null) {
+            return;
+        }
+        params.width = view.novaGetLayoutWidth();
+        params.height = view.novaGetLayoutHeight();
+        if (params instanceof android.widget.LinearLayout.LayoutParams) {
+            android.widget.LinearLayout.LayoutParams linearParams =
+                    (android.widget.LinearLayout.LayoutParams) params;
+            linearParams.weight = view.novaGetLayoutWeight();
+            linearParams.gravity = view.novaGetLayoutGravity();
+        }
+        if (params instanceof android.widget.RelativeLayout.LayoutParams) {
+            android.widget.RelativeLayout.LayoutParams relativeParams =
+                    (android.widget.RelativeLayout.LayoutParams) params;
+            if (view.novaIsAlignParentBottom()) {
+                relativeParams.addRule(android.widget.RelativeLayout.ALIGN_PARENT_BOTTOM);
+            } else {
+                relativeParams.removeRule(android.widget.RelativeLayout.ALIGN_PARENT_BOTTOM);
+            }
+        }
+        view.requestLayout();
+    }
+
     private static final class InflateNode {
         final View view;
         final int indent;
@@ -411,18 +526,60 @@ public class LayoutInflater {
 
         if (viewClass == null) {
             System.err.println("[LayoutInflater] Unknown view class: " + className);
+            NovaTrace.recordMissingClass(className, "LayoutInflater.instantiateView");
             return null;
         }
 
         try {
-            Constructor<?> ctor = viewClass.getConstructor(Context.class);
+            Constructor<?> ctor = viewClass.getDeclaredConstructor(Context.class);
+            ctor.setAccessible(true);
             return (View) ctor.newInstance(mContext);
         } catch (NoSuchMethodException e) {
+            NovaTrace.recordMissingMethod(className, "<init>(Context)", "LayoutInflater.instantiateView");
             try {
-                Constructor<?> ctor = viewClass.getConstructor();
+                Constructor<?> ctor = viewClass.getDeclaredConstructor(Context.class, AttributeSet.class);
+                ctor.setAccessible(true);
+                return (View) ctor.newInstance(mContext, null);
+            } catch (NoSuchMethodException e2) {
+                NovaTrace.recordMissingMethod(className, "<init>(Context,AttributeSet)", "LayoutInflater.instantiateView");
+            } catch (Exception e2) {
+                Throwable cause = e2.getCause();
+                System.err.println("[LayoutInflater] Error creating view: " + className + " - "
+                        + e2.getMessage() + (cause != null ? " cause=" + cause : ""));
+                if (cause != null) {
+                    cause.printStackTrace();
+                    NovaTrace.recordFailure("inflate/" + className, cause);
+                } else {
+                    NovaTrace.recordFailure("inflate/" + className, e2);
+                }
+                return null;
+            }
+            try {
+                Constructor<?> ctor = viewClass.getDeclaredConstructor(Context.class, AttributeSet.class, int.class);
+                ctor.setAccessible(true);
+                return (View) ctor.newInstance(mContext, null, 0);
+            } catch (NoSuchMethodException e3) {
+                NovaTrace.recordMissingMethod(className, "<init>(Context,AttributeSet,int)", "LayoutInflater.instantiateView");
+            } catch (Exception e3) {
+                Throwable cause = e3.getCause();
+                System.err.println("[LayoutInflater] Error creating view: " + className + " - "
+                        + e3.getMessage() + (cause != null ? " cause=" + cause : ""));
+                if (cause != null) {
+                    cause.printStackTrace();
+                    NovaTrace.recordFailure("inflate/" + className, cause);
+                } else {
+                    NovaTrace.recordFailure("inflate/" + className, e3);
+                }
+                return null;
+            }
+            NovaTrace.recordMissingMethod(className, "<init>(Context)", "LayoutInflater.instantiateView");
+            try {
+                Constructor<?> ctor = viewClass.getDeclaredConstructor();
+                ctor.setAccessible(true);
                 return (View) ctor.newInstance();
             } catch (Exception e2) {
                 System.err.println("[LayoutInflater] Failed to instantiate: " + className);
+                NovaTrace.recordFailure("inflate/" + className, e2);
                 return null;
             }
         } catch (Exception e) {
@@ -431,6 +588,9 @@ public class LayoutInflater {
                     + e.getMessage() + (cause != null ? " cause=" + cause : ""));
             if (cause != null) {
                 cause.printStackTrace();
+                NovaTrace.recordFailure("inflate/" + className, cause);
+            } else {
+                NovaTrace.recordFailure("inflate/" + className, e);
             }
             return null;
         }

@@ -39,6 +39,8 @@ public final class RenderCoordinator {
             }
 
             Log.d(TAG, "Starting render coordinator for " + width + "x" + height);
+            NovaTrace.recordRenderTarget(rootView != null ? rootView.getClass().getName() : "null",
+                    rootView != null ? rootView.getClass().getName() : "null");
             mRootView = rootView;
             mBackBuffer = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
             mBackCanvas = new Canvas(mBackBuffer);
@@ -85,7 +87,11 @@ public final class RenderCoordinator {
             try {
                 synchronized (mLock) {
                     if (mBackCanvas != null && mRootView != null) {
+                        android.os.Looper.dispatchPendingMain();
                         mBackCanvas.drawColor(Color.WHITE);
+                        int widthSpec = View.MeasureSpec.makeMeasureSpec(mBackBuffer.getWidth(), View.MeasureSpec.EXACTLY);
+                        int heightSpec = View.MeasureSpec.makeMeasureSpec(mBackBuffer.getHeight(), View.MeasureSpec.EXACTLY);
+                        mRootView.measure(widthSpec, heightSpec);
                         mRootView.layout(0, 0, mBackBuffer.getWidth(), mBackBuffer.getHeight());
                         mRootView.draw(mBackCanvas);
                         submitFrame();
@@ -93,6 +99,7 @@ public final class RenderCoordinator {
                         if (!mDumpedTree && frameCount >= 30) {
                             Log.d(TAG, "Render tree:");
                             dumpViewTree(mRootView, "");
+                            NovaTrace.dumpSummary("first-render-tree");
                             mDumpedTree = true;
                         }
                         if (frameCount % 60 == 0) {
@@ -109,6 +116,7 @@ public final class RenderCoordinator {
                 break;
             } catch (Exception e) {
                 Log.e(TAG, "Error in render loop", e);
+                NovaTrace.recordFailure("renderLoop", e);
             }
         }
     }

@@ -17,6 +17,7 @@ public class Activity extends ContextWrapper {
     private static final String TAG = "NovaActivity";
     private Application mApplication;
     private final Window mWindow = new Window(this);
+    private final android.content.res.Resources.Theme mTheme = getResources().newTheme();
     private View mContentView;
     private boolean mFinished;
     private Intent mIntent;
@@ -111,10 +112,12 @@ public class Activity extends ContextWrapper {
     public Context getApplicationContext() { return this; }
 
     @Override
-    public void setTheme(int resid) {}
+    public void setTheme(int resid) {
+        mTheme.applyStyle(resid, true);
+    }
 
     @Override
-    public android.content.res.Resources.Theme getTheme() { return null; }
+    public android.content.res.Resources.Theme getTheme() { return mTheme; }
 
     @Override
     public ClassLoader getClassLoader() { return getClass().getClassLoader(); }

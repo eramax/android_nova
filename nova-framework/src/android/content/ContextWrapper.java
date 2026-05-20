@@ -5,9 +5,11 @@ import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.content.res.TypedArray;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.AttributeSet;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -95,6 +97,10 @@ public class ContextWrapper extends Context {
     @Override public Context createWindowContext(android.view.Display display, int type, Bundle options) { return mBase != null ? mBase.createWindowContext(display, type, options) : this; }
     @Override public boolean isDeviceProtectedStorage() { return mBase != null && mBase.isDeviceProtectedStorage(); }
     @Override public boolean moveDatabaseFrom(Context sourceContext, String name) { return mBase != null && mBase.moveDatabaseFrom(sourceContext, name); }
+    @Override public TypedArray obtainStyledAttributes(int[] attrs) { return mBase != null ? mBase.obtainStyledAttributes(attrs) : super.obtainStyledAttributes(attrs); }
+    @Override public TypedArray obtainStyledAttributes(int resId, int[] attrs) { return mBase != null ? mBase.obtainStyledAttributes(resId, attrs) : super.obtainStyledAttributes(resId, attrs); }
+    @Override public TypedArray obtainStyledAttributes(AttributeSet set, int[] attrs) { return mBase != null ? mBase.obtainStyledAttributes(set, attrs) : super.obtainStyledAttributes(set, attrs); }
+    @Override public TypedArray obtainStyledAttributes(AttributeSet set, int[] attrs, int defStyleAttr, int defStyleRes) { return mBase != null ? mBase.obtainStyledAttributes(set, attrs, defStyleAttr, defStyleRes) : super.obtainStyledAttributes(set, attrs, defStyleAttr, defStyleRes); }
 
     @Override public String toString() { return getClass().getSimpleName() + "{base=" + mBase + "}"; }
 }

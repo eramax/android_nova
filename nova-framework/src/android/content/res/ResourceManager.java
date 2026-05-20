@@ -68,6 +68,20 @@ public class ResourceManager {
         return null;
     }
 
+    public synchronized Integer getDimensionPixelSize(int resourceId) {
+        ResolvedResource resource = resolveResource(resourceId);
+        if (resource == null) {
+            return null;
+        }
+        if (resource.dimensionValue != null) {
+            return Math.round(resource.dimensionValue);
+        }
+        if (resource.referenceId != null && resource.referenceId != resourceId) {
+            return getDimensionPixelSize(resource.referenceId);
+        }
+        return null;
+    }
+
     public synchronized String getFileResourcePath(int resourceId) {
         ResolvedResource resource = resolveResource(resourceId);
         if (resource == null) {
@@ -313,6 +327,8 @@ public class ResourceManager {
                 candidate.kind = "file";
             } else if (line.contains(":color/")) {
                 candidate.kind = "color";
+            } else if (line.contains(":dimen/")) {
+                candidate.kind = "dimen";
             }
 
             if (i + 1 < lines.length) {
@@ -326,6 +342,8 @@ public class ResourceManager {
                     }
                 } else if (next.startsWith("(color) #")) {
                     candidate.colorValue = parseColorLiteral(next.substring(8));
+                } else if (next.startsWith("(dimension) ")) {
+                    candidate.dimensionValue = parseDimensionLiteral(next.substring(12));
                 }
             }
 
@@ -352,11 +370,29 @@ public class ResourceManager {
         return null;
     }
 
+    private Float parseDimensionLiteral(String literal) {
+        try {
+            String value = literal.trim().toLowerCase();
+            if (value.endsWith("dp") || value.endsWith("dip")
+                    || value.endsWith("sp") || value.endsWith("px")) {
+                int unitStart = value.length() - 2;
+                if (value.endsWith("dip")) {
+                    unitStart = value.length() - 3;
+                }
+                return Float.parseFloat(value.substring(0, unitStart));
+            }
+            return Float.parseFloat(value);
+        } catch (NumberFormatException ignored) {
+        }
+        return null;
+    }
+
     private static final class ResolvedResource {
         int resourceId;
         String kind;
         String stringValue;
         Integer referenceId;
         Integer colorValue;
+        Float dimensionValue;
     }
 }

@@ -56,6 +56,15 @@ public class TextView extends View {
     public void setText(CharSequence text, BufferType type) {}
 
     @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        int textLength = mText != null ? mText.length() : 0;
+        int desiredWidth = getPaddingLeft() + getPaddingRight() + Math.max(24, textLength * 9);
+        int desiredHeight = getPaddingTop() + getPaddingBottom() + 24;
+        setMeasuredDimension(resolveSizeAndState(desiredWidth, widthMeasureSpec, 0),
+                resolveSizeAndState(desiredHeight, heightMeasureSpec, 0));
+    }
+
+    @Override
     protected void onDraw(Canvas canvas) {
         if (canvas == null || mText == null || mText.length() == 0) {
             return;

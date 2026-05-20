@@ -63,6 +63,25 @@ public final class Looper {
         }
     }
 
+    public static void dispatchPendingMain() {
+        Looper main = getMainLooper();
+        if (main == null) {
+            return;
+        }
+        for (int i = 0; i < 128; i++) {
+            Message msg = main.mQueue.nextIfReady();
+            if (msg == null) {
+                break;
+            }
+            try {
+                msg.target.dispatchMessage(msg);
+            } catch (Exception e) {
+                android.util.Log.e("Looper", "Exception in pending message handling", e);
+            }
+            msg.recycleUnchecked();
+        }
+    }
+
     public void quit()      { mQueue.quit(false); }
     public void quitSafely(){ mQueue.quit(true); }
 

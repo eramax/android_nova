@@ -12,6 +12,7 @@ import java.util.ArrayList;
 public class Application extends ContextWrapper implements ComponentCallbacks2 {
 
     private final ArrayList<ActivityLifecycleCallbacks> mActivityLifecycleCallbacks = new ArrayList<>();
+    private final android.content.res.Resources.Theme mTheme = getResources().newTheme();
 
     public interface ActivityLifecycleCallbacks {
         default void onActivityPreCreated(Activity activity, Bundle savedInstanceState) {}
@@ -117,5 +118,15 @@ public class Application extends ContextWrapper implements ComponentCallbacks2 {
             return android.view.LayoutInflater.from(this);
         }
         return null;
+    }
+
+    @Override
+    public void setTheme(int resid) {
+        mTheme.applyStyle(resid, true);
+    }
+
+    @Override
+    public android.content.res.Resources.Theme getTheme() {
+        return mTheme;
     }
 }

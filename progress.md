@@ -4,6 +4,81 @@ Hand-maintained engineering log. Entries record completed and verified milestone
 
 ---
 
+## 2026-05-20 — Phase 2 Core Shim Progress (Material Life)
+
+### Summary
+
+Material Life runtime bring-up continued using the `vendor/nova/Makefile` wrapper
+for all rebuild/run iterations. The work stayed on generic bridge-adjacent/core
+framework contracts only; no app-specific hacks were added.
+
+### Verified commands
+
+```bash
+make -f vendor/nova/Makefile framework
+timeout 12s make -f vendor/nova/Makefile run \
+    APK=/mnt/mydata/projects2/0/aosp-full/vendor/nova/apks/phase2/Material\ Life_1.1.0_APKPure.apk
+```
+
+### What is now working
+
+- `GameOfLifeActivity` reaches `onStart()`
+- Fragment/page inflation proceeds into the menu page
+- `MenuView` root inflates
+- `MenuOptionsView` now inflates as a real `ListView` subclass instead of dying in
+  SDK stubs
+- `onFinishInflate()` is dispatched generically after inflation
+- Material/AppCompat constructors are getting substantially deeper into their real
+  initialization path
+
+### Generic contracts added
+
+- `Context.obtainStyledAttributes(...)`
+- usable `Resources.Theme` + `Resources.newTheme()`
+- minimal `TypedArray`
+- minimal adapter/list stack:
+  - `Adapter`
+  - `ListAdapter`
+  - `SpinnerAdapter`
+  - `BaseAdapter`
+  - `AdapterView`
+  - `AbsListView`
+  - `ListView`
+- `View.onFinishInflate()`
+- `View.setSaveFromParentEnabled(boolean)`
+- `AnimatorListenerAdapter`
+- `android.util.TypedValue`
+- resource dimension lookup:
+  - `Resources.getDimension()`
+  - `Resources.getDimensionPixelOffset()`
+  - `Resources.getDimensionPixelSize()`
+- `ImageView` tint API:
+  - `setImageTintList/getImageTintList`
+  - `setImageTintMode/getImageTintMode`
+
+### Current blocker
+
+`MenuButton` still does not finish constructing. The latest verified failing point is:
+
+- `NoSuchMethodError: android.animation.ValueAnimator.setInterpolator(TimeInterpolator)`
+
+Because `MenuButton` fails, `MenuView.onFinishInflate()` later casts the wrong child
+and the fragment ends with a null button path. This is now a narrow AndroidX/Material
+animation compatibility gap, not a broad rendering failure.
+
+### Architecture note
+
+The work remains in the right direction only when constrained like this:
+
+- primary target = Linux/Wayland bridge/runtime
+- minimal Java shim only for core contracts real apps hit before they reach the bridge
+- no widget-by-widget expansion unless runtime traces prove the contract is hot-path
+
+The runtime tracer has been useful here: each run now exposes the next concrete,
+generic API boundary instead of encouraging speculative framework expansion.
+
+---
+
 ## 2026-05-19 — Phase 0 Complete
 
 ### Summary
@@ -258,6 +333,107 @@ JAVAC_JAR=out/soong/.intermediates/vendor/nova/nova-framework/nova-framework-hos
 DEX_DIR=out/soong/.intermediates/vendor/nova/nova-framework/nova-framework-host/android_common/dex
 LIB_CORE=out/soong/.intermediates/build/soong/java/core-libraries/core-current-stubs-for-system-modules-no-annotations/android_common/jarjar/turbine/core-current-stubs-for-system-modules-no-annotations.jar
 
+---
+
+## 2026-05-20 — Phase 2 Runtime Tracing Added
+
+### Summary
+
+Added a targeted runtime compatibility tracer to Nova instead of continuing blind
+framework expansion. The tracer records first-hit lifecycle calls, inflater/view
+attachment events, render-target selection, missing-class/missing-method signals,
+and a compact summary dump during the first render-tree snapshot.
+
+This is verified with `Material Life_1.1.0_APKPure.apk` and now provides a stable
+evidence loop for deciding which missing contracts are real and which changes
+would be framework creep.
+
+### Verified build + run
+
+- ✅ `source build/envsetup.sh && lunch nova-trunk_staging-eng && SOONG_ALLOW_MISSING_DEPENDENCIES=true m nova-framework-host`
+- ✅ `timeout 12s out/host/linux-x86/bin/nova vendor/nova/apks/phase2/Material Life_1.1.0_APKPure.apk`
+- ✅ `NovaTrace` summary emitted into `/tmp/nova-material.log` under the normal timeout workflow
+
+### Tracer coverage added
+
+| Area | Signal |
+|------|--------|
+| Lifecycle | first-hit `launch`, `onCreate`, `onResume` |
+| Inflation | first-hit parent/child inflate chain |
+| View hierarchy | first-hit `addView` mutations |
+| Render bridge | root render target chosen by Nova |
+| Compatibility misses | missing class / missing method |
+| Failures | explicit recorded runtime failures |
+
+### Material Life findings from `NovaTrace`
+
+Verified summary from first render tree:
+
+- Lifecycle reached:
+  - `GameOfLifeActivity#launch`
+  - `GameOfLifeActivity#onCreate`
+  - `GameOfLifeActivity#onResume`
+  - `InfoActivity#launch`
+  - `InfoActivity#onCreate`
+  - `InfoActivity#onResume`
+- Inflation reached:
+  - root `FrameLayout -> RelativeLayout`
+  - `RelativeLayout -> ViewPager`
+  - `RelativeLayout -> footer LinearLayout`
+  - footer descendants: `TextView`, nested `LinearLayout`, `Button`, `ImageButton`
+- Render targets chosen:
+  - initial `FrameLayout -> c.c.a.a.d.k`
+  - current intro screen `RelativeLayout -> RelativeLayout`
+- Missing classes in this run:
+  - `com.android.gles3jni.GLES3JNILib` from launcher probe only; not relevant to Material Life
+- Missing methods:
+  - none in this run
+- Recorded failures:
+  - none in this run
+
+### Current verified runtime state
+
+- ✅ Generic `startActivity()` path works; app transitions from `GameOfLifeActivity` to `InfoActivity`
+- ✅ Qualified layout resolution and inflater nesting work
+- ✅ Generic `View` / `ViewGroup` layout-param propagation works again
+- ✅ `LinearLayout` footer shell is restored to sane geometry:
+  - `RelativeLayout [0,0 960x540]`
+  - `ViewPager [0,0 960x540]`
+  - footer `LinearLayout [0,460 960x80]`
+- ✅ Weight-based footer distribution is partially correct again
+- ⏳ Pager body remains blank; no page-content children are present under `ViewPager` in the traced hierarchy yet
+
+### Architecture learning / decision
+
+This debugging cycle clarified an important scope boundary:
+
+- Nova should primarily solve the **bridge problem**:
+  - Wayland/windowing
+  - surface/canvas/EGL handoff
+  - input/timing/host runtime glue
+- Nova still needs a **minimal host framework shim** so apps can reach those bridges:
+  - `Activity`
+  - `Resources`
+  - `LayoutInflater`
+  - `View` / `ViewGroup`
+  - looper/choreographer basics
+- Nova should **not** drift into reimplementing large parts of Android widget/framework surface without evidence
+
+Practical rule adopted:
+
+- only implement framework behavior when the tracer/logs show a real core contract gap
+- prefer AOSP-like semantics for those core contracts
+- treat widget-by-widget or app-shaped expansion as suspect unless it proves to be a shared runtime boundary
+
+### Next focus
+
+Use `NovaTrace` to answer the next higher-value question before adding more API surface:
+
+- why `ViewPager` is not attaching actual page content
+- whether the blocker is fragment host integration, adapter population timing, or another core container contract
+
+That keeps work centered on evidence-driven compatibility and avoids broad framework recreation.
+
 # 1. Compile new .java file
 $JAVAC --system "$SYSTEM" -classpath "$CLASSPATH" -proc:none -d "$CLASSES_DIR" <NewFile.java>
 
@@ -299,5 +475,3 @@ Successfully stabilized the *Material Life* cellular automaton rendering pipelin
 - The `c.c.a.a.f.b` drawer object is natively instantiated and registered into the coordinator (`jObj`).
 - The active rendering flag (`t`) is natively set to `true`.
 - The Canvas render coordinator stably produces and submits frames continuously (`Frames rendered: 10000+` successfully logged).
-
-

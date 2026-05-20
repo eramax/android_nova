@@ -47,8 +47,13 @@ public final class Launcher {
     }
 
     public static void launch(String apkPath, String activityClass, String packageName) throws Exception {
+        NovaTrace.installShutdownHook();
         Thread.setDefaultUncaughtExceptionHandler(
-                (t, e) -> System.err.println("[NovaLauncher] UNCAUGHT in " + t.getName() + ": " + e));
+                (t, e) -> {
+                    System.err.println("[NovaLauncher] UNCAUGHT in " + t.getName() + ": " + e);
+                    NovaTrace.recordFailure("uncaught/" + t.getName(), e);
+                    NovaTrace.dumpSummary("uncaught");
+                });
 
         String androidData = System.getenv("ANDROID_DATA");
         File optimizedDir = new File(androidData == null ? "." : androidData, "dex");
@@ -110,6 +115,7 @@ public final class Launcher {
     private static void launchActivity(String activityClass, android.content.Intent intent, boolean initialLaunch)
             throws Exception {
         Class<?> activityType = Class.forName(activityClass, true, sLoader);
+        NovaTrace.recordLifecycle(activityClass, "launch");
         System.out.println("[NovaLauncher] Loaded=" + activityType.getName());
         if (activityType.getSuperclass() != null) {
             System.out.println("[NovaLauncher] Super=" + activityType.getSuperclass().getName());
@@ -147,6 +153,7 @@ public final class Launcher {
             if (oldView != null) {
                 oldView.novaDetachFromWindow();
             }
+            invokeLifecycle(sCurrentActivity.getClass(), sCurrentActivity, "onStop", new Class<?>[0], new Object[0]);
         }
 
         invokeLifecycle(activityType, instance, "onCreate",
@@ -157,6 +164,7 @@ public final class Launcher {
             prepareContentView(contentView);
         }
 
+        invokeLifecycle(activityType, instance, "onStart", new Class<?>[0], new Object[0]);
         invokeLifecycle(activityType, instance, "onResume", new Class<?>[0], new Object[0]);
 
         if (sCurrentActivity != null && sCurrentActivity != instance) {
@@ -188,6 +196,7 @@ public final class Launcher {
         ViewDispatcher.setRootView(viewInstance);
 
         android.view.View renderTarget = findRenderTarget(viewInstance);
+        NovaTrace.recordRenderTarget(viewInstance.getClass().getName(), renderTarget.getClass().getName());
         System.out.println("[NovaLauncher] Found render target: " + renderTarget.getClass().getName());
         tryInvoke(renderTarget, "novaAttachToWindow", new Class<?>[0], new Object[0]);
     }
@@ -415,6 +424,7 @@ public final class Launcher {
             return;
         }
         method.setAccessible(true);
+        NovaTrace.recordLifecycle(activityClass.getName(), methodName);
         System.out.println("[NovaLauncher] Calling " + methodName);
         method.invoke(instance, args);
         System.out.println("[NovaLauncher] Completed " + methodName);
@@ -447,6 +457,7 @@ public final class Launcher {
                     + " loader=" + String.valueOf(type.getClassLoader()));
         } catch (ClassNotFoundException e) {
             System.out.println("[NovaLauncher] Missing class " + className);
+            NovaTrace.recordMissingClass(className, "Launcher.logClass");
         }
     }
 

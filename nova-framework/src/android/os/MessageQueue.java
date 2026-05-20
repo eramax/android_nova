@@ -45,15 +45,26 @@ public final class MessageQueue {
 
     Message next() {
         while (true) {
-            synchronized (mMessages) {
-                if (!mMessages.isEmpty()) {
-                    Message msg = mMessages.peek();
-                    long now = SystemClock.uptimeMillis();
-                    if (msg.when <= now) { mMessages.poll(); return msg; }
-                }
+            Message msg = nextIfReady();
+            if (msg != null) {
+                return msg;
             }
             try { Thread.sleep(1); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
         }
+    }
+
+    Message nextIfReady() {
+        synchronized (mMessages) {
+            if (!mMessages.isEmpty()) {
+                Message msg = mMessages.peek();
+                long now = SystemClock.uptimeMillis();
+                if (msg.when <= now) {
+                    mMessages.poll();
+                    return msg;
+                }
+            }
+        }
+        return null;
     }
 
     void quit(boolean safe) { mQuitting = true; }

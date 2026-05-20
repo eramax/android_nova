@@ -27,7 +27,7 @@ public class DrawerLayout {
     public android.graphics.drawable.Drawable getBackground() { return null; }
     public android.view.View getChildAt(int p0) { return null; }
     public int getChildCount() { return 0; }
-    public int getChildMeasureSpec(int p0, int p1, int p2) { return 0; }
+    public static int getChildMeasureSpec(int p0, int p1, int p2) { return 0; }
     public android.content.Context getContext() { return null; }
     public int getDescendantFocusability() { return 0; }
     public float getDrawerElevation() { return 0f; }

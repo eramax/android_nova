@@ -56,6 +56,21 @@ public class Resources {
         return 0;
     }
 
+    public float getDimension(int id) {
+        Integer value = ResourceManager.getInstance().getDimensionPixelSize(id);
+        return value != null ? (float) value : 0f;
+    }
+
+    public int getDimensionPixelOffset(int id) {
+        Integer value = ResourceManager.getInstance().getDimensionPixelSize(id);
+        return value != null ? value : 0;
+    }
+
+    public int getDimensionPixelSize(int id) {
+        Integer value = ResourceManager.getInstance().getDimensionPixelSize(id);
+        return value != null ? value : 0;
+    }
+
     public String getString(int id) {
         String value = ResourceManager.getInstance().getStringResource(id);
         return value != null ? value : Integer.toString(id);
@@ -77,6 +92,10 @@ public class Resources {
         return ResourceManager.getInstance().openResource(id);
     }
 
+    public Theme newTheme() {
+        return new Theme(this);
+    }
+
     public static class NotFoundException extends RuntimeException {
         public NotFoundException(String message) {
             super(message);
@@ -84,10 +103,26 @@ public class Resources {
     }
 
     public static class Theme {
+        private final Resources mResources;
+
+        public Theme() {
+            this(Resources.getSystem());
+        }
+
+        public Theme(Resources resources) {
+            mResources = resources != null ? resources : Resources.getSystem();
+        }
+
         public void applyStyle(int resId, boolean force) {}
-        public android.content.res.TypedArray obtainStyledAttributes(int[] attrs) { return null; }
-        public android.content.res.TypedArray obtainStyledAttributes(int resId, int[] attrs) { return null; }
-        public android.content.res.TypedArray obtainStyledAttributes(android.util.AttributeSet set, int[] attrs, int defStyleAttr, int defStyleRes) { return null; }
-        public Resources getResources() { return null; }
+        public android.content.res.TypedArray obtainStyledAttributes(int[] attrs) {
+            return android.content.res.TypedArray.obtain(mResources, null, attrs, true);
+        }
+        public android.content.res.TypedArray obtainStyledAttributes(int resId, int[] attrs) {
+            return android.content.res.TypedArray.obtain(mResources, null, attrs, true);
+        }
+        public android.content.res.TypedArray obtainStyledAttributes(android.util.AttributeSet set, int[] attrs, int defStyleAttr, int defStyleRes) {
+            return android.content.res.TypedArray.obtain(mResources, set, attrs, true);
+        }
+        public Resources getResources() { return mResources; }
     }
 }
