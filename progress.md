@@ -636,3 +636,200 @@ Successfully stabilized the *Material Life* cellular automaton rendering pipelin
 - The `c.c.a.a.f.b` drawer object is natively instantiated and registered into the coordinator (`jObj`).
 - The active rendering flag (`t`) is natively set to `true`.
 - The Canvas render coordinator stably produces and submits frames continuously (`Frames rendered: 10000+` successfully logged).
+
+---
+
+## 2026-05-20 — Phase 3 Complete: KeePassDX 4.4.2-free
+
+### Summary
+
+KeePassDX `FileDatabaseSelectActivity` inflates and completes full lifecycle
+(onCreate → onStart → onResume) with zero FAILURE signals from NovaTrace.
+
+### Root causes found and fixed
+
+#### 1. `NovaXmlResourceParser` not implementing `AttributeSet`
+
+**Symptom**: `Xml.asAttributeSet()` threw `ClassCastException` — NovaXmlResourceParser
+cannot be converted to AttributeSet.
+
+**Fix**: Added `implements android.util.AttributeSet` to NovaXmlResourceParser class
+declaration. Cannot add to `XmlResourceParser` interface (incompatible with `XmlPullParser`).
+
+#### 2. AppCompat `SupportMenuInflater` — "Unexpected end of document"
+
+**Symptom**: `RuntimeException("Unexpected end of document")` in ToolbarSpecial/MaterialToolbar
+constructors. AppCompat's `parseMenu()` throws when parser returns END_DOCUMENT before
+finding a `<menu>` tag.
+
+**Fix**: NovaXmlResourceParser now simulates a `<menu/>` document via state machine:
+states 0=START_DOCUMENT → 1=START_TAG("menu") → 2=END_TAG("menu") → 3=END_DOCUMENT.
+`getName()` returns "menu" in states 1 and 2.
+
+#### 3. `LayoutInflater.inflate(int, ViewGroup)` — root not attached to parent
+
+**Symptom**: ContentFrameLayout childCount=0 after inflate. ToolbarSpecial's `toolbar.setTitle()`
+NPE'd on null toolbar.
+
+**Fix**: 2-arg `inflate(resId, parent)` now matches Android's real behavior:
+`inflate(resId, parent, parent != null)` — attaches to parent when parent is non-null.
+Refactored so 3-arg `inflate` is the core method.
+
+#### 4. `TextView` missing compound drawable tint + text appearance + text color APIs
+
+**Symptom**: `NoSuchMethodError` for `setCompoundDrawableTintList`, `setTextAppearance(Context,int)`,
+`setTextColor(ColorStateList)`.
+
+**Fix**: Added all three method groups to TextView:
+- `setCompoundDrawableTintList/getCompoundDrawableTintList`, `setCompoundDrawableTintMode/getCompoundDrawableTintMode`
+- `setTextAppearance(int)`, `setTextAppearance(Context,int)`
+- `setTextColor(ColorStateList)`, `getTextColors()`, `getCurrentTextColor()`
+
+#### 5. `View.removeCallbacks` — wrong return type
+
+**Symptom**: `NoSuchMethodError: removeCallbacks(Runnable)Z` (Z = boolean return).
+
+**Fix**: Changed return type from `void` to `boolean` (matches modern Android API).
+
+#### 6. `Window.Callback` interface — missing default methods
+
+**Symptom**: `NoSuchMethodError: onCreatePanelMenu(I,Menu)Z` in anonymous Callback implementations.
+
+**Fix**: Added 12 methods as Java 8 `default` methods to Window.Callback interface:
+`onCreatePanelView`, `onCreatePanelMenu`, `onPreparePanel`, `onMenuOpened`,
+`onMenuClosed`, `dispatchKeyShortcutEvent`, `dispatchGenericMotionEvent`,
+`onWindowStartingActionMode` (×2), `onActionModeStarted/Finished`,
+`dispatchPopulateAccessibilityEvent`.
+
+#### 7. `Activity` — missing `isChild`, `getParent`, `isDestroyed`, `recreate`
+
+**Fix**: Added all four methods. Avoided duplicates of existing methods
+(`isTaskRoot`, `isFinishing`, `isChangingConfigurations`, `runOnUiThread`, `getWindow`).
+
+#### 8. `Intent` — missing typed extras (API 33)
+
+**Fix**: Added `getParcelableExtra(String, Class<T>)` and `getSerializableExtra(String, Class<T>)`.
+
+#### 9. `PackageManager` — missing `getServiceInfo`, `getProviderInfo`
+
+**Fix**: Added `getServiceInfo(ComponentName, int/long)` and `getProviderInfo(ComponentName, int)`.
+Created new stub classes `ServiceInfo.java` and `ProviderInfo.java` (minimal ComponentInfo subclasses).
+
+#### 10. Application class detection — `aapt dump xmltree` fallback
+
+**Symptom**: KeePassDX's `com.kunzisoft.keepass.app.App` not found by binary "Application" scan.
+
+**Fix**: `Launcher.java` now uses `aapt dump xmltree` to parse manifest `android:name`
+on `<application>` element. Falls back to binary scan. Also added field-fallback:
+when `setApplication()` throws `InvocationTargetException` (AppCompat's `attachBaseContext`
+calls missing methods), use reflection to set `mApplication` directly.
+
+### Runtime behavior
+
+- App correctly attached as `com.kunzisoft.keepass.app.App`
+- Database list screen inflated into ContentFrameLayout (childCount=1)
+- ToolbarSpecial (4 children), MaterialToolbar, CollapsingToolbarLayout all inflate
+- Zero FAILURE signals from NovaTrace
+
+### Phase gate status
+
+| Phase | App | Status |
+|-------|-----|--------|
+| 0 | gles3jni (GLES3 triangle) | ✅ |
+| 1 | gles3jni full render | ✅ |
+| 2 | Material Life, 2048, Pixel Dungeon | ✅ |
+| 3 | KeePassDX 4.4.2-free | ✅ |
+
+---
+
+## 2026-05-20 — Phase 4 In Progress: Multi-Process Daemon + IPC
+
+### Summary
+
+Phase 4: transition from single-process to daemon architecture. `frameworks/native`
+(libbinder_rpc source) not in partial AOSP checkout — implemented custom `libnova_ipc`
+Unix domain socket RPC library with same architectural role.
+
+### New modules
+
+| Module | Type | Purpose |
+|--------|------|---------|
+| `libnova_ipc` | `cc_library_host_static` | Unix domain socket RPC: parcel serialization, server/client, callbacks |
+| `libnova_binder_transport` | `cc_library_host_shared` | JNI bridge: Java `NovaBinderTransport` ↔ `libnova_ipc` |
+| `nova-daemon` | `cc_binary_host` | Background daemon exposing PackageManager, ActivityManager, WindowPolicyService |
+| `nova_ipc_test` | `cc_binary_host` | P4-T1 integration test: echo + callback |
+
+### P4-T1: libnova_ipc integration test — PASSED
+
+```
+[PASS] greet("world") → "Hello, world!"
+[PASS] ping() → daemon called back with "pong"
+All tests PASSED.
+```
+
+Wire protocol: `[total_len(4)][service_id(4)][txn_code(4)][data_len(4)][data...]`
+Reply: `[total_len(4)][status(4)][data_len(4)][data...]`
+Callback: daemon connects back to client-supplied Unix socket path.
+
+### P4-T2: NovaBinderTransport JNI bridge — DONE
+
+`NovaBinderTransport.java` provides:
+- `connect(socketPath)` → nativeConnect → nova_ipc_client_connect
+- `transact(serviceId, txn, byte[])` → nativeTransact → nova_ipc_transact
+- `close()` → nativeClose → nova_ipc_client_destroy
+
+`libnova_binder_transport.so` installed to `out/host/linux-x86/lib64/`.
+
+### P4-T3: nova-daemon skeleton — DONE
+
+Daemon registers three services:
+- `NOVA_SVC_PACKAGE_MANAGER (2)`: `getPackages`, `resolveActivity`
+- `NOVA_SVC_ACTIVITY_MANAGER (3)`: `startActivity`, `getRunningTasks`
+- `NOVA_SVC_WINDOW_POLICY (4)`: `registerWindow`, `focusWindow`, `unregisterWindow`
+
+Run: `nova-daemon [--socket-path PATH]` (default: `$XDG_RUNTIME_DIR/nova-daemon.sock`)
+
+### P4-T4: nova binary — `--package` and `--install` modes — DONE
+
+`nova` binary now supports:
+- `nova --install <apk>` — copies APK to `~/.local/share/nova/packages/<pkg>.apk`
+- `nova --package <name>` — resolves APK from package registry, connects to daemon
+- `nova --standalone` — single-process mode (Phase 0-3 compat, skips daemon)
+- `nova --daemon-socket <path>` — override daemon socket path
+
+Package name extraction via `aapt dump badging`. Package resolution from
+`$NOVA_PACKAGES_DIR` or `~/.local/share/nova/packages/`.
+
+### Activity-alias fallback for launcher detection
+
+**Symptom**: Fossify Math (`org.fossify.math`) has no `launchable-activity:` in aapt2
+badging output — its LAUNCHER intent-filter is on `<activity-alias>` elements, not the
+activity itself.
+
+**Fix**: `art.c` fallback: when `aapt2 dump badging` finds no `launchable-activity:`,
+parse `aapt dump xmltree` to find `<activity-alias>` elements with
+`android.intent.category.LAUNCHER` and extract `android:targetActivity`.
+
+Verified: `org.fossify.math` resolves to `org.fossify.math.activities.SplashActivity`.
+
+### Phase 4 gate test status
+
+```
+✅ nova_ipc_test passes (echo + callback)
+✅ nova-daemon starts, listens on Unix socket
+✅ nova --install copies APK to package registry
+✅ nova --package resolves APK path from package name
+✅ nova --package connects to daemon (WindowPolicyService register)
+🔧 org.fossify.math crashes in onCreate — needs framework shims (Phase 3+ work)
+```
+
+### Build commands
+
+```bash
+cd /mnt/mydata/projects2/0/aosp-full
+make -f vendor/nova/Makefile native    # builds all native targets including daemon + test
+make -f vendor/nova/Makefile framework # builds Java framework
+make -f vendor/nova/Makefile test-ipc  # runs P4-T1 integration test
+make -f vendor/nova/Makefile daemon    # starts nova-daemon
+make -f vendor/nova/Makefile run APK=<path>  # runs app (connects to daemon if available)
+```
