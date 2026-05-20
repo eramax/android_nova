@@ -113,6 +113,11 @@ public class Application extends ContextWrapper implements ComponentCallbacks2 {
     }
 
     @Override
+    public android.content.ContentResolver getContentResolver() {
+        return new android.content.ContentResolver();
+    }
+
+    @Override
     public Object getSystemService(String name) {
         if (Context.LAYOUT_INFLATER_SERVICE.equals(name)) {
             return android.view.LayoutInflater.from(this);

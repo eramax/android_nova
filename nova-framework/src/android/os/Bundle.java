@@ -24,9 +24,13 @@ public final class Bundle extends BaseBundle implements Cloneable, Parcelable {
     public IBinder getBinder(String key) { Object v = mMap.get(key); return v instanceof IBinder ? (IBinder)v : null; }
     @SuppressWarnings("unchecked")
     public <T extends Parcelable> T getParcelable(String key) { return (T) mMap.get(key); }
+    @SuppressWarnings("unchecked")
+    public <T> T getParcelable(String key, Class<T> clazz) { Object v = mMap.get(key); return clazz.isInstance(v) ? (T) v : null; }
     public Parcelable[] getParcelableArray(String key) { Object v = mMap.get(key); return v instanceof Parcelable[] ? (Parcelable[])v : null; }
     @SuppressWarnings("unchecked")
     public <T extends Parcelable> java.util.ArrayList<T> getParcelableArrayList(String key) { return (java.util.ArrayList<T>) mMap.get(key); }
+    @SuppressWarnings("unchecked")
+    public <T> T getSerializable(String key, Class<T> clazz) { Object v = mMap.get(key); return clazz.isInstance(v) ? (T) v : null; }
 
     @Override
     public Bundle clone() { return new Bundle(this); }

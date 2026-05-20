@@ -147,7 +147,9 @@ public abstract class Context {
     public abstract boolean deleteSharedPreferences(String name);
     public abstract Object getSystemService(String name);
     public abstract String getSystemServiceName(Class<?> serviceClass);
-    public abstract boolean checkPermission(String permission, int pid, int uid);
+    public static final int PERMISSION_GRANTED = 0;
+    public static final int PERMISSION_DENIED  = -1;
+    public abstract int checkPermission(String permission, int pid, int uid);
     public abstract int checkSelfPermission(String permission);
     public abstract void enforcePermission(String permission, int pid, int uid, String message);
     public abstract void startActivity(Intent intent);

@@ -7,6 +7,7 @@ public class Configuration {
     public static final int ORIENTATION_SQUARE = 3;
 
     public float fontScale = 1.0f;
+    public int fontWeightAdjustment = 0;
     public int mcc;
     public int mnc;
     public String locale;

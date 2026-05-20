@@ -228,6 +228,31 @@ public class ViewGroup extends View implements ViewParent {
             params.bottomMargin = child.novaGetLayoutMarginBottom();
             return params;
         }
+        // For non-framework ViewGroups (e.g. CoordinatorLayout from AppCompat), call the
+        // actual generateDefaultLayoutParams() which returns the correct subtype (e.g.
+        // CoordinatorLayout.LayoutParams). Without this, addView gives MarginLayoutParams
+        // which causes ClassCastException in CoordinatorLayout.onMeasure/onDraw.
+        try {
+            java.lang.reflect.Method gen = this.getClass().getMethod("generateDefaultLayoutParams");
+            gen.setAccessible(true);
+            LayoutParams appParams = (LayoutParams) gen.invoke(this);
+            if (appParams != null && !(appParams instanceof MarginLayoutParams
+                    && appParams.getClass() == MarginLayoutParams.class)) {
+                // Got a real subtype — set its dimensions via reflection if possible
+                try {
+                    appParams.width = width;
+                    appParams.height = height;
+                } catch (Exception ignored) {}
+                if (appParams instanceof MarginLayoutParams) {
+                    MarginLayoutParams mp = (MarginLayoutParams) appParams;
+                    mp.leftMargin = child.novaGetLayoutMarginLeft();
+                    mp.topMargin = child.novaGetLayoutMarginTop();
+                    mp.rightMargin = child.novaGetLayoutMarginRight();
+                    mp.bottomMargin = child.novaGetLayoutMarginBottom();
+                }
+                return appParams;
+            }
+        } catch (Exception ignored) {}
         MarginLayoutParams params = new MarginLayoutParams(width, height);
         params.leftMargin = child.novaGetLayoutMarginLeft();
         params.topMargin = child.novaGetLayoutMarginTop();

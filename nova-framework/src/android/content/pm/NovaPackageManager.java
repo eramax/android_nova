@@ -44,7 +44,12 @@ public final class NovaPackageManager extends PackageManager {
             return null;
         }
         if (!component.getClassName().equals(mCurrentActivityInfo.name)) {
-            return null;
+            // Return a valid ActivityInfo for any activity in the current package
+            ActivityInfo info = new ActivityInfo();
+            info.applicationInfo = mCurrentActivityInfo.applicationInfo;
+            info.name = component.getClassName();
+            info.packageName = component.getPackageName();
+            return info;
         }
         return mCurrentActivityInfo;
     }

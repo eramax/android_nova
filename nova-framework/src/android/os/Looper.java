@@ -21,21 +21,16 @@ public final class Looper {
     }
 
     public static void prepareMainLooper() {
-        prepare(false);
+        if (myLooper() == null) prepare(false);
         synchronized (Looper.class) {
-            if (sMainLooper != null) throw new IllegalStateException("Main looper already prepared");
-            sMainLooper = myLooper();
+            if (sMainLooper == null) sMainLooper = myLooper();
         }
     }
 
-    public static synchronized Looper getMainLooper() {
-        if (sMainLooper == null) {
-            // Auto-prepare main looper for in-process use
-            Looper l = new Looper(false);
-            sMainLooper = l;
-            sThreadLocal.set(l);
+    public static Looper getMainLooper() {
+        synchronized (Looper.class) {
+            return sMainLooper;
         }
-        return sMainLooper;
     }
 
     public static Looper myLooper() { return sThreadLocal.get(); }
@@ -68,17 +63,25 @@ public final class Looper {
         if (main == null) {
             return;
         }
-        for (int i = 0; i < 128; i++) {
-            Message msg = main.mQueue.nextIfReady();
-            if (msg == null) {
-                break;
+        // Temporarily associate the main looper with this thread so that
+        // Looper.myLooper() == Looper.getMainLooper() during dispatch. This
+        // satisfies AndroidX lifecycle's "addObserver must be on main thread" check
+        // when startActivity is dispatched from the render thread.
+        Looper prev = sThreadLocal.get();
+        sThreadLocal.set(main);
+        try {
+            for (int i = 0; i < 128; i++) {
+                Message msg = main.mQueue.nextIfReady();
+                if (msg == null) break;
+                try {
+                    msg.target.dispatchMessage(msg);
+                } catch (Exception e) {
+                    android.util.Log.e("Looper", "Exception in pending message handling", e);
+                }
+                msg.recycleUnchecked();
             }
-            try {
-                msg.target.dispatchMessage(msg);
-            } catch (Exception e) {
-                android.util.Log.e("Looper", "Exception in pending message handling", e);
-            }
-            msg.recycleUnchecked();
+        } finally {
+            sThreadLocal.set(prev);
         }
     }
 

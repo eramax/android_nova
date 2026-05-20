@@ -63,7 +63,7 @@ public class ContextWrapper extends Context {
     @Override public boolean deleteSharedPreferences(String name) { return mBase != null && mBase.deleteSharedPreferences(name); }
     @Override public Object getSystemService(String name) { return mBase != null ? mBase.getSystemService(name) : null; }
     @Override public String getSystemServiceName(Class<?> serviceClass) { return mBase != null ? mBase.getSystemServiceName(serviceClass) : null; }
-    @Override public boolean checkPermission(String permission, int pid, int uid) { return mBase == null || mBase.checkPermission(permission, pid, uid); }
+    @Override public int checkPermission(String permission, int pid, int uid) { return mBase != null ? mBase.checkPermission(permission, pid, uid) : android.content.Context.PERMISSION_GRANTED; }
     @Override public int checkSelfPermission(String permission) { return mBase != null ? mBase.checkSelfPermission(permission) : android.content.pm.PackageManager.PERMISSION_GRANTED; }
     @Override public void enforcePermission(String permission, int pid, int uid, String message) { if (mBase != null) mBase.enforcePermission(permission, pid, uid, message); }
     @Override public void startActivity(Intent intent) { if (mBase != null) mBase.startActivity(intent); }

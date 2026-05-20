@@ -112,7 +112,7 @@ public class Activity extends ContextWrapper {
     public android.os.Looper getMainLooper() { return android.os.Looper.getMainLooper(); }
 
     @Override
-    public Context getApplicationContext() { return this; }
+    public Context getApplicationContext() { return mApplication != null ? mApplication : this; }
 
     @Override
     public void setTheme(int resid) {
@@ -144,7 +144,7 @@ public class Activity extends ContextWrapper {
     public java.io.File getDir(String name, int mode) { return new java.io.File("/tmp/novaart/" + name); }
 
     @Override
-    public boolean checkPermission(String permission, int pid, int uid) { return true; }
+    public int checkPermission(String permission, int pid, int uid) { return android.content.Context.PERMISSION_GRANTED; }
 
     @Override
     public int checkSelfPermission(String permission) { return android.content.pm.PackageManager.PERMISSION_GRANTED; }
@@ -192,7 +192,7 @@ public class Activity extends ContextWrapper {
     public boolean onCreateOptionsMenu(android.view.Menu menu) { return false; }
     public boolean onOptionsItemSelected(android.view.MenuItem item) { return false; }
     public void supportInvalidateOptionsMenu() {}
-    public android.view.MenuInflater getMenuInflater() { return null; }
+    public android.view.MenuInflater getMenuInflater() { return new android.view.MenuInflater(this); }
     public void onBackPressed() {}
     public void onWindowFocusChanged(boolean hasFocus) {}
     public android.app.ActionBar getActionBar() { return null; }

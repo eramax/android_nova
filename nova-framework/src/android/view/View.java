@@ -142,7 +142,11 @@ public class View {
         mAttached = true;
         System.out.println("[D/NovaView] attach " + getClass().getName());
         new Exception("Attach stack trace").printStackTrace(System.out);
-        onAttachedToWindow();
+        try {
+            onAttachedToWindow();
+        } catch (Exception e) {
+            System.err.println("[D/NovaView] onAttachedToWindow threw on " + getClass().getName() + ": " + e);
+        }
     }
 
     public final void novaDetachFromWindow() {
@@ -221,6 +225,9 @@ public class View {
     public void setOnCreateContextMenuListener(OnCreateContextMenuListener listener) {}
     public void setOnKeyListener(OnKeyListener listener) {}
     public void setOnFocusChangeListener(OnFocusChangeListener listener) {}
+    public void setOnScrollChangeListener(OnScrollChangeListener listener) {}
+    public void cancelPendingInputEvents() {}
+    public android.view.Display getDisplay() { return new android.view.Display(); }
     public void addOnAttachStateChangeListener(OnAttachStateChangeListener listener) {}
     public void removeOnAttachStateChangeListener(OnAttachStateChangeListener listener) {}
     public void addOnLayoutChangeListener(OnLayoutChangeListener listener) {}

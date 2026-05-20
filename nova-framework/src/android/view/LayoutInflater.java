@@ -287,6 +287,50 @@ public class LayoutInflater {
         Integer resourceValue = extractHexResourceValue(trimmed);
         Integer intValue = extractHexIntValue(trimmed);
 
+        // app:menu — inflate the toolbar menu (attribute name "menu" from res-auto namespace)
+        // AppCompat's Toolbar processes this in its constructor via obtainStyledAttributes, but
+        // we pass null for AttributeSet so it never fires. Call inflateMenu() explicitly here.
+        if (trimmed.contains(":menu(") && resourceValue != null) {
+            System.out.println("[LayoutInflater] app:menu detected on " + currentView.getClass().getName()
+                    + " resId=0x" + Integer.toHexString(resourceValue));
+            // Try inflateMenu(int) first (may be R8-removed in release APKs).
+            java.lang.reflect.Method inflateMenu = null;
+            Class<?> cls = currentView.getClass();
+            while (cls != null && inflateMenu == null) {
+                try {
+                    inflateMenu = cls.getDeclaredMethod("inflateMenu", int.class);
+                } catch (NoSuchMethodException ignored2) {
+                    cls = cls.getSuperclass();
+                }
+            }
+            if (inflateMenu != null) {
+                try {
+                    inflateMenu.setAccessible(true);
+                    inflateMenu.invoke(currentView, resourceValue);
+                    System.out.println("[LayoutInflater] inflateMenu(int) on "
+                            + inflateMenu.getDeclaringClass().getSimpleName());
+                } catch (Exception e) {
+                    System.err.println("[LayoutInflater] inflateMenu failed: " + e.getMessage());
+                }
+            } else {
+                // R8 may have removed inflateMenu — use our MenuInflater with the toolbar's menu
+                System.out.println("[LayoutInflater] inflateMenu not found, trying getMenu() fallback");
+                try {
+                    java.lang.reflect.Method getMenu = currentView.getClass().getMethod("getMenu");
+                    Object menu = getMenu.invoke(currentView);
+                    System.out.println("[LayoutInflater] got menu=" + (menu != null ? menu.getClass().getName() : "null"));
+                    if (menu instanceof android.view.Menu) {
+                        new android.view.MenuInflater(mContext).inflate(resourceValue, (android.view.Menu) menu);
+                        System.out.println("[LayoutInflater] menu inflated via nova MenuInflater");
+                    }
+                } catch (Exception e2) {
+                    System.err.println("[LayoutInflater] getMenu fallback failed: " + e2.getMessage());
+                    e2.printStackTrace(System.err);
+                }
+            }
+            return;
+        }
+
         if (trimmed.startsWith("A: android:id") || trimmed.contains("0x010100d0")) {
             if (resourceValue != null) {
                 currentView.setId(resourceValue);

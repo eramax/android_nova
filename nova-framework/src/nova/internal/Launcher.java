@@ -42,11 +42,16 @@ public final class Launcher {
     private static ClassLoader sLoader;
     private static Object sApplication;
     private static android.app.Activity sCurrentActivity;
+    // Reentrancy guard: prevents startActivity from calling launchActivity directly
+    // while another launchActivity is already on the call stack (avoids StackOverflow
+    // when drain-loop dispatches a posted startActivity lambda during an active launch).
+    private static volatile boolean sLaunching = false;
 
     private Launcher() {
     }
 
     public static void launch(String apkPath, String activityClass, String packageName) throws Exception {
+        android.os.Looper.prepareMainLooper();
         NovaTrace.installShutdownHook();
         Thread.setDefaultUncaughtExceptionHandler(
                 (t, e) -> {
@@ -104,6 +109,25 @@ public final class Launcher {
             return;
         }
 
+        // Post to main thread if: called from background thread, OR a launch is already in
+        // progress (reentrancy guard — prevents StackOverflow when the drain loop dispatches
+        // a posted startActivity lambda synchronously inside an active launchActivity call).
+        android.os.Looper mainLooper = android.os.Looper.getMainLooper();
+        boolean onMainThread = (mainLooper == null || mainLooper == android.os.Looper.myLooper());
+        if (!onMainThread || sLaunching) {
+            System.out.println("[NovaLauncher] startActivity posted to main thread: " + activityClass
+                    + (sLaunching ? " (reentrant guard)" : ""));
+            new android.os.Handler(mainLooper != null ? mainLooper : android.os.Looper.getMainLooper()).post(() -> {
+                try {
+                    launchActivity(activityClass, intent, false);
+                } catch (Exception e) {
+                    System.out.println("[NovaLauncher] startActivity (main) failed for " + activityClass + ": " + e);
+                    e.printStackTrace(System.out);
+                }
+            });
+            return;
+        }
+
         try {
             launchActivity(activityClass, intent, false);
         } catch (Exception e) {
@@ -113,6 +137,28 @@ public final class Launcher {
     }
 
     private static void launchActivity(String activityClass, android.content.Intent intent, boolean initialLaunch)
+            throws Exception {
+        if (sLaunching) {
+            // Already launching — post for after current launch finishes
+            android.os.Looper mainLooper = android.os.Looper.getMainLooper();
+            if (mainLooper != null) {
+                System.out.println("[NovaLauncher] launchActivity deferred (reentrant): " + activityClass);
+                new android.os.Handler(mainLooper).post(() -> {
+                    try { launchActivityImpl(activityClass, intent, initialLaunch); }
+                    catch (Exception e) { e.printStackTrace(System.out); }
+                });
+                return;
+            }
+        }
+        sLaunching = true;
+        try {
+            launchActivityImpl(activityClass, intent, initialLaunch);
+        } finally {
+            sLaunching = false;
+        }
+    }
+
+    private static void launchActivityImpl(String activityClass, android.content.Intent intent, boolean initialLaunch)
             throws Exception {
         Class<?> activityType = Class.forName(activityClass, true, sLoader);
         NovaTrace.recordLifecycle(activityClass, "launch");
@@ -174,6 +220,10 @@ public final class Launcher {
         invokeLifecycle(activityType, instance, "onCreate",
                 new Class<?>[] { Class.forName("android.os.Bundle") },
                 new Object[] { null });
+        // Simulate options menu creation — many apps populate state in onCreateOptionsMenu
+        tryInvoke(instance, "onCreateOptionsMenu",
+                new Class<?>[]{android.view.Menu.class},
+                new Object[]{new android.view.NovaMenu()});
         android.view.View contentView = getActivityContentView(activityType, instance);
         if (contentView != null) {
             prepareContentView(contentView);
@@ -182,25 +232,48 @@ public final class Launcher {
         invokeLifecycle(activityType, instance, "onStart", new Class<?>[0], new Object[0]);
         invokeLifecycle(activityType, instance, "onResume", new Class<?>[0], new Object[0]);
 
-        if (sCurrentActivity != null && sCurrentActivity != instance) {
-            return;
+        // Drain messages posted during onCreate/onStart/onResume. SplashActivity may start
+        // a coroutine that calls startActivity after 1–3 seconds, so we poll for up to 5s,
+        // stopping early as soon as we detect a new activity has been launched.
+        sCurrentActivity = (android.app.Activity) instance;  // set early so transition detection works
+        for (int i = 0; i < 100; i++) {
+            try { Thread.sleep(50); } catch (InterruptedException ie) { break; }
+            android.os.Looper.dispatchPendingMain();
+            // If a new activity was launched and replaced the current one, stop draining
+            if (sCurrentActivity != instance) {
+                return;
+            }
         }
 
         if (contentView != null) {
             bindRenderer(contentView);
         }
-
-        sCurrentActivity = (android.app.Activity) instance;
     }
 
     private static android.view.View getActivityContentView(Class<?> activityType, Object instance)
             throws Exception {
         Method getContentView = activityType.getMethod("getContentView");
         Object contentView = getContentView.invoke(instance);
-        if (!(contentView instanceof android.view.View)) {
-            return null;
+        if (contentView instanceof android.view.View) {
+            return (android.view.View) contentView;
         }
-        return (android.view.View) contentView;
+        // AppCompat may intercept setContentView and manage views through Window.getDecorView().
+        // Fall back to querying the window's decor view.
+        try {
+            Method getWindow = activityType.getMethod("getWindow");
+            Object window = getWindow.invoke(instance);
+            if (window instanceof android.view.Window) {
+                android.view.View decor = ((android.view.Window) window).getDecorView();
+                if (decor != null) {
+                    System.out.println("[NovaLauncher] Using window decor view: "
+                            + decor.getClass().getName());
+                    return decor;
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("[NovaLauncher] getWindow fallback failed: " + e);
+        }
+        return null;
     }
 
     private static void prepareContentView(android.view.View viewInstance) throws Exception {
@@ -214,6 +287,10 @@ public final class Launcher {
         NovaTrace.recordRenderTarget(viewInstance.getClass().getName(), renderTarget.getClass().getName());
         System.out.println("[NovaLauncher] Found render target: " + renderTarget.getClass().getName());
         tryInvoke(renderTarget, "novaAttachToWindow", new Class<?>[0], new Object[0]);
+        // Trigger surface lifecycle for SurfaceView/GLSurfaceView — moves GL thread out of WAITING
+        tryInvoke(renderTarget, "novaSimulateSurfaceLifecycle",
+                new Class<?>[]{int.class, int.class},
+                new Object[]{WINDOW_WIDTH, WINDOW_HEIGHT});
     }
 
     private static void bindRenderer(android.view.View viewInstance) throws Exception {

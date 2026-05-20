@@ -131,6 +131,15 @@ public class Window {
     public void togglePanel(int featureId, KeyEvent event) {}
     public void setStatusBarColor(int color) {}
     public void setNavigationBarColor(int color) {}
+    public void setDecorFitsSystemWindows(boolean decorFitsSystemWindows) {}
+    public boolean isDecorFitsSystemWindows() { return true; }
+    public void setStatusBarContrastEnforced(boolean ensureContrast) {}
+    public boolean isStatusBarContrastEnforced() { return false; }
+    public void setNavigationBarContrastEnforced(boolean enforceContrast) {}
+    public boolean isNavigationBarContrastEnforced() { return false; }
+    public void setHideOverlayWindows(boolean hide) {}
+    public void setSystemGestureExclusionRects(java.util.List<android.graphics.Rect> rects) {}
+    public java.util.List<android.graphics.Rect> getSystemGestureExclusionRects() { return java.util.Collections.emptyList(); }
     public int getStatusBarColor() { return 0; }
     public int getNavigationBarColor() { return 0; }
     public void setDecorCaptionShade(int decorCaptionShade) {}
@@ -160,4 +169,15 @@ public class Window {
     public android.transition.Transition getSharedElementReturnTransition() { return null; }
     public android.transition.Transition getSharedElementExitTransition() { return null; }
     public android.transition.Transition getSharedElementReenterTransition() { return null; }
+
+    public WindowInsetsController getInsetsController() {
+        return new WindowInsetsController() {
+            public void show(int types) {}
+            public void hide(int types) {}
+            public void setSystemBarsBehavior(int behavior) {}
+            public int getSystemBarsBehavior() { return 0; }
+            public void setSystemBarsAppearance(int appearance, int mask) {}
+            public int getSystemBarsAppearance() { return 0; }
+        };
+    }
 }
