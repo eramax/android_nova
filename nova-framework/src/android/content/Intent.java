@@ -135,7 +135,12 @@ public class Intent implements Parcelable, Cloneable {
     public String getStringExtra(String name)                { return mExtras != null ? mExtras.getString(name) : null; }
     public CharSequence getCharSequenceExtra(String name)    { return mExtras != null ? mExtras.getCharSequence(name) : null; }
     @SuppressWarnings("unchecked")
-    public <T extends Parcelable> T getParcelableExtra(String name) { return mExtras != null ? mExtras.<T>getParcelable(name) : null; }
+    public <T extends android.os.Parcelable> T getParcelableExtra(String name) { return mExtras != null ? mExtras.<T>getParcelable(name) : null; }
+    public <T> T getParcelableExtra(String name, Class<T> clazz) { return getParcelableExtra(name); }
+    public <T extends java.io.Serializable> T getSerializableExtra(String name, Class<T> clazz) {
+        java.io.Serializable s = mExtras != null ? mExtras.getSerializable(name) : null;
+        return clazz != null && clazz.isInstance(s) ? clazz.cast(s) : null;
+    }
     public Bundle getBundleExtra(String name)                { return mExtras != null ? mExtras.getBundle(name) : null; }
     public byte[] getByteArrayExtra(String name)             { return mExtras != null ? mExtras.getByteArray(name) : null; }
     public int[] getIntArrayExtra(String name)               { return mExtras != null ? mExtras.getIntArray(name) : null; }

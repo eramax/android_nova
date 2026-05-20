@@ -91,6 +91,16 @@ public class Paint {
     public Xfermode setXfermode(Xfermode xfermode) { return xfermode; }
     public void setShadowLayer(float radius, float dx, float dy, int shadowColor) {}
     public void clearShadowLayer() {}
+    public void setLetterSpacing(float letterSpacing) {}
+    public float getLetterSpacing() { return 0f; }
+    public void setWordSpacing(float wordSpacing) {}
+    public float getWordSpacing() { return 0f; }
+    public boolean setFontFeatureSettings(String settings) { return false; }
+    public boolean setFontVariationSettings(String settings) { return false; }
+    public String getFontFeatureSettings() { return null; }
+    public String getFontVariationSettings() { return null; }
+    public void setElegantTextHeight(boolean elegant) {}
+    public boolean isElegantTextHeight() { return false; }
     public Shader setShader(Shader shader) { return shader; }
     public ColorFilter setColorFilter(ColorFilter filter) { return filter; }
 

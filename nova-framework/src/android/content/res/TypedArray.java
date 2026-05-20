@@ -124,6 +124,10 @@ public class TypedArray {
     }
 
     public CharSequence getText(int index) {
+        if (mSet == null) {
+            // Theme-only lookup: no real string values; avoid returning attr IDs as strings.
+            return null;
+        }
         int resId = getResourceId(index, 0);
         if (resId != 0) {
             return mResources.getText(resId);

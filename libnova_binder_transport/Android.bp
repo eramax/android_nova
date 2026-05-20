@@ -1,0 +1,20 @@
+package {
+    default_applicable_licenses: ["vendor_nova_license"],
+}
+
+cc_library_host_shared {
+    name: "libnova_binder_transport",
+    compile_multilib: "64",
+    srcs: ["transport_jni.c"],
+    static_libs: ["libnova_ipc"],
+    header_libs: ["jni_headers"],
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Wno-unused-parameter",
+        "-D_GNU_SOURCE",
+        "-D_POSIX_C_SOURCE=200809L",
+    ],
+    stl: "none",
+    allow_undefined_symbols: true,
+}

@@ -47,6 +47,25 @@ public class ImageView extends View {
 
     public void setScaleType(ScaleType scaleType) {}
     public ScaleType getScaleType() { return ScaleType.FIT_CENTER; }
+    public void setImageMatrix(android.graphics.Matrix matrix) {}
+    public android.graphics.Matrix getImageMatrix() { return new android.graphics.Matrix(); }
+    public void setImageLevel(int level) {}
+    public void setImageAlpha(int alpha) {}
+    public int getImageAlpha() { return 255; }
+    public void setColorFilter(int color) {}
+    public void setColorFilter(int color, android.graphics.PorterDuff.Mode mode) {}
+    public void clearColorFilter() {}
+    public void setAdjustViewBounds(boolean adjustViewBounds) {}
+    public boolean getAdjustViewBounds() { return false; }
+    public void setMaxWidth(int maxWidth) {}
+    public void setMaxHeight(int maxHeight) {}
+    public int getMaxWidth() { return Integer.MAX_VALUE; }
+    public int getMaxHeight() { return Integer.MAX_VALUE; }
+    public void setBaseline(int baseline) {}
+    public int getBaseline() { return -1; }
+    public void setBaselineAlignBottom(boolean aligned) {}
+    public boolean getBaselineAlignBottom() { return false; }
+    public void setImageState(int[] state, boolean merge) {}
 
     public enum ScaleType {
         MATRIX, FIT_XY, FIT_START, FIT_CENTER, FIT_END, CENTER, CENTER_CROP, CENTER_INSIDE

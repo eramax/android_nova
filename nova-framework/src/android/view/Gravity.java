@@ -31,4 +31,21 @@ public class Gravity {
     public static final int DEFAULT_GRAVITY = NO_GRAVITY;
 
     private Gravity() {}
+
+    public static int getAbsoluteGravity(int gravity, int layoutDirection) {
+        int result = gravity;
+        if ((result & RELATIVE_LAYOUT_DIRECTION) != 0) {
+            result &= ~RELATIVE_LAYOUT_DIRECTION;
+            if (layoutDirection == android.view.View.LAYOUT_DIRECTION_RTL) {
+                // Swap LEFT and RIGHT
+                int h = result & HORIZONTAL_GRAVITY_MASK;
+                if (h == LEFT) {
+                    result = (result & ~HORIZONTAL_GRAVITY_MASK) | RIGHT;
+                } else if (h == RIGHT) {
+                    result = (result & ~HORIZONTAL_GRAVITY_MASK) | LEFT;
+                }
+            }
+        }
+        return result;
+    }
 }

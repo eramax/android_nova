@@ -59,30 +59,34 @@ public class LayoutInflater {
     public LayoutInflater cloneInContext(Context newContext) { return new LayoutInflater(newContext); }
 
     public View inflate(int layoutResId, ViewGroup parent) {
-        String layoutXml = loadLayoutXmlFromApk(layoutResId);
-        if (layoutXml == null) {
-            System.err.println("[LayoutInflater] Failed to load layout XML");
-            return fallbackView();
-        }
-
-        try {
-            return parseAndInflate(layoutXml, parent);
-        } catch (Exception e) {
-            System.err.println("[LayoutInflater] Failed to inflate layout: " + e.getMessage());
-            e.printStackTrace();
-            return fallbackView();
-        }
+        // Matches Android's real LayoutInflater: inflate(resId, root) == inflate(resId, root, root != null)
+        return inflate(layoutResId, parent, parent != null);
     }
 
     public View inflate(int layoutResId, ViewGroup parent, boolean attachToRoot) {
-        View view = inflate(layoutResId, parent);
-        if (attachToRoot && parent != null && view != null && view.getParent() != parent) {
-            parent.addView(view);
+        String layoutXml = loadLayoutXmlFromApk(layoutResId);
+        if (layoutXml == null) {
+            System.err.println("[LayoutInflater] Failed to load layout XML");
+            return parent != null ? parent : fallbackView();
         }
-        if (attachToRoot && parent != null) {
-            return parent;
+
+        try {
+            View view = parseAndInflate(layoutXml, parent);
+            if (view == null) {
+                return parent != null ? parent : fallbackView();
+            }
+            if (attachToRoot && parent != null) {
+                if (view.getParent() == null) {
+                    parent.addView(view);
+                }
+                return parent;
+            }
+            return view;
+        } catch (Exception e) {
+            System.err.println("[LayoutInflater] Failed to inflate layout: " + e.getMessage());
+            e.printStackTrace();
+            return parent != null ? parent : fallbackView();
         }
-        return view;
     }
 
     private String loadLayoutXmlFromApk(int layoutResId) {

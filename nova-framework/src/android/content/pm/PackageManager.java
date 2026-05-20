@@ -61,6 +61,15 @@ public class PackageManager {
         return new java.util.ArrayList<>();
     }
 
+    public ServiceInfo getServiceInfo(ComponentName component, int flags) throws NameNotFoundException {
+        return new ServiceInfo();
+    }
+    public ServiceInfo getServiceInfo(ComponentName component, long flags) throws NameNotFoundException {
+        return getServiceInfo(component, (int) flags);
+    }
+    public ProviderInfo getProviderInfo(ComponentName component, int flags) throws NameNotFoundException {
+        return new ProviderInfo();
+    }
     public android.content.pm.ResolveInfo resolveActivity(android.content.Intent intent, int flags) { return null; }
     public android.content.pm.ResolveInfo resolveService(android.content.Intent intent, int flags) { return null; }
     public java.util.List<android.content.pm.ResolveInfo> queryIntentServices(android.content.Intent intent, int flags) { return new java.util.ArrayList<>(); }

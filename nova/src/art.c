@@ -448,7 +448,53 @@ int nova_art_launch_apk(struct nova_state *state, const char *apk_path, const ch
     if (resolved_activity == NULL || resolved_activity[0] == '\0') {
         if (detect_apk_field(aapt2_path, apk_path, "launchable-activity:", "name",
                              detected_activity, sizeof(detected_activity)) != 0) {
-            return -1;
+            // Fallback: find launcher activity via aapt xmltree + activity-alias parsing.
+            // Covers apps where the LAUNCHER intent-filter is on an activity-alias
+            // rather than the activity itself (e.g. Fossify apps with theme aliases).
+            char xmltree_cmd[PATH_MAX * 2];
+            snprintf(xmltree_cmd, sizeof(xmltree_cmd),
+                     "aapt dump xmltree \"%s\" AndroidManifest.xml 2>/dev/null", apk_path);
+            FILE *fp = popen(xmltree_cmd, "r");
+            detected_activity[0] = '\0';
+            if (fp) {
+                char line[1024];
+                char pending_target[256] = {0};
+                int in_alias = 0, has_launcher = 0;
+                while (fgets(line, sizeof(line), fp)) {
+                    // Entering activity-alias element
+                    if (strstr(line, "E: activity-alias")) {
+                        // Commit previous alias if it had launcher
+                        if (in_alias && has_launcher && pending_target[0] && !detected_activity[0])
+                            snprintf(detected_activity, sizeof(detected_activity), "%s", pending_target);
+                        in_alias = 1; has_launcher = 0; pending_target[0] = '\0';
+                    } else if (strstr(line, "E: activity") && !strstr(line, "E: activity-alias")) {
+                        if (in_alias && has_launcher && pending_target[0] && !detected_activity[0])
+                            snprintf(detected_activity, sizeof(detected_activity), "%s", pending_target);
+                        in_alias = 0; has_launcher = 0; pending_target[0] = '\0';
+                    }
+                    if (in_alias) {
+                        // android:targetActivity
+                        char *ta = strstr(line, "android:targetActivity");
+                        if (ta) {
+                            char *q1 = strchr(ta, '"');
+                            if (q1) { char *q2 = strchr(q1+1, '"');
+                                if (q2 && (size_t)(q2-q1-1) < sizeof(pending_target)) {
+                                    memcpy(pending_target, q1+1, (size_t)(q2-q1-1));
+                                    pending_target[q2-q1-1] = '\0';
+                                }
+                            }
+                        }
+                        if (strstr(line, "android.intent.category.LAUNCHER")) has_launcher = 1;
+                    }
+                }
+                if (in_alias && has_launcher && pending_target[0] && !detected_activity[0])
+                    snprintf(detected_activity, sizeof(detected_activity), "%s", pending_target);
+                pclose(fp);
+            }
+            if (!detected_activity[0]) {
+                fprintf(stderr, "[Nova] Could not detect launchable activity in %s\n", apk_path);
+                return -1;
+            }
         }
         resolved_activity = detected_activity;
     }

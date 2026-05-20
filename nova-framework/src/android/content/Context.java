@@ -113,6 +113,8 @@ public abstract class Context {
     public abstract Context getApplicationContext();
     public abstract void setTheme(int resid);
     public abstract Resources.Theme getTheme();
+    public int getThemeResId() { return 0; }
+    public boolean isRestricted() { return false; }
     public abstract ClassLoader getClassLoader();
     public abstract String getPackageName();
     public abstract ApplicationInfo getApplicationInfo();
@@ -203,6 +205,10 @@ public abstract class Context {
     public String getString(int resId, Object... args) { return ""; }
     public CharSequence getText(int resId) { return ""; }
     public int getColor(int id) { return 0; }
+    public android.content.res.ColorStateList getColorStateList(int id) {
+        Resources resources = getResources();
+        return resources != null ? resources.getColorStateList(id) : android.content.res.ColorStateList.valueOf(0);
+    }
     public android.graphics.drawable.Drawable getDrawable(int id) {
         Resources resources = getResources();
         return resources != null ? resources.getDrawable(id) : null;

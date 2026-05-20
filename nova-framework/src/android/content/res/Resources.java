@@ -17,8 +17,17 @@ public class Resources {
         return mAssets;
     }
 
-    public void getValue(int id, android.util.TypedValue outValue, boolean resolveRefs) {}
-    public void getValue(String name, android.util.TypedValue outValue, boolean resolveRefs) {}
+    public void getValue(int id, android.util.TypedValue outValue, boolean resolveRefs) {
+        if (outValue != null) {
+            // Set a non-null string so ResourcesCompat.loadFont passes its null check.
+            // API 26+ will then call res.getFont(id) which our stub handles.
+            outValue.string = "nova_font_placeholder.ttf";
+            outValue.type = android.util.TypedValue.TYPE_STRING;
+        }
+    }
+    public void getValue(String name, android.util.TypedValue outValue, boolean resolveRefs) {
+        getValue(0, outValue, resolveRefs);
+    }
 
     public boolean getBoolean(int id) {
         return false;
@@ -27,6 +36,26 @@ public class Resources {
     public int getColor(int id) {
         Integer color = ResourceManager.getInstance().getColorResource(id);
         return color != null ? color : id;
+    }
+
+    public int getColor(int id, Theme theme) {
+        return getColor(id);
+    }
+
+    public ColorStateList getColorStateList(int id) {
+        Integer color = ResourceManager.getInstance().getColorResource(id);
+        return color != null ? ColorStateList.valueOf(color) : ColorStateList.valueOf(0);
+    }
+
+    public ColorStateList getColorStateList(int id, Theme theme) {
+        return getColorStateList(id);
+    }
+
+    public int[] getIntArray(int id) { return new int[0]; }
+    public String[] getStringArray(int id) { return new String[0]; }
+    public CharSequence[] getTextArray(int id) { return new CharSequence[0]; }
+    public void getValueForDensity(int id, int density, android.util.TypedValue outValue, boolean resolveRefs) {
+        getValue(id, outValue, resolveRefs);
     }
 
     public android.graphics.drawable.Drawable getDrawable(int id) {
@@ -49,7 +78,8 @@ public class Resources {
             }
         }
 
-        // Default: VectorDrawable satisfies AppCompat's checkVectorDrawableSetup check.
+        // Default: VectorDrawable extends StateListDrawable, satisfying both
+        // AppCompat's instanceof VectorDrawable check and StateListDrawable cast sites.
         return new android.graphics.drawable.VectorDrawable();
     }
 
@@ -89,11 +119,29 @@ public class Resources {
         return value != null ? value : Integer.toString(id);
     }
 
+    public TypedArray obtainTypedArray(int id) {
+        return TypedArray.obtain(this, null, new int[0], false);
+    }
+    public android.graphics.Typeface getFont(int id) throws NotFoundException {
+        return android.graphics.Typeface.DEFAULT;
+    }
+
+    public String getResourceName(int resid) { return Integer.toHexString(resid); }
+    public String getResourceEntryName(int resid) { return Integer.toHexString(resid); }
+    public String getResourceTypeName(int resid) { return "unknown"; }
+    public String getResourcePackageName(int resid) { return "android"; }
+
     public CharSequence getText(int id) {
         return getString(id);
     }
 
     public XmlResourceParser getXml(int id) {
+        return new NovaXmlResourceParser();
+    }
+    public XmlResourceParser getLayout(int id) {
+        return new NovaXmlResourceParser();
+    }
+    public XmlResourceParser getAnimation(int id) {
         return new NovaXmlResourceParser();
     }
 

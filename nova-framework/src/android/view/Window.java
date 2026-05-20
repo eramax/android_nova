@@ -13,6 +13,19 @@ public class Window {
         boolean onMenuItemSelected(int featureId, android.view.MenuItem item);
         void onWindowAttributesChanged(WindowManager.LayoutParams attrs);
         void onContentChanged();
+
+        default View onCreatePanelView(int featureId) { return null; }
+        default boolean onCreatePanelMenu(int featureId, Menu menu) { return false; }
+        default boolean onPreparePanel(int featureId, View view, Menu menu) { return false; }
+        default boolean onMenuOpened(int featureId, Menu menu) { return false; }
+        default void onMenuClosed(Menu menu) {}
+        default boolean dispatchKeyShortcutEvent(KeyEvent event) { return false; }
+        default boolean dispatchGenericMotionEvent(MotionEvent event) { return false; }
+        default android.view.ActionMode onWindowStartingActionMode(android.view.ActionMode.Callback callback) { return null; }
+        default android.view.ActionMode onWindowStartingActionMode(android.view.ActionMode.Callback callback, int type) { return null; }
+        default void onActionModeStarted(android.view.ActionMode mode) {}
+        default void onActionModeFinished(android.view.ActionMode mode) {}
+        default boolean dispatchPopulateAccessibilityEvent(android.view.accessibility.AccessibilityEvent event) { return false; }
     }
 
     private final Context mContext;

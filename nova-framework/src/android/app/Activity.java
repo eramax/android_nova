@@ -288,4 +288,9 @@ public class Activity extends ContextWrapper {
     public View getContentView() {
         return mContentView;
     }
+
+    public boolean isChild() { return false; }
+    public Activity getParent() { return null; }
+    public boolean isDestroyed() { return false; }
+    public void recreate() {}
 }

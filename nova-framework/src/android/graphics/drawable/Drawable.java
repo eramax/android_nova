@@ -59,7 +59,20 @@ public abstract class Drawable {
     public boolean isVisible() { return true; }
     public int getAlpha() { return 255; }
     public void setTint(int tintColor) {}
-    public void mutate() {}
+    public void setTintList(android.content.res.ColorStateList tint) {}
+    public void setTintMode(android.graphics.PorterDuff.Mode tintMode) {}
+    public void clearColorFilter() { setColorFilter(null); }
+    public void setColorFilter(int color, android.graphics.PorterDuff.Mode mode) {}
+    public Drawable mutate() { return this; }
+    public void jumpToCurrentState() {}
+    public android.graphics.Region getDirtyBounds() { return null; }
+    public void setChangingConfigurations(int configs) {}
+    public boolean hasFocusStateSpecified() { return false; }
+    public int getLevel() { return 0; }
+    public boolean setLevel(int level) { return false; }
+    public boolean setLayoutDirection(int layoutDirection) { return false; }
+    public int getLayoutDirection() { return 0; }
+    public boolean onLayoutDirectionChanged(int layoutDirection) { return false; }
     public Drawable.ConstantState getConstantState() { return null; }
     public static abstract class ConstantState {
         public abstract Drawable newDrawable();

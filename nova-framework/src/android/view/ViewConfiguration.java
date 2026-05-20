@@ -45,4 +45,6 @@ public class ViewConfiguration {
     public int getScaledWindowTouchSlop() { return TOUCH_SLOP; }
     public int getScaledMinimumScalingSpan() { return 100; }
     public boolean hasPermanentMenuKey() { return false; }
+    public float getScaledHorizontalScrollFactor() { return 1.0f; }
+    public float getScaledVerticalScrollFactor() { return 1.0f; }
 }

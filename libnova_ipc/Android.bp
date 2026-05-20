@@ -1,0 +1,18 @@
+package {
+    default_applicable_licenses: ["vendor_nova_license"],
+}
+
+cc_library_host_static {
+    name: "libnova_ipc",
+    compile_multilib: "64",
+    srcs: ["nova_ipc.c"],
+    export_include_dirs: ["."],
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Wno-unused-parameter",
+        "-D_GNU_SOURCE",
+        "-D_POSIX_C_SOURCE=200809L",
+    ],
+    stl: "none",
+}

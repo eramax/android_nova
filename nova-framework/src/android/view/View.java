@@ -436,6 +436,21 @@ public class View {
         mBackground = d;
         invalidate();
     }
+    public void setBackgroundTintList(android.content.res.ColorStateList tint) {}
+    public android.content.res.ColorStateList getBackgroundTintList() { return null; }
+    public void setBackgroundTintMode(android.graphics.PorterDuff.Mode tintMode) {}
+    public android.graphics.PorterDuff.Mode getBackgroundTintMode() { return null; }
+    public void setBackgroundResource(int resid) { setBackground(mContext != null ? mContext.getDrawable(resid) : null); }
+    public void setScrollContainer(boolean isScrollContainer) {}
+    public boolean isScrollContainer() { return false; }
+    public void setKeyboardNavigationCluster(boolean isCluster) {}
+    public boolean isKeyboardNavigationCluster() { return false; }
+    public int getImportantForAutofill() { return 0; }
+    public void setImportantForAutofill(int mode) {}
+    public boolean isInEditMode() { return false; }
+    public void setTooltipText(CharSequence tooltipText) {}
+    public CharSequence getTooltipText() { return null; }
+    public android.window.OnBackInvokedDispatcher findOnBackInvokedDispatcher() { return null; }
     public int getLeft() { return mLeft; }
     public int getTop() { return mTop; }
     public int getRight() { return mRight; }
@@ -595,8 +610,9 @@ public class View {
     public void postDelayed(Runnable action, long delayMillis) {
         new android.os.Handler().postDelayed(action, delayMillis);
     }
-    public void removeCallbacks(Runnable action) {
+    public boolean removeCallbacks(Runnable action) {
         new android.os.Handler().removeCallbacks(action);
+        return true;
     }
     public void setOnApplyWindowInsetsListener(OnApplyWindowInsetsListener listener) {}
     public void setAccessibilityDelegate(AccessibilityDelegate delegate) {}

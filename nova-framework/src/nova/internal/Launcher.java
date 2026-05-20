@@ -134,6 +134,21 @@ public final class Launcher {
                     Class.forName("android.app.Application", false, sLoader));
             setAppMethod.invoke(instance, sApplication);
             System.out.println("[NovaLauncher] Attached Application to Activity");
+        } catch (java.lang.reflect.InvocationTargetException e) {
+            Throwable cause = e.getCause();
+            System.out.println("[NovaLauncher] Failed to attach Application: " + cause);
+            if (cause != null) cause.printStackTrace();
+            // Retry with direct field set to still attach the Application
+            try {
+                java.lang.reflect.Field f = findField(activityType, "mApplication");
+                if (f != null) {
+                    f.setAccessible(true);
+                    f.set(instance, sApplication);
+                    System.out.println("[NovaLauncher] Attached Application via field");
+                }
+            } catch (Exception fe) {
+                System.out.println("[NovaLauncher] Field attach also failed: " + fe);
+            }
         } catch (Exception e) {
             System.out.println("[NovaLauncher] Failed to attach Application: " + e);
         }
@@ -283,11 +298,13 @@ public final class Launcher {
 
     private static Object initApplication(String apkPath, ClassLoader loader) {
         String appClassName = findApplicationClassName(apkPath);
+        System.out.println("[NovaLauncher] App class name from manifest: " + appClassName);
         Object appInstance = null;
         try {
             Class<?> androidAppClass = Class.forName("android.app.Application", false, loader);
             if (appClassName != null && !appClassName.isEmpty()) {
                 Class<?> appClass = Class.forName(appClassName, true, loader);
+                System.out.println("[NovaLauncher] App class loaded, isAssignable=" + androidAppClass.isAssignableFrom(appClass));
                 if (androidAppClass.isAssignableFrom(appClass)) {
                     Constructor<?> ctor = appClass.getDeclaredConstructor();
                     ctor.setAccessible(true);
@@ -341,24 +358,21 @@ public final class Launcher {
     }
 
     private static String findApplicationClassName(String apkPath) {
+        // Use aapt to parse the manifest and find android:name on the <application> element
+        String fromAapt = findApplicationClassViaAapt(apkPath);
+        if (fromAapt != null) return fromAapt;
+        // Fallback: scan binary manifest for "Application" class names
         try (ZipFile zip = new ZipFile(apkPath)) {
             ZipEntry entry = zip.getEntry("AndroidManifest.xml");
-            if (entry == null)
-                return null;
+            if (entry == null) return null;
             byte[] data;
             try (InputStream is = zip.getInputStream(entry)) {
                 java.io.ByteArrayOutputStream buf = new java.io.ByteArrayOutputStream();
                 byte[] chunk = new byte[4096];
                 int n;
-                while ((n = is.read(chunk)) != -1)
-                    buf.write(chunk, 0, n);
+                while ((n = is.read(chunk)) != -1) buf.write(chunk, 0, n);
                 data = buf.toByteArray();
             }
-            /*
-             * The binary manifest string pool contains UTF-16LE strings.
-             * We scan for a string that looks like a full Java class name
-             * containing 'Application' and the package structure.
-             */
             return extractApplicationNameFromManifest(data);
         } catch (IOException e) {
             System.out.println("[NovaLauncher] Cannot read manifest: " + e);
@@ -366,13 +380,49 @@ public final class Launcher {
         }
     }
 
+    private static String findApplicationClassViaAapt(String apkPath) {
+        try {
+            String[] cmd = {"/usr/bin/aapt", "dump", "xmltree", apkPath, "AndroidManifest.xml"};
+            ProcessBuilder pb = new ProcessBuilder(cmd);
+            pb.redirectError(ProcessBuilder.Redirect.PIPE);
+            Process proc = pb.start();
+            boolean inApplication = false;
+            try (java.io.BufferedReader br = new java.io.BufferedReader(
+                    new java.io.InputStreamReader(proc.getInputStream()))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    String t = line.trim();
+                    if (t.startsWith("E: application")) {
+                        inApplication = true;
+                    } else if (inApplication && t.startsWith("E: ")) {
+                        // entered a sub-element — stop looking
+                        // But keep searching in case name attr comes first
+                    }
+                    if (inApplication && t.contains("android:name(0x01010003)")) {
+                        // A: android:name(0x01010003)="com.foo.App" (Raw: ...)
+                        int q1 = t.indexOf('"');
+                        int q2 = t.indexOf('"', q1 + 1);
+                        if (q1 >= 0 && q2 > q1) {
+                            String name = t.substring(q1 + 1, q2);
+                            // Only the application-level name (not permissions/service names)
+                            // The application name typically has few dots and no spaces
+                            if (!name.contains(" ") && !name.startsWith("android.permission")) {
+                                proc.destroy();
+                                return name;
+                            }
+                        }
+                    }
+                }
+            }
+            proc.waitFor();
+        } catch (Exception e) {
+            System.out.println("[NovaLauncher] aapt manifest parse failed: " + e);
+        }
+        return null;
+    }
+
     private static String extractApplicationNameFromManifest(byte[] data) {
-        /*
-         * Scan for UTF-16LE strings that look like Application class names.
-         * In binary XML, the string pool starts at offset 8 (after chunk header).
-         * We take a simpler approach: scan for 16-bit sequences that form valid
-         * Java class names containing "Application".
-         */
+        // Scan for UTF-16LE class names containing "Application"
         StringBuilder cur = new StringBuilder();
         String best = null;
         for (int i = 0; i + 1 < data.length; i += 2) {
@@ -382,13 +432,8 @@ public final class Launcher {
                 cur.append((char) ch);
             } else {
                 String s = cur.toString();
-                /*
-                 * Strip any leading numeric/non-identifier characters (length prefix in binary
-                 * XML)
-                 */
                 int start = 0;
-                while (start < s.length() && !Character.isLetter(s.charAt(start)))
-                    start++;
+                while (start < s.length() && !Character.isLetter(s.charAt(start))) start++;
                 s = s.substring(start);
                 if (s.length() > 10 && s.contains("Application") && s.contains(".")) {
                     best = s;
@@ -580,6 +625,15 @@ public final class Launcher {
             Path path = Path.of(candidate);
             if (Files.isRegularFile(path)) {
                 return path;
+            }
+        }
+        return null;
+    }
+
+    private static java.lang.reflect.Field findField(Class<?> cls, String name) {
+        for (Class<?> c = cls; c != null; c = c.getSuperclass()) {
+            for (java.lang.reflect.Field f : c.getDeclaredFields()) {
+                if (f.getName().equals(name)) return f;
             }
         }
         return null;

@@ -5,8 +5,25 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 
-public class NovaXmlResourceParser implements XmlResourceParser {
-    private int mEvent = START_DOCUMENT;
+public class NovaXmlResourceParser implements XmlResourceParser, android.util.AttributeSet {
+    // Simulates <menu/> so AppCompat's SupportMenuInflater.parseMenu() doesn't throw
+    // "Unexpected end of document" when inflating toolbar menus.
+    // States: 0=START_DOCUMENT, 1=START_TAG("menu"), 2=END_TAG("menu"), 3=END_DOCUMENT
+    private int mState = 0;
+
+    private int stateToEvent() {
+        switch (mState) {
+            case 1: return START_TAG;
+            case 2: return END_TAG;
+            case 3: return END_DOCUMENT;
+            default: return START_DOCUMENT;
+        }
+    }
+
+    private int advance() {
+        if (mState < 3) mState++;
+        return stateToEvent();
+    }
 
     @Override public void setFeature(String name, boolean state) throws XmlPullParserException {}
     @Override public boolean getFeature(String name) { return false; }
@@ -28,7 +45,9 @@ public class NovaXmlResourceParser implements XmlResourceParser {
     @Override public String getText() { return null; }
     @Override public char[] getTextCharacters(int[] holderForStartAndLength) { return null; }
     @Override public String getNamespace() { return null; }
-    @Override public String getName() { return null; }
+    @Override public String getName() {
+        return (mState == 1 || mState == 2) ? "menu" : null;
+    }
     @Override public String getPrefix() { return null; }
     @Override public boolean isEmptyElementTag() throws XmlPullParserException { return false; }
     @Override public int getAttributeCount() { return 0; }
@@ -39,12 +58,12 @@ public class NovaXmlResourceParser implements XmlResourceParser {
     @Override public boolean isAttributeDefault(int index) { return false; }
     @Override public String getAttributeValue(int index) { return null; }
     @Override public String getAttributeValue(String namespace, String name) { return null; }
-    @Override public int getEventType() throws XmlPullParserException { return mEvent; }
-    @Override public int next() throws XmlPullParserException, IOException { mEvent = END_DOCUMENT; return mEvent; }
-    @Override public int nextToken() throws XmlPullParserException, IOException { return next(); }
+    @Override public int getEventType() throws XmlPullParserException { return stateToEvent(); }
+    @Override public int next() throws XmlPullParserException, IOException { return advance(); }
+    @Override public int nextToken() throws XmlPullParserException, IOException { return advance(); }
     @Override public void require(int type, String namespace, String name) throws XmlPullParserException, IOException {}
     @Override public String nextText() throws XmlPullParserException, IOException { return ""; }
-    @Override public int nextTag() throws XmlPullParserException, IOException { mEvent = END_DOCUMENT; return mEvent; }
+    @Override public int nextTag() throws XmlPullParserException, IOException { return advance(); }
 
     // XmlResourceParser extensions
     @Override public int getAttributeNameResource(int index) { return 0; }

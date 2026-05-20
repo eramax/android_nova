@@ -20,13 +20,20 @@ NATIVE_TARGETS := \
 	libnova_android \
 	libnova_egl \
 	libnova_jni \
-	nova
+	libnova_ipc \
+	libnova_binder_transport \
+	nova \
+	nova-daemon \
+	nova_ipc_test
 
 ENVSETUP = source build/envsetup.sh && lunch $(PRODUCT)
 BUILD_ENV = export SOONG_ALLOW_MISSING_DEPENDENCIES=$(SOONG_ALLOW_MISSING_DEPENDENCIES)
 RUN_ENV = export LD_LIBRARY_PATH=$(LD_PATH) && export LD_PRELOAD=$(LD_PRELOAD_LIB)
 
-.PHONY: help framework native all run run-log
+DAEMON_BIN := $(HOST_OUT)/bin/nova-daemon
+IPCTEST_BIN := $(HOST_OUT)/bin/nova_ipc_test
+
+.PHONY: help framework native all run run-log test-ipc daemon
 
 help:
 	@printf '%s\n' \
@@ -58,6 +65,14 @@ run:
 	@test -x "$(NOVA_BIN)" || { echo 'Missing nova binary: $(NOVA_BIN)'; exit 2; }
 	@test -f "$(LD_PRELOAD_LIB)" || { echo 'Missing preload library: $(LD_PRELOAD_LIB)'; exit 2; }
 	cd $(ROOT) && $(RUN_ENV) && "$(NOVA_BIN)" "$(APK)"
+
+test-ipc:
+	@test -x "$(IPCTEST_BIN)" || { echo 'Missing nova_ipc_test binary: $(IPCTEST_BIN)'; exit 2; }
+	cd $(ROOT) && "$(IPCTEST_BIN)"
+
+daemon:
+	@test -x "$(DAEMON_BIN)" || { echo 'Missing nova-daemon binary: $(DAEMON_BIN)'; exit 2; }
+	cd $(ROOT) && $(RUN_ENV) && "$(DAEMON_BIN)"
 
 run-log:
 	@test -n "$(APK)" || { echo 'APK=/abs/path/app.apk is required'; exit 2; }

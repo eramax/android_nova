@@ -8,11 +8,15 @@ cc_binary_host {
     srcs: [
         "src/main.c",
         "src/art.c",
+        "src/nova_daemon_client.c",
     ],
     shared_libs: [
         "libnova_android",
         "libnova_egl",
         "libnova_jni",
+    ],
+    static_libs: [
+        "libnova_ipc",
     ],
     cflags: [
         "-Wall",
