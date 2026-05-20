@@ -5,6 +5,8 @@ PRODUCT ?= nova-trunk_staging-eng
 SOONG_ALLOW_MISSING_DEPENDENCIES ?= true
 APK ?=
 LOG ?= /tmp/nova.log
+APK_GOALS := $(filter-out help framework native all run run-log test-ipc daemon,$(MAKECMDGOALS))
+APK_INPUT := $(strip $(if $(APK),$(APK),$(APK_GOALS)))
 
 HOST_OUT := $(ROOT)/out/host/linux-x86
 NOVA_BIN := $(HOST_OUT)/bin/nova
@@ -35,6 +37,9 @@ IPCTEST_BIN := $(HOST_OUT)/bin/nova_ipc_test
 
 .PHONY: help framework native all run run-log test-ipc daemon
 
+%:
+	@:
+
 help:
 	@printf '%s\n' \
 	'Nova helpers' \
@@ -61,10 +66,12 @@ native:
 all: framework native
 
 run:
-	@test -n "$(APK)" || { echo 'APK=/abs/path/app.apk is required'; exit 2; }
+	@test -n "$(APK_INPUT)" || { echo 'Usage: make run APK=/abs/path/app.apk or make run path/to/app.apk'; exit 2; }
 	@test -x "$(NOVA_BIN)" || { echo 'Missing nova binary: $(NOVA_BIN)'; exit 2; }
 	@test -f "$(LD_PRELOAD_LIB)" || { echo 'Missing preload library: $(LD_PRELOAD_LIB)'; exit 2; }
-	cd $(ROOT) && $(RUN_ENV) && "$(NOVA_BIN)" "$(APK)"
+	@APK_PATH="$$(realpath -m -- "$(APK_INPUT)")"; \
+	test -f "$$APK_PATH" || { echo "APK not found: $$APK_PATH"; exit 2; }; \
+	cd $(ROOT) && $(RUN_ENV) && "$(NOVA_BIN)" "$$APK_PATH"
 
 test-ipc:
 	@test -x "$(IPCTEST_BIN)" || { echo 'Missing nova_ipc_test binary: $(IPCTEST_BIN)'; exit 2; }
@@ -75,7 +82,9 @@ daemon:
 	cd $(ROOT) && $(RUN_ENV) && "$(DAEMON_BIN)"
 
 run-log:
-	@test -n "$(APK)" || { echo 'APK=/abs/path/app.apk is required'; exit 2; }
+	@test -n "$(APK_INPUT)" || { echo 'Usage: make run-log APK=/abs/path/app.apk or make run-log path/to/app.apk'; exit 2; }
 	@test -x "$(NOVA_BIN)" || { echo 'Missing nova binary: $(NOVA_BIN)'; exit 2; }
 	@test -f "$(LD_PRELOAD_LIB)" || { echo 'Missing preload library: $(LD_PRELOAD_LIB)'; exit 2; }
-	cd $(ROOT) && $(RUN_ENV) && "$(NOVA_BIN)" "$(APK)" >"$(LOG)" 2>&1
+	@APK_PATH="$$(realpath -m -- "$(APK_INPUT)")"; \
+	test -f "$$APK_PATH" || { echo "APK not found: $$APK_PATH"; exit 2; }; \
+	cd $(ROOT) && $(RUN_ENV) && "$(NOVA_BIN)" "$$APK_PATH" >"$(LOG)" 2>&1

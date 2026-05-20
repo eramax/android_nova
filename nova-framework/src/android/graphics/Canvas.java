@@ -37,6 +37,10 @@ public class Canvas {
         native_translate(mNativeCanvasWrapper, dx, dy);
     }
 
+    public boolean clipRect(float left, float top, float right, float bottom) {
+        return native_clipRect(mNativeCanvasWrapper, left, top, right, bottom);
+    }
+
     public int getWidth() {
         return native_getWidth(mNativeCanvasWrapper);
     }
@@ -84,6 +88,7 @@ public class Canvas {
     private native int native_save(long canvasHandle, int saveFlags);
     private native void native_restore(long canvasHandle);
     private native void native_translate(long canvasHandle, float dx, float dy);
+    private native boolean native_clipRect(long canvasHandle, float left, float top, float right, float bottom);
     private native int native_getWidth(long canvasHandle);
     private native int native_getHeight(long canvasHandle);
 }

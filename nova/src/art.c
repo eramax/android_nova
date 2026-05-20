@@ -165,6 +165,92 @@ static int detect_apk_field(const char *aapt2_path, const char *apk_path,
     return -1;
 }
 
+static int detect_launchable_activity_via_xmltree(const char *apk_path, char *out, size_t out_size) {
+    char command[PATH_MAX * 2];
+    char line[1024];
+    FILE *fp;
+    char pending_name[PATH_MAX] = {0};
+    char pending_target[PATH_MAX] = {0};
+    int in_activity = 0;
+    int in_alias = 0;
+    int has_launcher = 0;
+
+    snprintf(command, sizeof(command),
+             "/usr/bin/aapt dump xmltree \"%s\" AndroidManifest.xml 2>/dev/null",
+             apk_path);
+    fp = popen(command, "r");
+    if (fp == NULL) {
+        return -1;
+    }
+
+    out[0] = '\0';
+    while (fgets(line, sizeof(line), fp) != NULL) {
+        if (strstr(line, "E: activity-alias")) {
+            if (has_launcher && !out[0]) {
+                const char *candidate = in_alias ? pending_target : pending_name;
+                if (candidate[0]) {
+                    snprintf(out, out_size, "%s", candidate);
+                }
+            }
+            in_activity = 0;
+            in_alias = 1;
+            has_launcher = 0;
+            pending_name[0] = '\0';
+            pending_target[0] = '\0';
+            continue;
+        }
+
+        if (strstr(line, "E: activity") && !strstr(line, "E: activity-alias")) {
+            if (has_launcher && !out[0]) {
+                const char *candidate = in_alias ? pending_target : pending_name;
+                if (candidate[0]) {
+                    snprintf(out, out_size, "%s", candidate);
+                }
+            }
+            in_activity = 1;
+            in_alias = 0;
+            has_launcher = 0;
+            pending_name[0] = '\0';
+            pending_target[0] = '\0';
+            continue;
+        }
+
+        if (in_activity || in_alias) {
+            char *name = strstr(line, "android:name");
+            char *target = strstr(line, "android:targetActivity");
+            if (name) {
+                char *q1 = strchr(name, '"');
+                char *q2 = q1 ? strchr(q1 + 1, '"') : NULL;
+                if (q1 && q2 && (size_t)(q2 - q1 - 1) < sizeof(pending_name)) {
+                    memcpy(pending_name, q1 + 1, (size_t)(q2 - q1 - 1));
+                    pending_name[q2 - q1 - 1] = '\0';
+                }
+            }
+            if (target) {
+                char *q1 = strchr(target, '"');
+                char *q2 = q1 ? strchr(q1 + 1, '"') : NULL;
+                if (q1 && q2 && (size_t)(q2 - q1 - 1) < sizeof(pending_target)) {
+                    memcpy(pending_target, q1 + 1, (size_t)(q2 - q1 - 1));
+                    pending_target[q2 - q1 - 1] = '\0';
+                }
+            }
+            if (strstr(line, "android.intent.category.LAUNCHER")) {
+                has_launcher = 1;
+            }
+        }
+    }
+
+    if (has_launcher && !out[0]) {
+        const char *candidate = in_alias ? pending_target : pending_name;
+        if (candidate[0]) {
+            snprintf(out, out_size, "%s", candidate);
+        }
+    }
+
+    pclose(fp);
+    return out[0] ? 0 : -1;
+}
+
 static const char *find_system_gles_library(void) {
     size_t i;
     for (i = 0; i < sizeof(kGlesV2Candidates) / sizeof(kGlesV2Candidates[0]); ++i) {
@@ -318,13 +404,14 @@ int nova_art_init(struct nova_state *state, int argc, char *argv[]) {
              "%s/apex/com.android.conscrypt/javalib/conscrypt.jar",
              host_out, host_out, host_out, host_out, host_out, host_out, host_out);
     snprintf(bootclasspath_locations, sizeof(bootclasspath_locations),
-             "/apex/com.android.art/javalib/core-oj.jar:"
-             "/apex/com.android.art/javalib/core-libart.jar:"
-             "/apex/com.android.art/javalib/okhttp.jar:"
-             "/apex/com.android.art/javalib/bouncycastle.jar:"
-             "/apex/com.android.art/javalib/apache-xml.jar:"
-             "/apex/com.android.i18n/javalib/core-icu4j.jar:"
-             "/apex/com.android.conscrypt/javalib/conscrypt.jar");
+             "%s/apex/com.android.art/javalib/core-oj.jar:"
+             "%s/apex/com.android.art/javalib/core-libart.jar:"
+             "%s/apex/com.android.art/javalib/okhttp.jar:"
+             "%s/apex/com.android.art/javalib/bouncycastle.jar:"
+             "%s/apex/com.android.art/javalib/apache-xml.jar:"
+             "%s/apex/com.android.i18n/javalib/core-icu4j.jar:"
+             "%s/apex/com.android.conscrypt/javalib/conscrypt.jar",
+             host_out, host_out, host_out, host_out, host_out, host_out, host_out);
 
     snprintf(image_path, sizeof(image_path), "%s/apex/com.android.art/framework/boot.art",
              host_out);
@@ -448,50 +535,8 @@ int nova_art_launch_apk(struct nova_state *state, const char *apk_path, const ch
     if (resolved_activity == NULL || resolved_activity[0] == '\0') {
         if (detect_apk_field(aapt2_path, apk_path, "launchable-activity:", "name",
                              detected_activity, sizeof(detected_activity)) != 0) {
-            // Fallback: find launcher activity via aapt xmltree + activity-alias parsing.
-            // Covers apps where the LAUNCHER intent-filter is on an activity-alias
-            // rather than the activity itself (e.g. Fossify apps with theme aliases).
-            char xmltree_cmd[PATH_MAX * 2];
-            snprintf(xmltree_cmd, sizeof(xmltree_cmd),
-                     "aapt dump xmltree \"%s\" AndroidManifest.xml 2>/dev/null", apk_path);
-            FILE *fp = popen(xmltree_cmd, "r");
-            detected_activity[0] = '\0';
-            if (fp) {
-                char line[1024];
-                char pending_target[256] = {0};
-                int in_alias = 0, has_launcher = 0;
-                while (fgets(line, sizeof(line), fp)) {
-                    // Entering activity-alias element
-                    if (strstr(line, "E: activity-alias")) {
-                        // Commit previous alias if it had launcher
-                        if (in_alias && has_launcher && pending_target[0] && !detected_activity[0])
-                            snprintf(detected_activity, sizeof(detected_activity), "%s", pending_target);
-                        in_alias = 1; has_launcher = 0; pending_target[0] = '\0';
-                    } else if (strstr(line, "E: activity") && !strstr(line, "E: activity-alias")) {
-                        if (in_alias && has_launcher && pending_target[0] && !detected_activity[0])
-                            snprintf(detected_activity, sizeof(detected_activity), "%s", pending_target);
-                        in_alias = 0; has_launcher = 0; pending_target[0] = '\0';
-                    }
-                    if (in_alias) {
-                        // android:targetActivity
-                        char *ta = strstr(line, "android:targetActivity");
-                        if (ta) {
-                            char *q1 = strchr(ta, '"');
-                            if (q1) { char *q2 = strchr(q1+1, '"');
-                                if (q2 && (size_t)(q2-q1-1) < sizeof(pending_target)) {
-                                    memcpy(pending_target, q1+1, (size_t)(q2-q1-1));
-                                    pending_target[q2-q1-1] = '\0';
-                                }
-                            }
-                        }
-                        if (strstr(line, "android.intent.category.LAUNCHER")) has_launcher = 1;
-                    }
-                }
-                if (in_alias && has_launcher && pending_target[0] && !detected_activity[0])
-                    snprintf(detected_activity, sizeof(detected_activity), "%s", pending_target);
-                pclose(fp);
-            }
-            if (!detected_activity[0]) {
+            if (detect_launchable_activity_via_xmltree(apk_path, detected_activity,
+                                                       sizeof(detected_activity)) != 0) {
                 fprintf(stderr, "[Nova] Could not detect launchable activity in %s\n", apk_path);
                 return -1;
             }

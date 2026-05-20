@@ -314,9 +314,6 @@ public class ViewGroup extends View implements ViewParent {
     }
 
     protected int resolveLayoutParam(int viewHint, int fallback) {
-        if (viewHint == 0) {
-            return fallback;
-        }
         return viewHint;
     }
 

@@ -186,6 +186,14 @@ static void native_translate(JNIEnv *env, jobject, jlong canvasHandle, jfloat dx
     nova_canvas_translate((struct nova_canvas *)(intptr_t)canvasHandle, dx, dy);
 }
 
+static jboolean native_clipRect(JNIEnv *env, jobject, jlong canvasHandle,
+                                jfloat left, jfloat top, jfloat right, jfloat bottom) {
+    (void)env;
+    nova_canvas_clip_rect((struct nova_canvas *)(intptr_t)canvasHandle,
+                          left, top, right, bottom);
+    return JNI_TRUE;
+}
+
 static jint native_getWidth(JNIEnv *env, jobject, jlong canvasHandle) {
     (void)env;
     return nova_canvas_width((struct nova_canvas *)(intptr_t)canvasHandle);
@@ -208,6 +216,7 @@ static const JNINativeMethod gMethods[] = {
     { "native_save",      "(JI)I",                     (void*)native_save },
     { "native_restore",   "(J)V",                      (void*)native_restore },
     { "native_translate", "(JFF)V",                    (void*)native_translate },
+    { "native_clipRect",  "(JFFFF)Z",                  (void*)native_clipRect },
     { "native_getWidth",  "(J)I",                      (void*)native_getWidth },
     { "native_getHeight", "(J)I",                      (void*)native_getHeight },
 };

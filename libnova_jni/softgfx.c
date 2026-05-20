@@ -25,6 +25,14 @@ struct nova_canvas {
     float translate_y;
     float saved_translate_x[32];
     float saved_translate_y[32];
+    int clip_left;
+    int clip_top;
+    int clip_right;
+    int clip_bottom;
+    int saved_clip_left[32];
+    int saved_clip_top[32];
+    int saved_clip_right[32];
+    int saved_clip_bottom[32];
 };
 
 static int clamp_floor(float value, int min_value, int max_value) {
@@ -86,6 +94,14 @@ static void fill_span(struct nova_bitmap *bitmap, int x0, int y0, int x1, int y1
             row[x] = color;
         }
     }
+}
+
+static int clamp_min(int value, int min_value) {
+    return value < min_value ? min_value : value;
+}
+
+static int clamp_max(int value, int max_value) {
+    return value > max_value ? max_value : value;
 }
 
 struct nova_bitmap *nova_bitmap_create(int width, int height, int config, int is_mutable) {
@@ -232,6 +248,10 @@ struct nova_canvas *nova_canvas_create(struct nova_bitmap *bitmap) {
 
     canvas->bitmap = bitmap;
     canvas->save_depth = 1;
+    canvas->clip_left = 0;
+    canvas->clip_top = 0;
+    canvas->clip_right = bitmap ? bitmap->width : 0;
+    canvas->clip_bottom = bitmap ? bitmap->height : 0;
     return canvas;
 }
 
@@ -242,6 +262,10 @@ void nova_canvas_destroy(struct nova_canvas *canvas) {
 void nova_canvas_set_bitmap(struct nova_canvas *canvas, struct nova_bitmap *bitmap) {
     if (canvas) {
         canvas->bitmap = bitmap;
+        canvas->clip_left = 0;
+        canvas->clip_top = 0;
+        canvas->clip_right = bitmap ? bitmap->width : 0;
+        canvas->clip_bottom = bitmap ? bitmap->height : 0;
     }
 }
 
@@ -268,10 +292,10 @@ void nova_canvas_draw_rect(struct nova_canvas *canvas, float left, float top,
         bottom = swap;
     }
 
-    x0 = clamp_floor(left + canvas->translate_x, 0, canvas->bitmap->width);
-    y0 = clamp_floor(top + canvas->translate_y, 0, canvas->bitmap->height);
-    x1 = clamp_ceil(right + canvas->translate_x, 0, canvas->bitmap->width);
-    y1 = clamp_ceil(bottom + canvas->translate_y, 0, canvas->bitmap->height);
+    x0 = clamp_floor(left + canvas->translate_x, canvas->clip_left, canvas->clip_right);
+    y0 = clamp_floor(top + canvas->translate_y, canvas->clip_top, canvas->clip_bottom);
+    x1 = clamp_ceil(right + canvas->translate_x, canvas->clip_left, canvas->clip_right);
+    y1 = clamp_ceil(bottom + canvas->translate_y, canvas->clip_top, canvas->clip_bottom);
 
     if (paint->style == NOVA_PAINT_STYLE_FILL || paint->style == NOVA_PAINT_STYLE_FILL_AND_STROKE) {
         fill_span(canvas->bitmap, x0, y0, x1, y1, paint->color);
@@ -305,6 +329,10 @@ int nova_canvas_save(struct nova_canvas *canvas, int save_flags) {
     if (canvas->save_depth - 1 < 32) {
         canvas->saved_translate_x[canvas->save_depth - 1] = canvas->translate_x;
         canvas->saved_translate_y[canvas->save_depth - 1] = canvas->translate_y;
+        canvas->saved_clip_left[canvas->save_depth - 1] = canvas->clip_left;
+        canvas->saved_clip_top[canvas->save_depth - 1] = canvas->clip_top;
+        canvas->saved_clip_right[canvas->save_depth - 1] = canvas->clip_right;
+        canvas->saved_clip_bottom[canvas->save_depth - 1] = canvas->clip_bottom;
     }
     canvas->save_depth += 1;
     return canvas->save_depth;
@@ -316,6 +344,10 @@ void nova_canvas_restore(struct nova_canvas *canvas) {
         if (canvas->save_depth - 1 < 32) {
             canvas->translate_x = canvas->saved_translate_x[canvas->save_depth - 1];
             canvas->translate_y = canvas->saved_translate_y[canvas->save_depth - 1];
+            canvas->clip_left = canvas->saved_clip_left[canvas->save_depth - 1];
+            canvas->clip_top = canvas->saved_clip_top[canvas->save_depth - 1];
+            canvas->clip_right = canvas->saved_clip_right[canvas->save_depth - 1];
+            canvas->clip_bottom = canvas->saved_clip_bottom[canvas->save_depth - 1];
         }
     }
 }
@@ -326,6 +358,49 @@ void nova_canvas_translate(struct nova_canvas *canvas, float dx, float dy) {
     }
     canvas->translate_x += dx;
     canvas->translate_y += dy;
+}
+
+void nova_canvas_clip_rect(struct nova_canvas *canvas, float left, float top,
+                           float right, float bottom) {
+    int clip_left;
+    int clip_top;
+    int clip_right;
+    int clip_bottom;
+
+    if (!canvas || !canvas->bitmap) {
+        return;
+    }
+
+    if (right < left) {
+        float swap = left;
+        left = right;
+        right = swap;
+    }
+    if (bottom < top) {
+        float swap = top;
+        top = bottom;
+        bottom = swap;
+    }
+
+    clip_left = clamp_floor(left + canvas->translate_x, 0, canvas->bitmap->width);
+    clip_top = clamp_floor(top + canvas->translate_y, 0, canvas->bitmap->height);
+    clip_right = clamp_ceil(right + canvas->translate_x, 0, canvas->bitmap->width);
+    clip_bottom = clamp_ceil(bottom + canvas->translate_y, 0, canvas->bitmap->height);
+
+    canvas->clip_left = clamp_min(clip_left, canvas->clip_left);
+    canvas->clip_top = clamp_min(clip_top, canvas->clip_top);
+    canvas->clip_right = clamp_max(clip_right, canvas->clip_right);
+    canvas->clip_bottom = clamp_max(clip_bottom, canvas->clip_bottom);
+    if (canvas->clip_left < clip_left) canvas->clip_left = clip_left;
+    if (canvas->clip_top < clip_top) canvas->clip_top = clip_top;
+    if (canvas->clip_right > clip_right) canvas->clip_right = clip_right;
+    if (canvas->clip_bottom > clip_bottom) canvas->clip_bottom = clip_bottom;
+    if (canvas->clip_left > canvas->clip_right) {
+        canvas->clip_left = canvas->clip_right;
+    }
+    if (canvas->clip_top > canvas->clip_bottom) {
+        canvas->clip_top = canvas->clip_bottom;
+    }
 }
 
 int nova_canvas_width(const struct nova_canvas *canvas) {
@@ -346,12 +421,12 @@ void nova_canvas_blit_bitmap(struct nova_canvas *canvas, const struct nova_bitma
     left += (int) canvas->translate_x;
     top += (int) canvas->translate_y;
     /* Clip src region to destination canvas bounds */
-    int d_left  = left < 0 ? 0 : left;
-    int d_top   = top  < 0 ? 0 : top;
+    int d_left  = left < canvas->clip_left ? canvas->clip_left : left;
+    int d_top   = top  < canvas->clip_top ? canvas->clip_top : top;
     int d_right  = left + src->width;
     int d_bottom = top  + src->height;
-    if (d_right  > canvas->bitmap->width)  d_right  = canvas->bitmap->width;
-    if (d_bottom > canvas->bitmap->height) d_bottom = canvas->bitmap->height;
+    if (d_right  > canvas->clip_right)  d_right  = canvas->clip_right;
+    if (d_bottom > canvas->clip_bottom) d_bottom = canvas->clip_bottom;
     if (d_left >= d_right || d_top >= d_bottom) return;
 
     copy_w = d_right - d_left;

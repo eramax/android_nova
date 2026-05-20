@@ -339,6 +339,12 @@ public class LayoutInflater {
 
         if (trimmed.startsWith("A: android:layout_width") || trimmed.contains("0x010100f4")) {
             Integer width = extractLayoutSizeValue(trimmed);
+            if (width == null && resourceValue != null && mContext != null) {
+                width = mContext.getResources().getDimensionPixelSize(resourceValue);
+                System.out.println("[LayoutInflater] layout_width ref "
+                        + String.format("0x%08x", resourceValue) + " -> " + width
+                        + " for " + currentView.getClass().getName());
+            }
             if (width != null) {
                 currentView.novaSetLayoutWidth(width);
                 syncLayoutParams(currentView);
@@ -348,6 +354,12 @@ public class LayoutInflater {
 
         if (trimmed.startsWith("A: android:layout_height") || trimmed.contains("0x010100f5")) {
             Integer height = extractLayoutSizeValue(trimmed);
+            if (height == null && resourceValue != null && mContext != null) {
+                height = mContext.getResources().getDimensionPixelSize(resourceValue);
+                System.out.println("[LayoutInflater] layout_height ref "
+                        + String.format("0x%08x", resourceValue) + " -> " + height
+                        + " for " + currentView.getClass().getName());
+            }
             if (height != null) {
                 currentView.novaSetLayoutHeight(height);
                 syncLayoutParams(currentView);
@@ -453,8 +465,13 @@ public class LayoutInflater {
         if (matcher.find()) {
             try {
                 int raw = (int) Long.parseLong(matcher.group(1), 16);
-                int approxPx = raw >> 8;
-                return approxPx > 0 ? approxPx : 48;
+                android.util.DisplayMetrics metrics =
+                        mContext != null ? mContext.getResources().getDisplayMetrics() : null;
+                if (metrics == null) {
+                    metrics = new android.util.DisplayMetrics();
+                    metrics.setToDefaults();
+                }
+                return android.util.TypedValue.complexToDimensionPixelSize(raw, metrics);
             } catch (NumberFormatException ignored) {
             }
         }

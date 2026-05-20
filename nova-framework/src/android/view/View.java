@@ -182,6 +182,7 @@ public class View {
         if (canvas != null) {
             canvas.save();
             canvas.translate(mLeft, mTop);
+            canvas.clipRect(0, 0, getWidth(), getHeight());
         }
         if (mBackground != null && canvas != null) {
             mBackground.setBounds(0, 0, getWidth(), getHeight());

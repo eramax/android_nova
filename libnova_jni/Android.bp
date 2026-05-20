@@ -47,3 +47,22 @@ cc_library_host_shared {
     stl: "none",
     allow_undefined_symbols: true,
 }
+
+cc_binary_host {
+    name: "nova_softgfx_test",
+    compile_multilib: "64",
+    srcs: [
+        "softgfx_test.c",
+        "softgfx.c",
+    ],
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Wno-unused-parameter",
+        "-Wno-sign-compare",
+        "-D_GNU_SOURCE",
+        "-D_POSIX_C_SOURCE=200809L",
+    ],
+    host_ldlibs: ["-lm"],
+    stl: "none",
+}
