@@ -36,7 +36,7 @@ public final class NovaPackageManager extends PackageManager {
         mCurrentPackageInfo = packageInfo;
     }
 
-    synchronized ActivityInfo getActivityInfo(ComponentName component, int flags) {
+    public synchronized ActivityInfo getActivityInfo(ComponentName component, int flags) throws NameNotFoundException {
         if (component == null || mCurrentActivityInfo == null) {
             return null;
         }

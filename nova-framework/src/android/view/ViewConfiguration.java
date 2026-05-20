@@ -32,4 +32,17 @@ public class ViewConfiguration {
     public int getScaledMaximumFlingVelocity() {
         return MAX_FLING_VELOCITY;
     }
+
+    public boolean shouldShowMenuShortcutsWhenKeyboardPresent() { return false; }
+    public int getScaledDoubleTapSlop() { return TOUCH_SLOP * 2; }
+    public int getScaledOverscrollDistance() { return 0; }
+    public int getScaledOverflingDistance() { return 0; }
+    public static int getDoubleTapTimeout() { return 300; }
+    public static int getLongPressTimeout() { return 500; }
+    public static int getTapTimeout() { return 100; }
+    public int getScaledScrollBarSize() { return 10; }
+    public int getScaledFadingEdgeLength() { return 200; }
+    public int getScaledWindowTouchSlop() { return TOUCH_SLOP; }
+    public int getScaledMinimumScalingSpan() { return 100; }
+    public boolean hasPermanentMenuKey() { return false; }
 }

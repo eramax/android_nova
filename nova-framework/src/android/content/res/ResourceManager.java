@@ -208,7 +208,11 @@ public class ResourceManager {
             return null;
         }
 
-        String layoutPath = resolveExistingLayoutPath(resolveLayoutPath(resourceId));
+        // First try the --values dump which returns the actual obfuscated path (e.g. res/rY.xml)
+        String layoutPath = getFileResourcePath(resourceId);
+        if (layoutPath == null) {
+            layoutPath = resolveExistingLayoutPath(resolveLayoutPath(resourceId));
+        }
         System.out.println("[ResourceManager] Dumping layout XML tree for: " + layoutPath);
 
         try {

@@ -57,6 +57,16 @@ public class Configuration {
     public static final int UI_MODE_NIGHT_NO         = 0x10;
     public static final int UI_MODE_NIGHT_YES        = 0x20;
 
+    public java.util.Locale getLocale() {
+        return java.util.Locale.getDefault();
+    }
+
+    public android.os.LocaleList getLocales() {
+        return android.os.LocaleList.getDefault();
+    }
+
+    public void setLocales(android.os.LocaleList locales) {}
+
     public Configuration() {
         screenLayout = SCREENLAYOUT_SIZE_NORMAL | SCREENLAYOUT_LONG_NO | SCREENLAYOUT_LAYOUTDIR_LTR;
         uiMode = UI_MODE_TYPE_NORMAL | UI_MODE_NIGHT_NO;

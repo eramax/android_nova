@@ -45,6 +45,9 @@ public class Activity extends ContextWrapper {
     }
 
     public Intent getIntent() {
+        if (mIntent == null) {
+            mIntent = new Intent();
+        }
         return mIntent;
     }
 
@@ -194,9 +197,45 @@ public class Activity extends ContextWrapper {
     public void onWindowFocusChanged(boolean hasFocus) {}
     public android.app.ActionBar getActionBar() { return null; }
 
+    public android.window.OnBackInvokedDispatcher getOnBackInvokedDispatcher() {
+        return new android.window.NovaOnBackInvokedDispatcher();
+    }
+
+    public void registerActivityLifecycleCallbacks(Application.ActivityLifecycleCallbacks callback) {
+        if (mApplication != null) mApplication.registerActivityLifecycleCallbacks(callback);
+    }
+
+    public void unregisterActivityLifecycleCallbacks(Application.ActivityLifecycleCallbacks callback) {
+        if (mApplication != null) mApplication.unregisterActivityLifecycleCallbacks(callback);
+    }
+
+    public android.content.ComponentName getComponentName() {
+        return new android.content.ComponentName(getPackageName(), getClass().getName());
+    }
+
+    public android.os.IBinder getActivityToken() { return null; }
+    public android.view.ViewModelStore getViewModelStore() { return new android.view.ViewModelStore(); }
+
+    public boolean isChangingConfigurations() { return false; }
+    public boolean isTaskRoot() { return true; }
+    public int getTaskId() { return 1; }
+    public void startActivityForResult(Intent intent, int requestCode) {}
+    public void startActivityForResult(Intent intent, int requestCode, android.os.Bundle options) {}
+    public void overridePendingTransition(int enterAnim, int exitAnim) {}
+    public void reportFullyDrawn() {}
+    public android.os.Bundle getLastSavedInstanceState() { return null; }
+    public void postponeEnterTransition() {}
+    public void startPostponedEnterTransition() {}
+    public android.view.LayoutInflater getLayoutInflater() { return android.view.LayoutInflater.from(this); }
+
     public android.content.SharedPreferences getPreferences(int mode) {
         return getSharedPreferences(getClass().getSimpleName(), mode);
     }
+
+    private CharSequence mTitle = "";
+    public CharSequence getTitle() { return mTitle; }
+    public void setTitle(CharSequence title) { mTitle = title != null ? title : ""; }
+    public void setTitle(int titleId) { mTitle = getResources().getText(titleId); }
 
     public void setVolumeControlStream(int streamType) {}
     public void setRequestedOrientation(int requestedOrientation) {}

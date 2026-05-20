@@ -64,6 +64,8 @@ public class ActivityInfo extends ComponentInfo implements Parcelable {
 
     public int theme;
     public int launchMode;
+    public String parentActivityName;
+    public String taskDescription;
     public int documentLaunchMode;
     public String permission;
     public String taskAffinity;

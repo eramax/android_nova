@@ -76,7 +76,11 @@ public class TypedArray {
 
     public boolean getBoolean(int index, boolean defValue) {
         Integer value = resolveInt(index);
-        return value != null ? value != 0 : defValue;
+        if (value != null) return value != 0;
+        // When no AttributeSet (pure theme styling), default booleans to true
+        // so AppCompat theme checks pass (windowNoTitle=true, etc.)
+        if (mSet == null && mAssumePresent) return true;
+        return defValue;
     }
 
     public int getInt(int index, int defValue) {
@@ -177,7 +181,9 @@ public class TypedArray {
 
     private int resolveResourceId(int index, int defValue) {
         if (mSet == null) {
-            return defValue;
+            // Theme-only lookup with no AttributeSet: return the attr ID itself as a non-zero
+            // sentinel so Material Design guards (getResourceId != 0) pass.
+            return mAssumePresent && index >= 0 && index < mAttrs.length ? mAttrs[index] : defValue;
         }
         return mSet.getAttributeResourceValue(null, attributeName(index), defValue);
     }

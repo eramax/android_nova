@@ -76,6 +76,7 @@ public class Paint {
         native_setColor(mNativePaint, (a << 24) | (r << 16) | (g << 8) | b);
     }
     public int getColor() { return native_getColor(mNativePaint); }
+    public int getAlpha() { return (native_getColor(mNativePaint) >>> 24) & 0xff; }
     public float getStrokeWidth() { return native_getStrokeWidth(mNativePaint); }
     public float getTextSize() { return 12.0f; }
     public float measureText(String text) { return text == null ? 0 : text.length() * 7.0f; }
@@ -87,11 +88,11 @@ public class Paint {
     public void setLinearText(boolean linearText) {}
     public void setDither(boolean dither) {}
     public void setFilterBitmap(boolean filter) {}
-    public void setXfermode(android.graphics.Xfermode xfermode) { return; }
+    public Xfermode setXfermode(Xfermode xfermode) { return xfermode; }
     public void setShadowLayer(float radius, float dx, float dy, int shadowColor) {}
     public void clearShadowLayer() {}
-    public void setShader(android.graphics.Shader shader) {}
-    public void setColorFilter(android.graphics.ColorFilter filter) {}
+    public Shader setShader(Shader shader) { return shader; }
+    public ColorFilter setColorFilter(ColorFilter filter) { return filter; }
 
     public static final int ANTI_ALIAS_FLAG     = 0x01;
     public static final int FILTER_BITMAP_FLAG  = 0x02;

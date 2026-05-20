@@ -17,6 +17,9 @@ public class Resources {
         return mAssets;
     }
 
+    public void getValue(int id, android.util.TypedValue outValue, boolean resolveRefs) {}
+    public void getValue(String name, android.util.TypedValue outValue, boolean resolveRefs) {}
+
     public boolean getBoolean(int id) {
         return false;
     }
@@ -32,12 +35,22 @@ public class Resources {
             return new android.graphics.drawable.ColorDrawable(color);
         }
 
-        android.graphics.Bitmap bitmap = android.graphics.BitmapFactory.decodeResource(this, id);
-        if (bitmap != null) {
-            return new android.graphics.drawable.BitmapDrawable(this, bitmap);
+        // Only try BitmapFactory for bitmap resources (PNG/JPEG/WEBP).
+        // XML-based drawables (vectors, selectors) must not go through BitmapFactory.
+        String path = ResourceManager.getInstance().getFileResourcePath(id);
+        if (path != null) {
+            String lp = path.toLowerCase();
+            if (lp.endsWith(".png") || lp.endsWith(".jpg") || lp.endsWith(".jpeg")
+                    || lp.endsWith(".webp") || lp.endsWith(".gif") || lp.endsWith(".bmp")) {
+                android.graphics.Bitmap bitmap = android.graphics.BitmapFactory.decodeResource(this, id);
+                if (bitmap != null) {
+                    return new android.graphics.drawable.BitmapDrawable(this, bitmap);
+                }
+            }
         }
 
-        return new android.graphics.drawable.ColorDrawable(id);
+        // Default: VectorDrawable satisfies AppCompat's checkVectorDrawableSetup check.
+        return new android.graphics.drawable.VectorDrawable();
     }
 
     public android.graphics.drawable.Drawable getDrawable(int id, Theme theme) {
@@ -123,6 +136,17 @@ public class Resources {
         public android.content.res.TypedArray obtainStyledAttributes(android.util.AttributeSet set, int[] attrs, int defStyleAttr, int defStyleRes) {
             return android.content.res.TypedArray.obtain(mResources, set, attrs, true);
         }
+        public boolean resolveAttribute(int resid, android.util.TypedValue outValue, boolean resolveRefs) {
+            return false;
+        }
         public Resources getResources() { return mResources; }
+        public void setTo(Theme other) {}
+        public int[] activityInfoConfigChangesToNative(int changes) { return new int[0]; }
+        public boolean isOutOfDate() { return false; }
+        public int getChangingConfigurations() { return 0; }
+        public android.util.TypedValue getAttribute(int resId, android.util.TypedValue outValue, boolean resolveRefs) {
+            if (outValue != null) outValue.type = android.util.TypedValue.TYPE_NULL;
+            return null;
+        }
     }
 }

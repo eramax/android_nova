@@ -114,6 +114,14 @@ public class View {
         new Exception("Constructor View(Context, AttributeSet) trace for " + getClass().getName()).printStackTrace(System.out);
     }
 
+    public View(Context context, AttributeSet attrs, int defStyleAttr) {
+        mContext = context;
+    }
+
+    public View(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
+        mContext = context;
+    }
+
     public Context getContext() {
         return mContext;
     }
@@ -244,6 +252,7 @@ public class View {
         if (this instanceof ViewGroup) {
             ViewGroup group = (ViewGroup) this;
             int count = group.getChildCount();
+            System.out.println("[FindViewById] searching " + getClass().getSimpleName() + "(id=0x" + Integer.toHexString(mId) + ") for 0x" + Integer.toHexString(id) + " childCount=" + count);
             for (int i = 0; i < count; i++) {
                 View child = group.getChildAt(i);
                 if (child != null) {
@@ -256,6 +265,168 @@ public class View {
         }
         return null;
     }
+    public void setWillNotDraw(boolean willNotDraw) {}
+    public boolean willNotDraw() { return false; }
+    public void setWillNotCache(boolean willNotCache) {}
+    public void setForeground(android.graphics.drawable.Drawable foreground) {}
+    public android.graphics.drawable.Drawable getForeground() { return null; }
+    public void setForegroundGravity(int gravity) {}
+
+    public boolean isLaidOut() { return mAttached; }
+    public void saveAttributeDataForStyleable(Context context, int[] attrs, AttributeSet set, android.content.res.TypedArray a, int defStyleAttr, int defStyleRes) {}
+    public boolean getFitsSystemWindows() { return false; }
+    public void setFitsSystemWindows(boolean fitSystemWindows) {}
+    public boolean dispatchNestedScroll(int dxConsumed, int dyConsumed, int dxUnconsumed, int dyUnconsumed, int[] offsetInWindow) { return false; }
+    public boolean dispatchNestedPreScroll(int dx, int dy, int[] consumed, int[] offsetInWindow) { return false; }
+    public boolean startNestedScroll(int axes) { return false; }
+    public void stopNestedScroll() {}
+    public boolean hasNestedScrollingParent() { return false; }
+    public int getWindowVisibility() { return VISIBLE; }
+    public void onWindowVisibilityChanged(int visibility) {}
+    public boolean isShown() { return mVisibility == VISIBLE && mAttached; }
+    public void setDuplicateParentStateEnabled(boolean enabled) {}
+    public boolean isDuplicateParentStateEnabled() { return false; }
+    public void setDrawingCacheEnabled(boolean enabled) {}
+    public boolean isDrawingCacheEnabled() { return false; }
+    public android.graphics.Bitmap getDrawingCache() { return null; }
+    public void destroyDrawingCache() {}
+    public android.graphics.Bitmap getDrawingCache(boolean autoScale) { return null; }
+    public int getBaseline() { return -1; }
+    public boolean isOpaque() { return false; }
+    public void offsetTopAndBottom(int offset) {}
+    public void offsetLeftAndRight(int offset) {}
+    public void setVerticalScrollbarPosition(int position) {}
+    public void setHorizontalScrollbarEnabled(boolean horizontalScrollbarEnabled) {}
+    public void setVerticalScrollbarEnabled(boolean verticalScrollbarEnabled) {}
+    public boolean isVerticalScrollBarEnabled() { return false; }
+    public boolean isHorizontalScrollBarEnabled() { return false; }
+    public void awakenScrollBars() {}
+    public void computeScroll() {}
+    public int computeVerticalScrollOffset() { return 0; }
+    public int computeVerticalScrollRange() { return 0; }
+    public int computeVerticalScrollExtent() { return getHeight(); }
+    public int computeHorizontalScrollOffset() { return 0; }
+    public int computeHorizontalScrollRange() { return 0; }
+    public int computeHorizontalScrollExtent() { return getWidth(); }
+    public boolean isSaveEnabled() { return true; }
+    public void setSaveEnabled(boolean enabled) {}
+    public int getMeasuredWidthAndState() { return mMeasuredWidth; }
+    public int getMeasuredHeightAndState() { return mMeasuredHeight; }
+    public int getMeasuredState() { return 0; }
+    public android.view.ViewOutlineProvider getOutlineProvider() { return null; }
+    public void setOutlineAmbientShadowColor(int color) {}
+    public void setOutlineSpotShadowColor(int color) {}
+    public int getOutlineAmbientShadowColor() { return 0; }
+    public int getOutlineSpotShadowColor() { return 0; }
+    public boolean hasWindowFocus() { return mAttached; }
+    public boolean isDirty() { return false; }
+    public boolean isFocusable() { return mFocusable; }
+    public boolean isFocusableInTouchMode() { return mFocusableInTouchMode; }
+    public boolean requestFocus(int direction) { return requestFocus(); }
+    public void clearFocus() { mHasFocus = false; }
+    private boolean mActivated;
+    public void setActivated(boolean activated) { mActivated = activated; }
+    public boolean isActivated() { return mActivated; }
+    private boolean mPressed;
+    public void setPressed(boolean pressed) { mPressed = pressed; }
+    public boolean isPressed() { return mPressed; }
+    public void setContextClickable(boolean contextClickable) {}
+    public boolean isContextClickable() { return false; }
+    public void setHapticFeedbackEnabled(boolean hapticFeedbackEnabled) {}
+    public boolean performHapticFeedback(int feedbackConstant) { return false; }
+    private CharSequence mContentDescription;
+    public void setContentDescription(CharSequence contentDescription) { mContentDescription = contentDescription; }
+    public CharSequence getContentDescription() { return mContentDescription; }
+    public void setAccessibilityLiveRegion(int mode) {}
+    public int getAccessibilityLiveRegion() { return 0; }
+    public void sendAccessibilityEvent(int eventType) {}
+    public void announceForAccessibility(CharSequence text) {}
+    public static final int LAYER_TYPE_NONE = 0;
+    public static final int LAYER_TYPE_SOFTWARE = 1;
+    public static final int LAYER_TYPE_HARDWARE = 2;
+    public int getLayerType() { return LAYER_TYPE_NONE; }
+    public void setTransitionName(String transitionName) {}
+    public String getTransitionName() { return null; }
+    public void setTranslationZ(float translationZ) {}
+    public float getTranslationZ() { return 0f; }
+    public void setOutlineProvider(Object provider) {}
+    public void setClipToOutline(boolean clipToOutline) {}
+    public boolean getClipToOutline() { return false; }
+    public void setNestedScrollingEnabled(boolean enabled) {}
+    public boolean isNestedScrollingEnabled() { return false; }
+    public void setScrollIndicators(int indicators) {}
+    public void setScrollIndicators(int indicators, int mask) {}
+    public int getScrollIndicators() { return 0; }
+    public boolean canScrollHorizontally(int direction) { return false; }
+    public boolean canScrollVertically(int direction) { return false; }
+    private OnLongClickListener mOnLongClickListener;
+    public boolean performLongClick() { return mOnLongClickListener != null && mOnLongClickListener.onLongClick(this); }
+    public boolean showContextMenu() { return false; }
+    public boolean showContextMenu(float x, float y) { return false; }
+    public void setRotationX(float rotationX) {}
+    public float getRotationX() { return 0f; }
+    public void setRotationY(float rotationY) {}
+    public float getRotationY() { return 0f; }
+    public void setPivotX(float pivotX) {}
+    public float getPivotX() { return 0f; }
+    public void setPivotY(float pivotY) {}
+    public float getPivotY() { return 0f; }
+    public android.view.ViewPropertyAnimator getViewPropertyAnimator() { return null; }
+    public boolean getKeepScreenOn() { return false; }
+    public boolean getSoundEffectsEnabled() { return false; }
+    public void setSoundEffectsEnabled(boolean soundEffectsEnabled) {}
+    public void playSoundEffect(int soundConstant) {}
+    public static final int NO_ID = -1;
+    public int getNextFocusUpId() { return NO_ID; }
+    public void setNextFocusUpId(int nextFocusUpId) {}
+    public int getNextFocusDownId() { return NO_ID; }
+    public void setNextFocusDownId(int nextFocusDownId) {}
+    public int getNextFocusLeftId() { return NO_ID; }
+    public void setNextFocusLeftId(int nextFocusLeftId) {}
+    public int getNextFocusRightId() { return NO_ID; }
+    public void setNextFocusRightId(int nextFocusRightId) {}
+    public int getNextFocusForwardId() { return NO_ID; }
+    public void setNextFocusForwardId(int nextFocusForwardId) {}
+    public int getWindowSystemUiVisibility() { return 0; }
+    public void setOnSystemUiVisibilityChangeListener(OnSystemUiVisibilityChangeListener l) {}
+    public interface OnSystemUiVisibilityChangeListener { void onSystemUiVisibilityChange(int visibility); }
+    public void drawableHotspotChanged(float x, float y) {}
+    public void postInvalidateDelayed(long delayMilliseconds) { invalidate(); }
+    public void postInvalidateOnAnimation() { invalidate(); }
+    public void postOnAnimation(Runnable action) { if (action != null) action.run(); }
+    public void postOnAnimationDelayed(Runnable action, long delayMillis) { if (action != null) action.run(); }
+    public void invalidateDrawable(android.graphics.drawable.Drawable drawable) { invalidate(); }
+    public android.view.WindowInsets onApplyWindowInsets(android.view.WindowInsets insets) { return insets; }
+    public void onWindowSystemUiVisibilityChanged(int visible) {}
+    public boolean fitSystemWindows(android.graphics.Rect insets) { return false; }
+    public void requestApplyInsets() {}
+    public void dispatchApplyWindowInsets(android.view.WindowInsets insets) {}
+    public android.view.WindowInsets getRootWindowInsets() { return null; }
+    public void setWindowInsetsAnimationCallback(Object callback) {}
+    public int getPaddingStart() { return mPaddingLeft; }
+    public int getPaddingEnd() { return mPaddingRight; }
+    public boolean isPaddingRelative() { return false; }
+    public void setPaddingRelative(int start, int top, int end, int bottom) { setPadding(start, top, end, bottom); }
+    public static final int TEXT_ALIGNMENT_INHERIT = 0;
+    public static final int TEXT_ALIGNMENT_GRAVITY = 1;
+    public static final int TEXT_ALIGNMENT_TEXT_START = 2;
+    public static final int TEXT_ALIGNMENT_TEXT_END = 3;
+    public static final int TEXT_ALIGNMENT_CENTER = 4;
+    public static final int TEXT_ALIGNMENT_VIEW_START = 5;
+    public static final int TEXT_ALIGNMENT_VIEW_END = 6;
+    public void setTextAlignment(int textAlignment) {}
+    public int getTextAlignment() { return TEXT_ALIGNMENT_GRAVITY; }
+    public void setTextDirection(int textDirection) {}
+    public int getTextDirection() { return 0; }
+    public int getLayoutDirection() { return LAYOUT_DIRECTION_LTR; }
+    public void setLayoutDirection(int layoutDirection) {}
+    public static final int LAYOUT_DIRECTION_LTR = 0;
+    public static final int LAYOUT_DIRECTION_RTL = 1;
+    public static final int LAYOUT_DIRECTION_INHERIT = 2;
+    public static final int LAYOUT_DIRECTION_LOCALE = 3;
+    public boolean isRtl() { return false; }
+    public int getResolvedLayoutDirection() { return LAYOUT_DIRECTION_LTR; }
+
     public android.graphics.drawable.Drawable getBackground() { return mBackground; }
     public void setBackground(android.graphics.drawable.Drawable background) {
         mBackground = background;
@@ -458,6 +629,9 @@ public class View {
     public int getSuggestedMinimumHeight() {
         return Math.max(mMinHeight, mPaddingTop + mPaddingBottom);
     }
+
+    public android.os.Parcelable onSaveInstanceState() { return null; }
+    public void onRestoreInstanceState(android.os.Parcelable state) {}
 
     private int resolveDefaultMeasuredSize(int measureSpec, int layoutSpec, int fallback) {
         int mode = MeasureSpec.getMode(measureSpec);

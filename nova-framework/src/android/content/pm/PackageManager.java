@@ -37,10 +37,14 @@ public class PackageManager {
         throw new NameNotFoundException(packageName);
     }
 
-    public ActivityInfo getActivityInfo(ComponentName component, long flags) throws NameNotFoundException {
-        ActivityInfo info = NovaPackageManager.getInstance().getActivityInfo(component, (int) flags);
+    public ActivityInfo getActivityInfo(ComponentName component, int flags) throws NameNotFoundException {
+        ActivityInfo info = NovaPackageManager.getInstance().getActivityInfo(component, flags);
         if (info != null) return info;
         throw new NameNotFoundException(component != null ? component.toString() : "null");
+    }
+
+    public ActivityInfo getActivityInfo(ComponentName component, long flags) throws NameNotFoundException {
+        return getActivityInfo(component, (int) flags);
     }
 
     public int checkPermission(String permName, String pkgName) { return PERMISSION_GRANTED; }

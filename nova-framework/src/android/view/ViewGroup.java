@@ -34,6 +34,18 @@ public class ViewGroup extends View implements ViewParent {
         super(context);
     }
 
+    public ViewGroup(Context context, android.util.AttributeSet attrs) {
+        super(context, attrs);
+    }
+
+    public ViewGroup(Context context, android.util.AttributeSet attrs, int defStyleAttr) {
+        super(context, attrs, defStyleAttr);
+    }
+
+    public ViewGroup(Context context, android.util.AttributeSet attrs, int defStyleAttr, int defStyleRes) {
+        super(context, attrs, defStyleAttr, defStyleRes);
+    }
+
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
@@ -214,6 +226,14 @@ public class ViewGroup extends View implements ViewParent {
         invalidate();
     }
 
+    public void removeViewAt(int index) {
+        if (index < 0 || index >= mChildren.size()) return;
+        View child = mChildren.remove(index);
+        cleanupChild(child);
+        requestLayout();
+        invalidate();
+    }
+
     public int getChildCount() {
         return mChildren.size();
     }
@@ -240,6 +260,15 @@ public class ViewGroup extends View implements ViewParent {
 
     public boolean willNotDraw() {
         return mWillNotDraw;
+    }
+
+    public interface OnHierarchyChangeListener {
+        void onChildViewAdded(View parent, View child);
+        void onChildViewRemoved(View parent, View child);
+    }
+    private OnHierarchyChangeListener mOnHierarchyChangeListener;
+    public void setOnHierarchyChangeListener(OnHierarchyChangeListener listener) {
+        mOnHierarchyChangeListener = listener;
     }
 
     public void setDescendantFocusability(int focusability) {
@@ -468,4 +497,19 @@ public class ViewGroup extends View implements ViewParent {
     public boolean onNestedPreFling(View target, float velocityX, float velocityY) { return false; }
     @Override
     public int getNestedScrollAxes() { return 0; }
+
+    public int indexOfChild(View child) {
+        return mChildren.indexOf(child);
+    }
+
+    public android.animation.LayoutTransition getLayoutTransition() { return null; }
+    public void setLayoutTransition(android.animation.LayoutTransition transition) {}
+    public void setMotionEventSplittingEnabled(boolean split) {}
+    public boolean isMotionEventSplittingEnabled() { return false; }
+    public void setTouchscreenBlocksFocus(boolean touchscreenBlocksFocus) {}
+    public boolean getTouchscreenBlocksFocus() { return false; }
+    public void setClipChildren(boolean clipChildren) {}
+    public boolean getClipChildren() { return true; }
+    public void setClipToPadding(boolean clipToPadding) {}
+    public boolean getClipToPadding() { return true; }
 }

@@ -152,7 +152,8 @@ public class LayoutInflater {
         View currentView = null;
         List<InflateNode> stack = new ArrayList<>();
 
-        for (String rawLine : lines) {
+        for (int li = 0; li < lines.length; li++) {
+            String rawLine = lines[li];
             String trimmed = rawLine.trim();
             if (trimmed.startsWith("A:") && currentView != null) {
                 applyAttribute(currentView, trimmed);
@@ -170,6 +171,41 @@ public class LayoutInflater {
             int indent = getIndentation(rawLine);
             String elementName = extractElementName(trimmed);
             if (elementName == null || elementName.isEmpty()) {
+                continue;
+            }
+
+            // Handle <include> tag by looking ahead for layout= attribute
+            if ("include".equals(elementName)) {
+                Integer layoutId = null;
+                for (int j = li + 1; j < lines.length; j++) {
+                    String nextTrimmed = lines[j].trim();
+                    if (nextTrimmed.startsWith("E:")) break;
+                    if (nextTrimmed.startsWith("A:") && (nextTrimmed.contains("layout=@") || nextTrimmed.contains("layout=") )) {
+                        layoutId = extractHexResourceValue(nextTrimmed);
+                        break;
+                    }
+                }
+                if (layoutId != null) {
+                    ViewGroup currentParent = null;
+                    for (int k = stack.size() - 1; k >= 0; k--) {
+                        if (stack.get(k).view instanceof ViewGroup) {
+                            currentParent = (ViewGroup) stack.get(k).view;
+                            break;
+                        }
+                    }
+                    if (currentParent == null && rootView instanceof ViewGroup) {
+                        currentParent = (ViewGroup) rootView;
+                    }
+                    try {
+                        View includedView = inflate(layoutId, currentParent, false);
+                        if (includedView != null && currentParent != null) {
+                            currentParent.addView(includedView);
+                            System.out.println("[LayoutInflater] include @0x" + Integer.toHexString(layoutId) + " → " + includedView.getClass().getName());
+                        }
+                    } catch (Exception e) {
+                        System.err.println("[LayoutInflater] include failed: " + e.getMessage());
+                    }
+                }
                 continue;
             }
 
@@ -236,6 +272,14 @@ public class LayoutInflater {
     }
 
     private void applyAttribute(View currentView, String trimmed) {
+        try {
+            applyAttributeUnsafe(currentView, trimmed);
+        } catch (Exception e) {
+            System.err.println("[LayoutInflater] Ignoring attribute error: " + trimmed.substring(0, Math.min(60, trimmed.length())) + " - " + e.getMessage());
+        }
+    }
+
+    private void applyAttributeUnsafe(View currentView, String trimmed) {
         Integer resourceValue = extractHexResourceValue(trimmed);
         Integer intValue = extractHexIntValue(trimmed);
 

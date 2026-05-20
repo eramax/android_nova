@@ -149,7 +149,7 @@ public class ValueAnimator extends Animator {
     public long getDuration() { return mDuration; }
 
     @Override
-    public Animator setDuration(long duration) { mDuration = duration; return this; }
+    public ValueAnimator setDuration(long duration) { mDuration = duration; return this; }
 
     @Override
     public long getStartDelay() { return mStartDelay; }
@@ -163,8 +163,8 @@ public class ValueAnimator extends Animator {
     public int getRepeatMode() { return mRepeatMode; }
     public void setRepeatMode(int value) { mRepeatMode = value; }
 
-    public void setInterpolator(android.view.animation.Interpolator value) {}
-    public android.view.animation.Interpolator getInterpolator() { return null; }
+    public void setInterpolator(TimeInterpolator value) {}
+    public TimeInterpolator getInterpolator() { return null; }
 
     public void setEvaluator(TypeEvaluator value) {}
 

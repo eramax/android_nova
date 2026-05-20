@@ -27,12 +27,33 @@ public class Window {
     public Context getContext() { return mContext; }
 
     public void setCallback(Callback callback) { mCallback = callback; }
-    public Callback getCallback() { return mCallback; }
+    public Callback getCallback() {
+        if (mCallback != null) return mCallback;
+        return new Callback() {
+            public boolean dispatchKeyEvent(KeyEvent e) { return false; }
+            public boolean dispatchTouchEvent(MotionEvent e) { return false; }
+            public void onWindowFocusChanged(boolean hasFocus) {}
+            public void onAttachedToWindow() {}
+            public void onDetachedFromWindow() {}
+            public boolean onMenuItemSelected(int featureId, MenuItem item) { return false; }
+            public void onWindowAttributesChanged(WindowManager.LayoutParams attrs) {}
+            public void onContentChanged() {}
+        };
+    }
 
     public void setContentView(View view) { mDecorView = view; }
     public void setContentView(int layoutResID) {}
     public void addContentView(View view, ViewGroup.LayoutParams params) {}
-    public View getDecorView() { return mDecorView; }
+    public View getDecorView() {
+        if (mDecorView == null) {
+            android.widget.FrameLayout decor = new android.widget.FrameLayout(mContext);
+            android.widget.FrameLayout content = new android.widget.FrameLayout(mContext);
+            content.setId(0x01020002); // android.R.id.content
+            decor.addView(content);
+            mDecorView = decor;
+        }
+        return mDecorView;
+    }
     public View peekDecorView() { return mDecorView; }
 
     public WindowManager.LayoutParams getAttributes() { return mAttributes; }
