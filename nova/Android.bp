@@ -4,6 +4,7 @@ package {
 
 cc_binary_host {
     name: "nova",
+    compile_multilib: "64",
     srcs: [
         "src/main.c",
         "src/art.c",

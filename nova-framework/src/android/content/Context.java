@@ -201,7 +201,10 @@ public abstract class Context {
     public String getString(int resId, Object... args) { return ""; }
     public CharSequence getText(int resId) { return ""; }
     public int getColor(int id) { return 0; }
-    public android.graphics.drawable.Drawable getDrawable(int id) { return null; }
+    public android.graphics.drawable.Drawable getDrawable(int id) {
+        Resources resources = getResources();
+        return resources != null ? resources.getDrawable(id) : null;
+    }
 
     public android.os.Handler getMainExecutor() { return null; }
     public java.util.concurrent.Executor getMainExecutorService() { return null; }

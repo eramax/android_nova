@@ -21,6 +21,10 @@ struct nova_paint {
 struct nova_canvas {
     struct nova_bitmap *bitmap;
     int save_depth;
+    float translate_x;
+    float translate_y;
+    float saved_translate_x[32];
+    float saved_translate_y[32];
 };
 
 static int clamp_floor(float value, int min_value, int max_value) {
@@ -264,10 +268,10 @@ void nova_canvas_draw_rect(struct nova_canvas *canvas, float left, float top,
         bottom = swap;
     }
 
-    x0 = clamp_floor(left, 0, canvas->bitmap->width);
-    y0 = clamp_floor(top, 0, canvas->bitmap->height);
-    x1 = clamp_ceil(right, 0, canvas->bitmap->width);
-    y1 = clamp_ceil(bottom, 0, canvas->bitmap->height);
+    x0 = clamp_floor(left + canvas->translate_x, 0, canvas->bitmap->width);
+    y0 = clamp_floor(top + canvas->translate_y, 0, canvas->bitmap->height);
+    x1 = clamp_ceil(right + canvas->translate_x, 0, canvas->bitmap->width);
+    y1 = clamp_ceil(bottom + canvas->translate_y, 0, canvas->bitmap->height);
 
     if (paint->style == NOVA_PAINT_STYLE_FILL || paint->style == NOVA_PAINT_STYLE_FILL_AND_STROKE) {
         fill_span(canvas->bitmap, x0, y0, x1, y1, paint->color);
@@ -298,6 +302,10 @@ int nova_canvas_save(struct nova_canvas *canvas, int save_flags) {
     if (!canvas) {
         return 0;
     }
+    if (canvas->save_depth - 1 < 32) {
+        canvas->saved_translate_x[canvas->save_depth - 1] = canvas->translate_x;
+        canvas->saved_translate_y[canvas->save_depth - 1] = canvas->translate_y;
+    }
     canvas->save_depth += 1;
     return canvas->save_depth;
 }
@@ -305,7 +313,19 @@ int nova_canvas_save(struct nova_canvas *canvas, int save_flags) {
 void nova_canvas_restore(struct nova_canvas *canvas) {
     if (canvas && canvas->save_depth > 1) {
         canvas->save_depth -= 1;
+        if (canvas->save_depth - 1 < 32) {
+            canvas->translate_x = canvas->saved_translate_x[canvas->save_depth - 1];
+            canvas->translate_y = canvas->saved_translate_y[canvas->save_depth - 1];
+        }
     }
+}
+
+void nova_canvas_translate(struct nova_canvas *canvas, float dx, float dy) {
+    if (!canvas) {
+        return;
+    }
+    canvas->translate_x += dx;
+    canvas->translate_y += dy;
 }
 
 int nova_canvas_width(const struct nova_canvas *canvas) {
@@ -314,4 +334,48 @@ int nova_canvas_width(const struct nova_canvas *canvas) {
 
 int nova_canvas_height(const struct nova_canvas *canvas) {
     return (canvas && canvas->bitmap) ? canvas->bitmap->height : 0;
+}
+
+void nova_canvas_blit_bitmap(struct nova_canvas *canvas, const struct nova_bitmap *src,
+                              int left, int top) {
+    int src_x, src_y, dst_x, dst_y;
+    int copy_w, copy_h;
+    if (!canvas || !canvas->bitmap || !src || !src->pixels || !canvas->bitmap->pixels) {
+        return;
+    }
+    left += (int) canvas->translate_x;
+    top += (int) canvas->translate_y;
+    /* Clip src region to destination canvas bounds */
+    int d_left  = left < 0 ? 0 : left;
+    int d_top   = top  < 0 ? 0 : top;
+    int d_right  = left + src->width;
+    int d_bottom = top  + src->height;
+    if (d_right  > canvas->bitmap->width)  d_right  = canvas->bitmap->width;
+    if (d_bottom > canvas->bitmap->height) d_bottom = canvas->bitmap->height;
+    if (d_left >= d_right || d_top >= d_bottom) return;
+
+    copy_w = d_right - d_left;
+    copy_h = d_bottom - d_top;
+    for (dst_y = d_top; dst_y < d_bottom; dst_y++) {
+        src_y = dst_y - top;
+        src_x = d_left - left;
+        uint32_t *dst_row = canvas->bitmap->pixels + dst_y * canvas->bitmap->width + d_left;
+        const uint32_t *src_row = src->pixels + src_y * src->width + src_x;
+        for (int px = 0; px < copy_w; px++) {
+            uint32_t sc = src_row[px];
+            uint32_t sa = (sc >> 24) & 0xFF;
+            if (sa == 0xFF) {
+                dst_row[px] = sc;
+            } else if (sa > 0) {
+                /* Simple alpha blend */
+                uint32_t da = 255 - sa;
+                uint32_t dc = dst_row[px];
+                uint32_t r = ((sc >> 16 & 0xFF) * sa + (dc >> 16 & 0xFF) * da) / 255;
+                uint32_t g = ((sc >>  8 & 0xFF) * sa + (dc >>  8 & 0xFF) * da) / 255;
+                uint32_t b = ((sc       & 0xFF) * sa + (dc       & 0xFF) * da) / 255;
+                dst_row[px] = (0xFF << 24) | (r << 16) | (g << 8) | b;
+            }
+        }
+    }
+    (void)copy_h; /* unused warning suppressor */
 }

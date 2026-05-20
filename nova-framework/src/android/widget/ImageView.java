@@ -2,6 +2,7 @@ package android.widget;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.View;
@@ -29,7 +30,11 @@ public class ImageView extends View {
         return mDrawable;
     }
 
-    public void setImageResource(int resId) {}
+    public void setImageResource(int resId) {
+        if (getContext() != null) {
+            setImageDrawable(getContext().getDrawable(resId));
+        }
+    }
     public void setImageBitmap(Bitmap bm) {}
 
     public void setScaleType(ScaleType scaleType) {}
@@ -37,5 +42,13 @@ public class ImageView extends View {
 
     public enum ScaleType {
         MATRIX, FIT_XY, FIT_START, FIT_CENTER, FIT_END, CENTER, CENTER_CROP, CENTER_INSIDE
+    }
+
+    @Override
+    protected void onDraw(Canvas canvas) {
+        if (mDrawable != null && canvas != null) {
+            mDrawable.setBounds(0, 0, getWidth(), getHeight());
+            mDrawable.draw(canvas);
+        }
     }
 }

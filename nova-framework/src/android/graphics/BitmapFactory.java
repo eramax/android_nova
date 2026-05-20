@@ -69,8 +69,7 @@ public class BitmapFactory {
 
     public static Bitmap decodeResource(Resources res, int id, Options opts) {
         if (res == null) return null;
-        try {
-            InputStream is = res.openRawResource(id);
+        try (InputStream is = res.openRawResource(id)) {
             if (is == null) return null;
             return decodeStream(is, null, opts);
         } catch (Exception e) {

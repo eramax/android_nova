@@ -17,6 +17,7 @@ public final class RenderCoordinator {
     private Canvas mBackCanvas;
     private final Object mLock = new Object();
     private long mFrameTimeNanos;
+    private boolean mDumpedTree;
 
     public static synchronized RenderCoordinator getInstance() {
         if (sInstance == null) {
@@ -31,10 +32,13 @@ public final class RenderCoordinator {
     }
 
     public void start(View rootView, int width, int height) {
-        if (mRunning) return;
-
-        Log.d(TAG, "Starting render coordinator for " + width + "x" + height);
         synchronized (mLock) {
+            mRootView = rootView;
+            if (mRunning) {
+                return;
+            }
+
+            Log.d(TAG, "Starting render coordinator for " + width + "x" + height);
             mRootView = rootView;
             mBackBuffer = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
             mBackCanvas = new Canvas(mBackBuffer);
@@ -48,6 +52,12 @@ public final class RenderCoordinator {
             }
         }, "NovaRenderThread");
         mRenderThread.start();
+    }
+
+    public void setRootView(View rootView) {
+        synchronized (mLock) {
+            mRootView = rootView;
+        }
     }
 
     public void stop() {
@@ -76,9 +86,15 @@ public final class RenderCoordinator {
                 synchronized (mLock) {
                     if (mBackCanvas != null && mRootView != null) {
                         mBackCanvas.drawColor(Color.WHITE);
+                        mRootView.layout(0, 0, mBackBuffer.getWidth(), mBackBuffer.getHeight());
                         mRootView.draw(mBackCanvas);
                         submitFrame();
                         frameCount++;
+                        if (!mDumpedTree && frameCount >= 30) {
+                            Log.d(TAG, "Render tree:");
+                            dumpViewTree(mRootView, "");
+                            mDumpedTree = true;
+                        }
                         if (frameCount % 60 == 0) {
                             Log.d(TAG, "Frames rendered: " + frameCount);
                         }
@@ -103,6 +119,20 @@ public final class RenderCoordinator {
             CanvasRender.submitFrame(mBackBuffer);
         } catch (Exception e) {
             Log.e(TAG, "Error submitting frame", e);
+        }
+    }
+
+    private void dumpViewTree(View view, String indent) {
+        if (view == null) {
+            return;
+        }
+        Log.d(TAG, indent + view.getClass().getName() + " [" + view.getLeft() + "," + view.getTop()
+                + " " + view.getWidth() + "x" + view.getHeight() + "]");
+        if (view instanceof android.view.ViewGroup) {
+            android.view.ViewGroup group = (android.view.ViewGroup) view;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                dumpViewTree(group.getChildAt(i), indent + "  ");
+            }
         }
     }
 }

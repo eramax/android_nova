@@ -59,6 +59,10 @@ public class EGLImpl implements EGL10 {
 
     public EGLContext eglCreateContext(EGLDisplay display, EGLConfig config, EGLContext share_context, int[] attrib_list) {
         long eglContextId = _eglCreateContext(display, config, share_context, attrib_list);
+        System.out.println("[NovaEGL] eglCreateContext display=" + display
+                + " config=" + config
+                + " share=" + share_context
+                + " -> " + eglContextId);
         if (eglContextId == 0) {
             return EGL10.EGL_NO_CONTEXT;
         }
@@ -84,6 +88,7 @@ public class EGLImpl implements EGL10 {
 
     public EGLSurface eglCreateWindowSurface(EGLDisplay display, EGLConfig config, Object native_window, int[] attrib_list) {
         Surface sur = null;
+        String nativeWindowClass = native_window != null ? native_window.getClass().getName() : "null";
         if (native_window instanceof SurfaceView) {
             SurfaceView surfaceView = (SurfaceView)native_window;
             sur = surfaceView.getHolder().getSurface();
@@ -105,6 +110,9 @@ public class EGLImpl implements EGL10 {
                 "eglCreateWindowSurface() can only be called with an instance of " +
                 "Surface, SurfaceView, SurfaceHolder or SurfaceTexture at the moment.");
         }
+
+        System.out.println("[NovaEGL] eglCreateWindowSurface native="
+                + nativeWindowClass + " -> " + eglSurfaceId);
 
         if (eglSurfaceId == 0) {
             return EGL10.EGL_NO_SURFACE;

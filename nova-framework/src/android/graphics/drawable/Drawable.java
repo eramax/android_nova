@@ -5,6 +5,9 @@ import android.graphics.ColorFilter;
 import android.graphics.Rect;
 
 public abstract class Drawable {
+    private final Rect mBounds = new Rect();
+    private Callback mCallback;
+
     public interface Callback {
         void invalidateDrawable(Drawable who);
         void scheduleDrawable(Drawable who, Runnable what, long when);
@@ -14,14 +17,35 @@ public abstract class Drawable {
     public abstract void setAlpha(int alpha);
     public abstract void setColorFilter(ColorFilter colorFilter);
     public abstract int getOpacity();
-    public void setBounds(int left, int top, int right, int bottom) {}
-    public void setBounds(Rect bounds) {}
-    public final Rect getBounds() { return new Rect(); }
-    public void setCallback(Callback cb) {}
-    public Callback getCallback() { return null; }
-    public void invalidateSelf() {}
-    public void scheduleSelf(Runnable what, long when) {}
-    public void unscheduleSelf(Runnable what) {}
+    public void setBounds(int left, int top, int right, int bottom) {
+        mBounds.left = left;
+        mBounds.top = top;
+        mBounds.right = right;
+        mBounds.bottom = bottom;
+    }
+    public void setBounds(Rect bounds) {
+        if (bounds != null) {
+            setBounds(bounds.left, bounds.top, bounds.right, bounds.bottom);
+        }
+    }
+    public final Rect getBounds() { return mBounds; }
+    public void setCallback(Callback cb) { mCallback = cb; }
+    public Callback getCallback() { return mCallback; }
+    public void invalidateSelf() {
+        if (mCallback != null) {
+            mCallback.invalidateDrawable(this);
+        }
+    }
+    public void scheduleSelf(Runnable what, long when) {
+        if (mCallback != null) {
+            mCallback.scheduleDrawable(this, what, when);
+        }
+    }
+    public void unscheduleSelf(Runnable what) {
+        if (mCallback != null) {
+            mCallback.unscheduleDrawable(this, what);
+        }
+    }
     public int getIntrinsicWidth() { return -1; }
     public int getIntrinsicHeight() { return -1; }
     public int getMinimumWidth() { return 0; }

@@ -39,7 +39,10 @@ void nova_canvas_draw_rect(struct nova_canvas *canvas, float left, float top,
 void nova_canvas_draw_color(struct nova_canvas *canvas, uint32_t color);
 int nova_canvas_save(struct nova_canvas *canvas, int save_flags);
 void nova_canvas_restore(struct nova_canvas *canvas);
+void nova_canvas_translate(struct nova_canvas *canvas, float dx, float dy);
 int nova_canvas_width(const struct nova_canvas *canvas);
 int nova_canvas_height(const struct nova_canvas *canvas);
+void nova_canvas_blit_bitmap(struct nova_canvas *canvas, const struct nova_bitmap *src,
+                              int left, int top);
 
 #endif

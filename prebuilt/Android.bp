@@ -10,6 +10,7 @@ cc_prebuilt_library_shared {
     name: "libwayland-client",
     host_supported: true,
     device_supported: false,
+    compile_multilib: "64",
     stl: "none",
     target: {
         linux_glibc_x86_64: {
@@ -23,6 +24,7 @@ cc_prebuilt_library_shared {
     name: "libwayland-egl",
     host_supported: true,
     device_supported: false,
+    compile_multilib: "64",
     stl: "none",
     target: {
         linux_glibc_x86_64: {
@@ -36,6 +38,7 @@ cc_prebuilt_library_shared {
     name: "libEGL-nova",
     host_supported: true,
     device_supported: false,
+    compile_multilib: "64",
     stl: "none",
     target: {
         linux_glibc_x86_64: {
@@ -49,6 +52,7 @@ cc_prebuilt_library_shared {
     name: "libGLESv2-nova",
     host_supported: true,
     device_supported: false,
+    compile_multilib: "64",
     stl: "none",
     target: {
         linux_glibc_x86_64: {
@@ -62,6 +66,7 @@ cc_prebuilt_library_shared {
     name: "libpng16-nova",
     host_supported: true,
     device_supported: false,
+    compile_multilib: "64",
     stl: "none",
     target: {
         linux_glibc_x86_64: {
@@ -80,6 +85,7 @@ cc_prebuilt_library_shared {
     stem: "libGLESv3",
     host_supported: true,
     device_supported: false,
+    compile_multilib: "64",
     stl: "none",
     target: {
         linux_glibc_x86_64: {

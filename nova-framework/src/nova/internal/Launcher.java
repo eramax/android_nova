@@ -16,6 +16,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public final class Launcher {
+    private static final int WINDOW_WIDTH = 960;
+    private static final int WINDOW_HEIGHT = 540;
     private static final String[] HOST_SUPPORT_LIBRARIES = {
             "libandroid.so",
             "liblog.so",
@@ -37,6 +39,9 @@ public final class Launcher {
             "/usr/lib64/libGLESv2.so.2",
             "/usr/lib64/libGLESv2.so"
     };
+    private static ClassLoader sLoader;
+    private static Object sApplication;
+    private static android.app.Activity sCurrentActivity;
 
     private Launcher() {
     }
@@ -68,6 +73,7 @@ public final class Launcher {
         ClassLoader loader = createDexClassLoader(
                 apkPath, optimizedDir.getAbsolutePath(), nativeLibDir.getAbsolutePath(), parent);
         Thread.currentThread().setContextClassLoader(loader);
+        sLoader = loader;
 
         System.out.println("[NovaLauncher] Loader=" + loader.getClass().getName());
         logClass("android.app.Activity", loader);
@@ -77,9 +83,33 @@ public final class Launcher {
         logClass("com.android.gles3jni.GLES3JNILib", loader);
 
         /* Initialize the APK's Application subclass before creating the Activity */
-        Object app = initApplication(apkPath, loader);
+        sApplication = initApplication(apkPath, loader);
+        launchActivity(activityClass, null, true);
+    }
 
-        Class<?> activityType = Class.forName(activityClass, true, loader);
+    public static void startActivity(android.content.Intent intent) {
+        if (sLoader == null || sApplication == null) {
+            System.out.println("[NovaLauncher] startActivity ignored: launcher not initialized");
+            return;
+        }
+
+        String activityClass = resolveActivityClassName(intent);
+        if (activityClass == null || activityClass.isEmpty()) {
+            System.out.println("[NovaLauncher] startActivity unresolved: " + intent);
+            return;
+        }
+
+        try {
+            launchActivity(activityClass, intent, false);
+        } catch (Exception e) {
+            System.out.println("[NovaLauncher] startActivity failed for " + activityClass + ": " + e);
+            e.printStackTrace(System.out);
+        }
+    }
+
+    private static void launchActivity(String activityClass, android.content.Intent intent, boolean initialLaunch)
+            throws Exception {
+        Class<?> activityType = Class.forName(activityClass, true, sLoader);
         System.out.println("[NovaLauncher] Loaded=" + activityType.getName());
         if (activityType.getSuperclass() != null) {
             System.out.println("[NovaLauncher] Super=" + activityType.getSuperclass().getName());
@@ -87,54 +117,121 @@ public final class Launcher {
 
         Constructor<?> ctor = activityType.getDeclaredConstructor();
         ctor.setAccessible(true);
+        if (initialLaunch) {
+            System.out.println("[NovaLauncher] Test new View attached: " + new android.view.View(null).isAttachedToWindow());
+        }
         Object instance = ctor.newInstance();
-        System.out.println("[NovaLauncher] Instance=" + instance.getClass().getName());
+        System.out.println("[NovaLauncher] Activity instance created: " + instance.getClass().getName());
 
         try {
-            Method setAppMethod = activityType.getMethod("setApplication", Class.forName("android.app.Application", false, loader));
-            setAppMethod.invoke(instance, app);
+            Method setAppMethod = activityType.getMethod("setApplication",
+                    Class.forName("android.app.Application", false, sLoader));
+            setAppMethod.invoke(instance, sApplication);
             System.out.println("[NovaLauncher] Attached Application to Activity");
         } catch (Exception e) {
             System.out.println("[NovaLauncher] Failed to attach Application: " + e);
         }
 
+        if (intent != null) {
+            try {
+                Method setIntentMethod = activityType.getMethod("setIntent", Class.forName("android.content.Intent", false, sLoader));
+                setIntentMethod.invoke(instance, intent);
+            } catch (Exception e) {
+                System.out.println("[NovaLauncher] Failed to set intent: " + e);
+            }
+        }
+
+        if (!initialLaunch && sCurrentActivity != null) {
+            invokeLifecycle(sCurrentActivity.getClass(), sCurrentActivity, "onPause", new Class<?>[0], new Object[0]);
+            android.view.View oldView = sCurrentActivity.getContentView();
+            if (oldView != null) {
+                oldView.novaDetachFromWindow();
+            }
+        }
+
         invokeLifecycle(activityType, instance, "onCreate",
                 new Class<?>[] { Class.forName("android.os.Bundle") },
                 new Object[] { null });
+        android.view.View contentView = getActivityContentView(activityType, instance);
+        if (contentView != null) {
+            prepareContentView(contentView);
+        }
+
         invokeLifecycle(activityType, instance, "onResume", new Class<?>[0], new Object[0]);
 
+        if (sCurrentActivity != null && sCurrentActivity != instance) {
+            return;
+        }
+
+        if (contentView != null) {
+            bindRenderer(contentView);
+        }
+
+        sCurrentActivity = (android.app.Activity) instance;
+    }
+
+    private static android.view.View getActivityContentView(Class<?> activityType, Object instance)
+            throws Exception {
         Method getContentView = activityType.getMethod("getContentView");
         Object contentView = getContentView.invoke(instance);
-        if (contentView != null) {
-            System.out.println("[NovaLauncher] ContentView=" + contentView.getClass().getName());
-            android.view.View viewInstance = (android.view.View) contentView;
-            ViewDispatcher.setRootView(viewInstance);
+        if (!(contentView instanceof android.view.View)) {
+            return null;
+        }
+        return (android.view.View) contentView;
+    }
 
-            /* Recurse into ViewGroups to find GLSurfaceView or TextureView */
-            android.view.View renderTarget = findRenderTarget(viewInstance);
-            if (renderTarget != viewInstance) {
-                System.out.println("[NovaLauncher] Found render target: " + renderTarget.getClass().getName());
+    private static void prepareContentView(android.view.View viewInstance) throws Exception {
+        System.out.println("[NovaLauncher] ContentView=" + viewInstance.getClass().getName());
+        System.out.println("[NovaLauncher] DUMP VIEW TREE START:");
+        dumpViewTree(viewInstance, "");
+        System.out.println("[NovaLauncher] DUMP VIEW TREE END");
+        ViewDispatcher.setRootView(viewInstance);
+
+        android.view.View renderTarget = findRenderTarget(viewInstance);
+        System.out.println("[NovaLauncher] Found render target: " + renderTarget.getClass().getName());
+        tryInvoke(renderTarget, "novaAttachToWindow", new Class<?>[0], new Object[0]);
+    }
+
+    private static void bindRenderer(android.view.View viewInstance) throws Exception {
+        android.view.View renderTarget = findRenderTarget(viewInstance);
+        boolean isGLSurfaceView = isClassOrSubclass(renderTarget.getClass(), "android.opengl.GLSurfaceView")
+                || tryInvokeReturning(renderTarget, "requestRender", new Class<?>[0], new Object[0]);
+        if (isGLSurfaceView) {
+            System.out.println("[NovaLauncher] GLSurfaceView — GL thread drives rendering via requestRender");
+        } else {
+            System.out.println("[NovaLauncher] Starting Canvas render coordinator on root view");
+            RenderCoordinator coordinator = RenderCoordinator.getInstance();
+            coordinator.setRootView(viewInstance);
+            coordinator.start(viewInstance, WINDOW_WIDTH, WINDOW_HEIGHT);
+        }
+        logGlThreadState(renderTarget);
+    }
+
+    private static String resolveActivityClassName(android.content.Intent intent) {
+        if (intent == null) {
+            return null;
+        }
+        android.content.ComponentName component = intent.getComponent();
+        if (component != null && component.getClassName() != null && !component.getClassName().isEmpty()) {
+            String className = component.getClassName();
+            if (className.charAt(0) == '.') {
+                return component.getPackageName() + className;
             }
+            return className;
+        }
+        return null;
+    }
 
-            logGlThreadState(renderTarget);
-            tryInvoke(renderTarget, "novaAttachToWindow", new Class<?>[0], new Object[0]);
-            tryInvoke(renderTarget, "novaSimulateSurfaceLifecycle",
-                    new Class<?>[] { int.class, int.class },
-                    new Object[] { 960, 540 });
-
-            boolean isGLSurfaceView = isClassOrSubclass(renderTarget.getClass(), "android.opengl.GLSurfaceView")
-                    || tryInvokeReturning(renderTarget, "requestRender", new Class<?>[0], new Object[0]);
-            boolean isTextureView = isClassOrSubclass(renderTarget.getClass(), "android.view.TextureView");
-            if (isGLSurfaceView) {
-                System.out.println("[NovaLauncher] GLSurfaceView — GL thread drives rendering via requestRender");
-            } else if (isTextureView) {
-                System.out.println(
-                        "[NovaLauncher] TextureView — app drives rendering via lockCanvas/unlockCanvasAndPost");
-            } else {
-                System.out.println("[NovaLauncher] Not GLSurfaceView/TextureView, starting Canvas render coordinator");
-                RenderCoordinator.getInstance().start(renderTarget, 960, 540);
+    private static void dumpViewTree(android.view.View v, String indent) {
+        if (v == null) return;
+        System.out.println(indent + "- " + v.getClass().getName() + " parent: "
+                + (v.getParent() != null ? v.getParent().getClass().getName() : "null")
+                + " attached: " + v.isAttachedToWindow());
+        if (v instanceof android.view.ViewGroup) {
+            android.view.ViewGroup vg = (android.view.ViewGroup) v;
+            for (int i = 0; i < vg.getChildCount(); i++) {
+                dumpViewTree(vg.getChildAt(i), indent + "  ");
             }
-            logGlThreadState(renderTarget);
         }
     }
 
@@ -487,4 +584,5 @@ public final class Launcher {
             System.out.println(messagePrefix + source);
         }
     }
+
 }

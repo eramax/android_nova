@@ -11,6 +11,7 @@ import android.view.WindowManager;
 import android.webkit.WebView;
 import android.util.Log;
 import android.content.res.Configuration;
+import nova.internal.Launcher;
 
 public class Activity extends ContextWrapper {
     private static final String TAG = "NovaActivity";
@@ -143,7 +144,10 @@ public class Activity extends ContextWrapper {
     public int checkSelfPermission(String permission) { return android.content.pm.PackageManager.PERMISSION_GRANTED; }
 
     @Override
-    public void startActivity(Intent intent) { System.out.println("[NovaActivity] startActivity: " + intent); }
+    public void startActivity(Intent intent) {
+        System.out.println("[NovaActivity] startActivity: " + intent);
+        Launcher.startActivity(intent);
+    }
 
     @Override
     public void startActivity(Intent intent, Bundle options) { startActivity(intent); }

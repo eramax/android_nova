@@ -39,13 +39,12 @@ public class Surface implements android.os.Parcelable {
     public void unlockCanvasAndPost(Canvas canvas) {
         if (mSurfaceTexture != null && mSurfaceTexture.novaBitmap != null) {
             if (mFrameCount <= 3 || mFrameCount % 60 == 0) {
-                Log.d(TAG, "unlockCanvasAndPost #" + mFrameCount + " → submitFrame");
+                Log.d(TAG, "unlockCanvasAndPost #" + mFrameCount + " → frame ready in novaBitmap");
             }
-            try {
-                CanvasRender.submitFrame(mSurfaceTexture.novaBitmap);
-            } catch (Exception e) {
-                Log.e(TAG, "submitFrame failed: " + e);
-            }
+            /* Pixels are already in mSurfaceTexture.novaBitmap.
+             * The RenderCoordinator composite pass will call TextureView.onDraw()
+             * → canvas.drawBitmap(mBitmap) to blit these pixels into the master
+             * back-buffer which is then submitted to Wayland. */
         }
     }
 

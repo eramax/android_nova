@@ -9,8 +9,10 @@ import android.content.res.ResourceManager;
 import android.webkit.WebView;
 import android.widget.LinearLayout;
 import java.io.ByteArrayInputStream;
+import java.util.ArrayList;
 import java.lang.reflect.Constructor;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -135,26 +137,13 @@ public class LayoutInflater {
         }
 
         View rootView = null;
-        ViewGroup rootParent = null;
-        int rootIndent = -1;
         View currentView = null;
+        List<InflateNode> stack = new ArrayList<>();
 
         for (String rawLine : lines) {
             String trimmed = rawLine.trim();
             if (trimmed.startsWith("A:") && currentView != null) {
-                if (trimmed.startsWith("A: android:id") || trimmed.contains("0x010100d0")) {
-                    Pattern idPattern = Pattern.compile("=@0x([0-9a-fA-F]+)");
-                    Matcher matcher = idPattern.matcher(trimmed);
-                    if (matcher.find()) {
-                        try {
-                            int idVal = (int) Long.parseLong(matcher.group(1), 16);
-                            currentView.setId(idVal);
-                            System.out.println("[LayoutInflater] Set ID " + String.format("0x%08x", idVal) + " on view: " + currentView.getClass().getName());
-                        } catch (NumberFormatException e) {
-                            // ignore
-                        }
-                    }
-                }
+                applyAttribute(currentView, trimmed);
                 continue;
             }
 
@@ -180,14 +169,22 @@ public class LayoutInflater {
 
             if (rootView == null) {
                 rootView = view;
-                rootIndent = indent;
-                if (view instanceof ViewGroup) {
-                    rootParent = (ViewGroup) view;
-                }
                 System.out.println("[LayoutInflater] Root element: " + elementName);
-            } else if (rootParent != null && indent > rootIndent) {
-                rootParent.addView(view);
-                System.out.println("[LayoutInflater] Added child: " + elementName);
+            } else {
+                while (!stack.isEmpty() && stack.get(stack.size() - 1).indent >= indent) {
+                    stack.remove(stack.size() - 1);
+                }
+                if (!stack.isEmpty()) {
+                    View parentView = stack.get(stack.size() - 1).view;
+                    if (parentView instanceof ViewGroup) {
+                        ((ViewGroup) parentView).addView(view);
+                        System.out.println("[LayoutInflater] Added child: " + elementName);
+                    }
+                }
+            }
+
+            if (view instanceof ViewGroup) {
+                stack.add(new InflateNode(view, indent));
             }
         }
 
@@ -211,6 +208,168 @@ public class LayoutInflater {
         return count;
     }
 
+    private void applyAttribute(View currentView, String trimmed) {
+        Integer resourceValue = extractHexResourceValue(trimmed);
+        Integer intValue = extractHexIntValue(trimmed);
+
+        if (trimmed.startsWith("A: android:id") || trimmed.contains("0x010100d0")) {
+            if (resourceValue != null) {
+                currentView.setId(resourceValue);
+                System.out.println("[LayoutInflater] Set ID " + String.format("0x%08x", resourceValue)
+                        + " on view: " + currentView.getClass().getName());
+            }
+            return;
+        }
+
+        if ((trimmed.startsWith("A: android:background") || trimmed.contains("0x010100d4"))
+                && resourceValue != null) {
+            currentView.setBackground(mContext.getDrawable(resourceValue));
+            return;
+        }
+
+        if ((trimmed.startsWith("A: android:background") || trimmed.contains("0x010100d4"))
+                && intValue != null) {
+            currentView.setBackground(new android.graphics.drawable.ColorDrawable(intValue));
+            return;
+        }
+
+        if (currentView instanceof android.widget.ImageView
+                && (trimmed.startsWith("A: android:src") || trimmed.contains("0x01010119"))
+                && resourceValue != null) {
+            ((android.widget.ImageView) currentView).setImageResource(resourceValue);
+            return;
+        }
+
+        if (currentView instanceof android.widget.TextView
+                && (trimmed.startsWith("A: android:text(") || trimmed.contains("0x0101014f"))
+                && resourceValue != null) {
+            ((android.widget.TextView) currentView).setText(resourceValue);
+            return;
+        }
+
+        if (currentView instanceof android.widget.TextView
+                && (trimmed.startsWith("A: android:textColor") || trimmed.contains("0x01010098"))
+                && intValue != null) {
+            ((android.widget.TextView) currentView).setTextColor(intValue);
+            return;
+        }
+
+        if (trimmed.startsWith("A: android:visibility") || trimmed.contains("0x010100dc")) {
+            Integer visibility = extractTypedIntValue(trimmed);
+            if (visibility != null) {
+                currentView.setVisibility(visibility);
+            }
+            return;
+        }
+
+        if (trimmed.startsWith("A: android:layout_width") || trimmed.contains("0x010100f4")) {
+            Integer width = extractLayoutSizeValue(trimmed);
+            if (width != null) {
+                currentView.novaSetLayoutWidth(width);
+            }
+            return;
+        }
+
+        if (trimmed.startsWith("A: android:layout_height") || trimmed.contains("0x010100f5")) {
+            Integer height = extractLayoutSizeValue(trimmed);
+            if (height != null) {
+                currentView.novaSetLayoutHeight(height);
+            }
+            return;
+        }
+
+        if (trimmed.startsWith("A: android:layout_alignParentBottom") || trimmed.contains("0x0101018e")) {
+            Integer alignParentBottom = extractBooleanTrue(trimmed);
+            currentView.novaSetAlignParentBottom(alignParentBottom != null && alignParentBottom != 0);
+            return;
+        }
+
+        if (currentView instanceof android.widget.LinearLayout
+                && (trimmed.startsWith("A: android:orientation") || trimmed.contains("0x010100c4"))) {
+            Integer orientation = extractTypedIntValue(trimmed);
+            if (orientation != null) {
+                ((android.widget.LinearLayout) currentView).setOrientation(orientation);
+            }
+        }
+    }
+
+    private Integer extractHexResourceValue(String trimmed) {
+        Pattern idPattern = Pattern.compile("=@0x([0-9a-fA-F]+)");
+        Matcher matcher = idPattern.matcher(trimmed);
+        if (matcher.find()) {
+            try {
+                return (int) Long.parseLong(matcher.group(1), 16);
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return null;
+    }
+
+    private Integer extractHexIntValue(String trimmed) {
+        Pattern intPattern = Pattern.compile("\\(type 0x1[d|c]\\)0x([0-9a-fA-F]+)");
+        Matcher matcher = intPattern.matcher(trimmed);
+        if (matcher.find()) {
+            try {
+                return (int) Long.parseLong(matcher.group(1), 16);
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return null;
+    }
+
+    private Integer extractTypedIntValue(String trimmed) {
+        Pattern intPattern = Pattern.compile("\\(type 0x1[0-2]\\)0x([0-9a-fA-F]+)");
+        Matcher matcher = intPattern.matcher(trimmed);
+        if (matcher.find()) {
+            try {
+                return (int) Long.parseLong(matcher.group(1), 16);
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return null;
+    }
+
+    private Integer extractLayoutSizeValue(String trimmed) {
+        Integer typedValue = extractTypedIntValue(trimmed);
+        if (typedValue != null) {
+            return typedValue;
+        }
+
+        Pattern dimensionPattern = Pattern.compile("\\(type 0x5\\)0x([0-9a-fA-F]+)");
+        Matcher matcher = dimensionPattern.matcher(trimmed);
+        if (matcher.find()) {
+            try {
+                int raw = (int) Long.parseLong(matcher.group(1), 16);
+                int approxPx = raw >> 8;
+                return approxPx > 0 ? approxPx : 48;
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return null;
+    }
+
+    private Integer extractBooleanTrue(String trimmed) {
+        Pattern boolPattern = Pattern.compile("\\(type 0x12\\)0x([0-9a-fA-F]+)");
+        Matcher matcher = boolPattern.matcher(trimmed);
+        if (matcher.find()) {
+            try {
+                return (int) Long.parseLong(matcher.group(1), 16);
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return null;
+    }
+
+    private static final class InflateNode {
+        final View view;
+        final int indent;
+
+        InflateNode(View view, int indent) {
+            this.view = view;
+            this.indent = indent;
+        }
+    }
+
     private String extractElementName(String line) {
         Pattern pattern = Pattern.compile("E:\\s*([\\w.]+)");
         Matcher matcher = pattern.matcher(line);
@@ -226,25 +385,26 @@ public class LayoutInflater {
         }
 
         Class<?> viewClass = VIEW_CLASSES.get(className);
+        ClassLoader loader = mContext != null ? mContext.getClassLoader() : LayoutInflater.class.getClassLoader();
 
         if (viewClass == null) {
             if (!className.contains(".")) {
                 try {
-                    viewClass = Class.forName("android.widget." + className);
+                    viewClass = Class.forName("android.widget." + className, false, loader);
                 } catch (ClassNotFoundException ignored) {}
                 if (viewClass == null) {
                     try {
-                        viewClass = Class.forName("android.view." + className);
+                        viewClass = Class.forName("android.view." + className, false, loader);
                     } catch (ClassNotFoundException ignored) {}
                 }
                 if (viewClass == null) {
                     try {
-                        viewClass = Class.forName("android.webkit." + className);
+                        viewClass = Class.forName("android.webkit." + className, false, loader);
                     } catch (ClassNotFoundException ignored) {}
                 }
             } else {
                 try {
-                    viewClass = Class.forName(className);
+                    viewClass = Class.forName(className, false, loader);
                 } catch (ClassNotFoundException ignored) {}
             }
         }
@@ -266,7 +426,12 @@ public class LayoutInflater {
                 return null;
             }
         } catch (Exception e) {
-            System.err.println("[LayoutInflater] Error creating view: " + className + " - " + e.getMessage());
+            Throwable cause = e.getCause();
+            System.err.println("[LayoutInflater] Error creating view: " + className + " - "
+                    + e.getMessage() + (cause != null ? " cause=" + cause : ""));
+            if (cause != null) {
+                cause.printStackTrace();
+            }
             return null;
         }
     }

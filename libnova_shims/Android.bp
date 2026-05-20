@@ -12,6 +12,7 @@ package {
 cc_library_host_shared {
     name: "libandroid-nova",
     stem: "libandroid",
+    compile_multilib: "64",
     srcs: ["libandroid.c"],
     cflags: ["-Wall", "-D_GNU_SOURCE"],
     stl: "none",
@@ -20,6 +21,7 @@ cc_library_host_shared {
 cc_library_host_shared {
     name: "libOpenSLES-nova",
     stem: "libOpenSLES",
+    compile_multilib: "64",
     srcs: ["libOpenSLES.c"],
     cflags: ["-Wall", "-D_GNU_SOURCE"],
     stl: "none",
@@ -27,6 +29,7 @@ cc_library_host_shared {
 
 cc_library_host_shared {
     name: "libdeepbind_wrapper",
+    compile_multilib: "64",
     srcs: ["deepbind_wrapper.c"],
     cflags: ["-Wall", "-D_GNU_SOURCE"],
     host_ldlibs: ["-ldl"],

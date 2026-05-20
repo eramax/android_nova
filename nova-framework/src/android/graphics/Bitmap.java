@@ -2,7 +2,12 @@ package android.graphics;
 
 public class Bitmap {
     public enum Config {
-        ARGB_8888(1);
+        ALPHA_8(2),
+        RGB_565(3),
+        ARGB_4444(4),
+        ARGB_8888(1),
+        RGBA_F16(5),
+        HARDWARE(6);
 
         final int nativeInt;
 

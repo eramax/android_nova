@@ -7,7 +7,6 @@ import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.util.AttributeSet;
 import android.util.Log;
-import nova.internal.CanvasRender;
 
 public class TextureView extends View {
     private static final String TAG = "NovaTextureView";
@@ -36,24 +35,39 @@ public class TextureView extends View {
     }
 
     public void setSurfaceTextureListener(SurfaceTextureListener listener) {
-        Log.d(TAG, "setSurfaceTextureListener " + (listener != null ? listener.getClass().getName() : "null")
+        System.out.println("[D/NovaTextureView] setSurfaceTextureListener " + (listener != null ? listener.getClass().getName() : "null")
                 + " mAvailable=" + mAvailable);
         mListener = listener;
-        if (mAvailable && mListener != null && mSurfaceTexture != null) {
-            Log.d(TAG, "surface already available, firing onSurfaceTextureAvailable immediately");
+        if (!mAvailable) {
+            initSurface();
+        } else if (mListener != null && mSurfaceTexture != null) {
+            System.out.println("[D/NovaTextureView] surface already available, firing onSurfaceTextureAvailable immediately");
             mListener.onSurfaceTextureAvailable(mSurfaceTexture, mWidth, mHeight);
         }
     }
 
     public SurfaceTextureListener getSurfaceTextureListener() { return mListener; }
 
-    public SurfaceTexture getSurfaceTexture() { return mSurfaceTexture; }
+    public SurfaceTexture getSurfaceTexture() {
+        if (!mAvailable) {
+            initSurface();
+        }
+        return mSurfaceTexture;
+    }
 
     public boolean isAvailable() { return mAvailable; }
 
     public void setSurfaceTexture(SurfaceTexture surfaceTexture) {
         mSurfaceTexture = surfaceTexture;
     }
+
+    @Override
+    protected void onDraw(Canvas canvas) {
+        if (mBitmap != null && mAvailable) {
+            canvas.drawBitmap(mBitmap, 0, 0, null);
+        }
+    }
+
 
     @Override
     protected void onAttachedToWindow() {
@@ -69,7 +83,7 @@ public class TextureView extends View {
         mSurfaceTexture.novaBitmap = mBitmap;
         mSurfaceTexture.novaCanvas = mCanvas;
         mAvailable = true;
-        Log.d(TAG, "TextureView surface available " + mWidth + "x" + mHeight);
+        System.out.println("[D/NovaTextureView] TextureView surface available " + mWidth + "x" + mHeight);
         if (mListener != null) {
             mListener.onSurfaceTextureAvailable(mSurfaceTexture, mWidth, mHeight);
         }
@@ -93,13 +107,12 @@ public class TextureView extends View {
     public void unlockCanvasAndPost(Canvas canvas) {
         if (mBitmap == null) return;
         if (mFrameCount <= 3 || mFrameCount % 60 == 0) {
-            Log.d(TAG, "unlockCanvasAndPost #" + mFrameCount + " → submitFrame");
+            Log.d(TAG, "unlockCanvasAndPost #" + mFrameCount + " → frame ready");
         }
-        try {
-            CanvasRender.submitFrame(mBitmap);
-        } catch (Exception e) {
-            Log.e(TAG, "unlockCanvasAndPost failed: " + e);
-        }
+        /* Frame is now in mBitmap; the RenderCoordinator's draw pass will
+         * composite it via onDraw() → Canvas.drawBitmap(mBitmap).
+         * Do NOT call CanvasRender.submitFrame here — that would race with the
+         * RenderCoordinator and overwrite its composite frame with a stale one. */
     }
 
     public Bitmap getBitmap() { return mBitmap; }

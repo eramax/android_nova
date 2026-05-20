@@ -156,7 +156,14 @@ public class Intent implements Parcelable, Cloneable {
     }
     public Intent cloneFilter() { Intent i = new Intent(); i.mAction = mAction; i.mData = mData; i.mType = mType; return i; }
     @Override public Intent clone() { return new Intent(this); }
-    @Override public String toString() { return "Intent{action=" + mAction + "}"; }
+    @Override
+    public String toString() {
+        return "Intent{action=" + mAction
+                + ", component=" + mComponent
+                + ", package=" + mPackage
+                + ", flags=0x" + Integer.toHexString(mFlags)
+                + "}";
+    }
 
     @Override public int describeContents() { return 0; }
     @Override public void writeToParcel(Parcel dest, int flags) {}

@@ -4,6 +4,7 @@ package {
 
 cc_library_host_shared {
     name: "libnova_jni",
+    compile_multilib: "64",
     srcs: [
         "android_runtime.c",
         "core_jni_helpers.c",
