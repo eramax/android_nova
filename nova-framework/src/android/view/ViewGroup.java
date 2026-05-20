@@ -199,6 +199,10 @@ public class ViewGroup extends View implements ViewParent {
         if (this instanceof android.widget.RelativeLayout) {
             android.widget.RelativeLayout.LayoutParams params =
                     new android.widget.RelativeLayout.LayoutParams(width, height);
+            params.leftMargin = child.novaGetLayoutMarginLeft();
+            params.topMargin = child.novaGetLayoutMarginTop();
+            params.rightMargin = child.novaGetLayoutMarginRight();
+            params.bottomMargin = child.novaGetLayoutMarginBottom();
             if (child.novaIsAlignParentBottom()) {
                 params.addRule(android.widget.RelativeLayout.ALIGN_PARENT_BOTTOM);
             }
@@ -209,12 +213,27 @@ public class ViewGroup extends View implements ViewParent {
                     new android.widget.LinearLayout.LayoutParams(width, height);
             params.weight = child.novaGetLayoutWeight();
             params.gravity = child.novaGetLayoutGravity();
+            params.leftMargin = child.novaGetLayoutMarginLeft();
+            params.topMargin = child.novaGetLayoutMarginTop();
+            params.rightMargin = child.novaGetLayoutMarginRight();
+            params.bottomMargin = child.novaGetLayoutMarginBottom();
             return params;
         }
         if (this instanceof android.widget.FrameLayout) {
-            return new android.widget.FrameLayout.LayoutParams(width, height);
+            android.widget.FrameLayout.LayoutParams params =
+                    new android.widget.FrameLayout.LayoutParams(width, height);
+            params.leftMargin = child.novaGetLayoutMarginLeft();
+            params.topMargin = child.novaGetLayoutMarginTop();
+            params.rightMargin = child.novaGetLayoutMarginRight();
+            params.bottomMargin = child.novaGetLayoutMarginBottom();
+            return params;
         }
-        return new MarginLayoutParams(width, height);
+        MarginLayoutParams params = new MarginLayoutParams(width, height);
+        params.leftMargin = child.novaGetLayoutMarginLeft();
+        params.topMargin = child.novaGetLayoutMarginTop();
+        params.rightMargin = child.novaGetLayoutMarginRight();
+        params.bottomMargin = child.novaGetLayoutMarginBottom();
+        return params;
     }
 
     public void removeView(View child) {
@@ -310,6 +329,10 @@ public class ViewGroup extends View implements ViewParent {
             params = new MarginLayoutParams(params);
         }
         child.setLayoutParams(params);
+        params.leftMargin = child.novaGetLayoutMarginLeft();
+        params.topMargin = child.novaGetLayoutMarginTop();
+        params.rightMargin = child.novaGetLayoutMarginRight();
+        params.bottomMargin = child.novaGetLayoutMarginBottom();
         return (MarginLayoutParams) params;
     }
 

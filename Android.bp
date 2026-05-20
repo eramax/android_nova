@@ -11,3 +11,9 @@ license {
     license_kinds: ["SPDX-license-identifier-Apache-2.0"],
     license_text: [],
 }
+
+java_library_host {
+    name: "AndroidGlobalLintChecker",
+    srcs: ["tools/lint_checks/global/AndroidGlobalLintChecker.java"],
+    visibility: ["//visibility:public"],
+}

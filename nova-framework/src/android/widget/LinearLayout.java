@@ -218,6 +218,10 @@ public class LinearLayout extends ViewGroup {
                 : new LayoutParams(child.novaGetLayoutWidth(), child.novaGetLayoutHeight());
         linearParams.weight = child.novaGetLayoutWeight();
         linearParams.gravity = child.novaGetLayoutGravity();
+        linearParams.leftMargin = child.novaGetLayoutMarginLeft();
+        linearParams.topMargin = child.novaGetLayoutMarginTop();
+        linearParams.rightMargin = child.novaGetLayoutMarginRight();
+        linearParams.bottomMargin = child.novaGetLayoutMarginBottom();
         child.setLayoutParams(linearParams);
         return linearParams;
     }

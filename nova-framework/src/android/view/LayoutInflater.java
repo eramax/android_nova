@@ -410,6 +410,110 @@ public class LayoutInflater {
         }
 
         if (currentView instanceof android.widget.LinearLayout
+                && (trimmed.startsWith("A: android:weightSum") || trimmed.contains("0x010101a9"))) {
+            Float weightSum = extractFloatValue(trimmed);
+            if (weightSum != null) {
+                ((android.widget.LinearLayout) currentView).setWeightSum(weightSum);
+            }
+            return;
+        }
+
+        if (trimmed.startsWith("A: android:padding") || trimmed.contains("0x010100d5")) {
+            Integer padding = extractLayoutSizeValue(trimmed);
+            if (padding != null) {
+                currentView.setPadding(padding, padding, padding, padding);
+            }
+            return;
+        }
+
+        if (trimmed.startsWith("A: android:paddingLeft") || trimmed.contains("0x010100d6")) {
+            Integer padding = extractLayoutSizeValue(trimmed);
+            if (padding != null) {
+                currentView.setPadding(padding, currentView.getPaddingTop(),
+                        currentView.getPaddingRight(), currentView.getPaddingBottom());
+            }
+            return;
+        }
+
+        if (trimmed.startsWith("A: android:paddingTop") || trimmed.contains("0x010100d7")) {
+            Integer padding = extractLayoutSizeValue(trimmed);
+            if (padding != null) {
+                currentView.setPadding(currentView.getPaddingLeft(), padding,
+                        currentView.getPaddingRight(), currentView.getPaddingBottom());
+            }
+            return;
+        }
+
+        if (trimmed.startsWith("A: android:paddingRight") || trimmed.contains("0x010100d8")) {
+            Integer padding = extractLayoutSizeValue(trimmed);
+            if (padding != null) {
+                currentView.setPadding(currentView.getPaddingLeft(), currentView.getPaddingTop(),
+                        padding, currentView.getPaddingBottom());
+            }
+            return;
+        }
+
+        if (trimmed.startsWith("A: android:paddingBottom") || trimmed.contains("0x010100d9")) {
+            Integer padding = extractLayoutSizeValue(trimmed);
+            if (padding != null) {
+                currentView.setPadding(currentView.getPaddingLeft(), currentView.getPaddingTop(),
+                        currentView.getPaddingRight(), padding);
+            }
+            return;
+        }
+
+        if (trimmed.startsWith("A: android:layout_margin") || trimmed.contains("0x010100f6")) {
+            Integer margin = extractLayoutSizeValue(trimmed);
+            if (margin != null) {
+                currentView.novaSetLayoutMargins(margin, margin, margin, margin);
+                syncLayoutParams(currentView);
+            }
+            return;
+        }
+
+        if (trimmed.startsWith("A: android:layout_marginLeft") || trimmed.contains("0x010100f7")) {
+            Integer margin = extractLayoutSizeValue(trimmed);
+            if (margin != null) {
+                currentView.novaSetLayoutMargins(margin, currentView.novaGetLayoutMarginTop(),
+                        currentView.novaGetLayoutMarginRight(), currentView.novaGetLayoutMarginBottom());
+                syncLayoutParams(currentView);
+            }
+            return;
+        }
+
+        if (trimmed.startsWith("A: android:layout_marginTop") || trimmed.contains("0x010100f8")) {
+            Integer margin = extractLayoutSizeValue(trimmed);
+            if (margin != null) {
+                currentView.novaSetLayoutMargins(currentView.novaGetLayoutMarginLeft(), margin,
+                        currentView.novaGetLayoutMarginRight(), currentView.novaGetLayoutMarginBottom());
+                syncLayoutParams(currentView);
+            }
+            return;
+        }
+
+        if (trimmed.startsWith("A: android:layout_marginRight") || trimmed.contains("0x010100f9")) {
+            Integer margin = extractLayoutSizeValue(trimmed);
+            if (margin != null) {
+                currentView.novaSetLayoutMargins(currentView.novaGetLayoutMarginLeft(),
+                        currentView.novaGetLayoutMarginTop(), margin,
+                        currentView.novaGetLayoutMarginBottom());
+                syncLayoutParams(currentView);
+            }
+            return;
+        }
+
+        if (trimmed.startsWith("A: android:layout_marginBottom") || trimmed.contains("0x010100fa")) {
+            Integer margin = extractLayoutSizeValue(trimmed);
+            if (margin != null) {
+                currentView.novaSetLayoutMargins(currentView.novaGetLayoutMarginLeft(),
+                        currentView.novaGetLayoutMarginTop(), currentView.novaGetLayoutMarginRight(),
+                        margin);
+                syncLayoutParams(currentView);
+            }
+            return;
+        }
+
+        if (currentView instanceof android.widget.LinearLayout
                 && (trimmed.startsWith("A: android:orientation") || trimmed.contains("0x010100c4"))) {
             Integer orientation = extractTypedIntValue(trimmed);
             if (orientation != null) {
@@ -527,6 +631,13 @@ public class LayoutInflater {
                     (android.widget.LinearLayout.LayoutParams) params;
             linearParams.weight = view.novaGetLayoutWeight();
             linearParams.gravity = view.novaGetLayoutGravity();
+        }
+        if (params instanceof ViewGroup.MarginLayoutParams) {
+            ViewGroup.MarginLayoutParams marginParams = (ViewGroup.MarginLayoutParams) params;
+            marginParams.leftMargin = view.novaGetLayoutMarginLeft();
+            marginParams.topMargin = view.novaGetLayoutMarginTop();
+            marginParams.rightMargin = view.novaGetLayoutMarginRight();
+            marginParams.bottomMargin = view.novaGetLayoutMarginBottom();
         }
         if (params instanceof android.widget.RelativeLayout.LayoutParams) {
             android.widget.RelativeLayout.LayoutParams relativeParams =

@@ -65,6 +65,10 @@ public class View {
     private int mScrollY;
     private float mLayoutWeight;
     private int mLayoutGravity = -1;
+    private int mLayoutMarginLeft;
+    private int mLayoutMarginTop;
+    private int mLayoutMarginRight;
+    private int mLayoutMarginBottom;
     private int mGravity = -1;
     private ViewGroup.LayoutParams mLayoutParams;
     private int mPaddingLeft;
@@ -537,6 +541,16 @@ public class View {
     public float novaGetLayoutWeight() { return mLayoutWeight; }
     public void novaSetLayoutGravity(int layoutGravity) { mLayoutGravity = layoutGravity; }
     public int novaGetLayoutGravity() { return mLayoutGravity; }
+    public void novaSetLayoutMargins(int left, int top, int right, int bottom) {
+        mLayoutMarginLeft = left;
+        mLayoutMarginTop = top;
+        mLayoutMarginRight = right;
+        mLayoutMarginBottom = bottom;
+    }
+    public int novaGetLayoutMarginLeft() { return mLayoutMarginLeft; }
+    public int novaGetLayoutMarginTop() { return mLayoutMarginTop; }
+    public int novaGetLayoutMarginRight() { return mLayoutMarginRight; }
+    public int novaGetLayoutMarginBottom() { return mLayoutMarginBottom; }
     public void novaSetGravity(int gravity) { mGravity = gravity; }
     public int novaGetGravity() { return mGravity; }
     public android.animation.StateListAnimator getStateListAnimator() { return null; }

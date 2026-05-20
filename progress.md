@@ -4,6 +4,76 @@ Hand-maintained engineering log. Entries record completed and verified milestone
 
 ---
 
+## 2026-05-20 — Manifest Reproducibility + Nova Build Repair
+
+### Summary
+
+This session focused on making the Nova checkout shareable and reproducible again,
+then restoring the Nova build path without changing any AOSP components outside
+`vendor/nova`.
+
+### Verified repository state
+
+- The two local manifest fragments were merged into one file:
+  - `.repo/local_manifests/nova.xml`
+- A shareable manifest copy was updated in:
+  - `vendor/nova/generated/nova.xml`
+- `vendor/nova/README.md` was added and pushed so others can reproduce the setup.
+- `vendor/nova` git history was repaired after a shallow/corrupt metadata state.
+- `vendor/nova` changes were pushed to the `nova` remote on `main`.
+
+### Repo-sync and checkout repair
+
+- A force sync was completed on the affected repos after the checkout drifted.
+- The tree was brought back to a state where `repo status` only reported changes
+  inside `vendor/nova`.
+- The reproducibility work confirmed that the remaining build failures were
+  Nova-side or external dependency issues, not leftover dirty AOSP checkouts.
+
+### Nova-only build fixes applied
+
+- `vendor/nova/nova-framework/Android.bp`
+  - removed stale `nova-sdk-*` dependencies that no longer matched the restored
+    tree state
+  - kept `nova-framework-host` on `core-public-stubs-system-modules`
+- `vendor/nova/Android.bp`
+  - added a local host-side `AndroidGlobalLintChecker` stub so Soong's global
+    lint edge can resolve without touching AOSP sources
+- `vendor/nova/tools/lint_checks/global/AndroidGlobalLintChecker.java`
+  - added the tiny host stub class used by the module above
+- The layout/render work from earlier in the session remains in:
+  - `nova-framework/src/android/view/LayoutInflater.java`
+  - `nova-framework/src/android/view/View.java`
+  - `nova-framework/src/android/view/ViewGroup.java`
+  - `nova-framework/src/android/widget/LinearLayout.java`
+
+### Findings
+
+- The first Nova build break after the sync was a missing set of module names for
+  `nova-framework-host`.
+- The earlier attempt to point Nova at `../prebuilts/sdk/35/module-lib/*.jar`
+  was invalid because Soong rejects out-of-tree jar paths from `vendor/nova`.
+- `AndroidGlobalLintChecker` is not a real build module in this checkout unless
+  it is provided locally; the actual Soong code only registers it in tests.
+- The current checkout already contains the relevant ART and core stubs in the
+  standard tree, so Nova should use the normal core system modules rather than
+  inventing new prebuilts.
+
+### Verified build result
+
+- `make -f vendor/nova/Makefile all` now gets past the Nova-specific Soong
+  failures.
+- The full product build still stops outside Nova in `external/protobuf`:
+  - `aprotoc` depends on missing `absl_log_initialize`
+  - this is an AOSP-side dependency issue, not a `vendor/nova` regression
+
+### Current state
+
+- `repo status` shows only `vendor/nova` files modified.
+- The tree is in a good state for continuing Nova work.
+- The remaining blocker is external to Nova and would require widening scope
+  beyond `vendor/nova` to finish a full `make all`.
+
 ## 2026-05-20 — Phase 2 Core Shim Progress (Material Life)
 
 ### Summary
