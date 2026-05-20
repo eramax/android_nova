@@ -13,14 +13,17 @@ Nova currently expects a `master-art` checkout with selected dependencies moved 
 repo init -u https://android.googlesource.com/platform/manifest -b master-art
 ```
 
-2. Create `.repo/local_manifests/nova.xml` and copy in the manifest from this repo:
+2. Fetch and install the Nova manifest:
 
-- source file: `vendor/nova/generated/nova.xml`
-- authoritative path in a consumer checkout: `.repo/local_manifests/nova.xml`
+```bash
+mkdir -p .repo/local_manifests
+curl -sL -o .repo/local_manifests/nova.xml \
+  https://raw.githubusercontent.com/eramax/android_nova/main/generated/nova.xml
+```
 
 The manifest does two things:
 - checks out `vendor/nova` from `https://github.com/eramax/android_nova` on `main`
-- moves the Nova dependency subset to `android16-qpr2-release` with `extend-project`
+- pins the Nova dependency subset to `android16-qpr2-release` with `extend-project`
 
 3. Sync the checkout:
 
@@ -28,9 +31,15 @@ The manifest does two things:
 repo sync -j$(nproc)
 ```
 
-Use a clean checkout for this step. If `repo sync` reports local changes in
-prebuilt or profile repos, that is local machine state, not a Nova source
-requirement.
+4. Stage host-system native libraries (one-time):
+
+```bash
+mkdir -p vendor/nova/prebuilt/lib64
+for lib in libEGL libwayland-client libwayland-egl libGLESv2 libpng16; do
+  ln -sf /usr/lib/x86_64-linux-gnu/${lib}.so vendor/nova/prebuilt/lib64/${lib}.so
+done
+ln -sf /usr/lib/x86_64-linux-gnu/libGLESv2.so vendor/nova/prebuilt/lib64/libGLESv3.so
+```
 
 ## Build
 
