@@ -67,7 +67,7 @@ public class Paint {
     public void setStrokeMiter(float miter) {}
     public void setTextAlign(Align align) {}
     public void setTextSize(float textSize) {}
-    public void setTypeface(android.graphics.Typeface typeface) {}
+    public android.graphics.Typeface setTypeface(android.graphics.Typeface typeface) { return typeface; }
     public void setAlpha(int a) {
         int color = (int)((a << 24) | (native_getColor(mNativePaint) & 0x00FFFFFF));
         native_setColor(mNativePaint, color);
@@ -80,6 +80,11 @@ public class Paint {
     public float getStrokeWidth() { return native_getStrokeWidth(mNativePaint); }
     public float getTextSize() { return 12.0f; }
     public float measureText(String text) { return text == null ? 0 : text.length() * 7.0f; }
+    public float measureText(String text, int start, int end) { return text == null ? 0 : (end - start) * 7.0f; }
+    public float measureText(CharSequence text, int start, int end) { return text == null ? 0 : (end - start) * 7.0f; }
+    public float measureText(char[] text, int index, int count) { return count * 7.0f; }
+    public int breakText(CharSequence text, int start, int end, boolean measureForwards, float maxWidth, float[] measuredWidth) { return end - start; }
+    public int breakText(String text, boolean measureForwards, float maxWidth, float[] measuredWidth) { return text == null ? 0 : text.length(); }
     public float ascent() { return -10.0f; }
     public float descent() { return 3.0f; }
     public int getFlags() { return 0; }

@@ -46,4 +46,6 @@ public final class Trace {
     public static void setTracingEnabled(boolean enabled, int flags) {}
     public static long queryTraceTagsChangedCallback() { return 0L; }
     public static void forceEnableAppTracing() {}
+    public static void beginSection(String sectionName) {}
+    public static void endSection() {}
 }

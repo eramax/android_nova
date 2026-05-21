@@ -77,6 +77,12 @@ public class Activity extends ContextWrapper {
         if (Context.VIBRATOR_SERVICE.equals(name)) {
             return new android.os.NovaVibrator();
         }
+        if (Context.ACCESSIBILITY_SERVICE.equals(name)) {
+            return android.view.accessibility.AccessibilityManager.getInstance(this);
+        }
+        if (Context.ACTIVITY_SERVICE.equals(name)) {
+            return new android.app.ActivityManager();
+        }
         if (Context.POWER_SERVICE.equals(name) || Context.DISPLAY_SERVICE.equals(name)) {
             return null;
         }

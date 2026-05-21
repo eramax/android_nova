@@ -28,6 +28,10 @@ public class ViewGroup extends View implements ViewParent {
         public int leftMargin, topMargin, rightMargin, bottomMargin;
         public MarginLayoutParams(int w, int h) { super(w, h); }
         public MarginLayoutParams(LayoutParams source) { super(source); }
+        public int getMarginStart() { return leftMargin; }
+        public int getMarginEnd() { return rightMargin; }
+        public void setMarginStart(int start) { leftMargin = start; }
+        public void setMarginEnd(int end) { rightMargin = end; }
     }
 
     public ViewGroup(Context context) {
@@ -196,7 +200,10 @@ public class ViewGroup extends View implements ViewParent {
     protected LayoutParams generateLayoutParamsForChild(View child) {
         int width = resolveLayoutParam(child.novaGetLayoutWidth(), LayoutParams.MATCH_PARENT);
         int height = resolveLayoutParam(child.novaGetLayoutHeight(), LayoutParams.MATCH_PARENT);
-        if (this instanceof android.widget.RelativeLayout) {
+        // For exact framework ViewGroup types, create their known LayoutParams directly.
+        // Use exact class equality (not instanceof) so subclasses from AppCompat/Material
+        // fall through to the reflection path below and get their own LayoutParams subtype.
+        if (this.getClass() == android.widget.RelativeLayout.class) {
             android.widget.RelativeLayout.LayoutParams params =
                     new android.widget.RelativeLayout.LayoutParams(width, height);
             params.leftMargin = child.novaGetLayoutMarginLeft();
@@ -208,7 +215,7 @@ public class ViewGroup extends View implements ViewParent {
             }
             return params;
         }
-        if (this instanceof android.widget.LinearLayout) {
+        if (this.getClass() == android.widget.LinearLayout.class) {
             android.widget.LinearLayout.LayoutParams params =
                     new android.widget.LinearLayout.LayoutParams(width, height);
             params.weight = child.novaGetLayoutWeight();
@@ -219,7 +226,7 @@ public class ViewGroup extends View implements ViewParent {
             params.bottomMargin = child.novaGetLayoutMarginBottom();
             return params;
         }
-        if (this instanceof android.widget.FrameLayout) {
+        if (this.getClass() == android.widget.FrameLayout.class) {
             android.widget.FrameLayout.LayoutParams params =
                     new android.widget.FrameLayout.LayoutParams(width, height);
             params.leftMargin = child.novaGetLayoutMarginLeft();
@@ -228,21 +235,27 @@ public class ViewGroup extends View implements ViewParent {
             params.bottomMargin = child.novaGetLayoutMarginBottom();
             return params;
         }
-        // For non-framework ViewGroups (e.g. CoordinatorLayout from AppCompat), call the
-        // actual generateDefaultLayoutParams() which returns the correct subtype (e.g.
-        // CoordinatorLayout.LayoutParams). Without this, addView gives MarginLayoutParams
-        // which causes ClassCastException in CoordinatorLayout.onMeasure/onDraw.
+        // For non-framework ViewGroups (AppCompat/Material subclasses), call their
+        // generateDefaultLayoutParams() to get the correct LayoutParams subtype.
+        // getDeclaredMethod + class hierarchy walk needed because the method is protected.
         try {
-            java.lang.reflect.Method gen = this.getClass().getMethod("generateDefaultLayoutParams");
+            java.lang.reflect.Method gen = null;
+            Class<?> cls = this.getClass();
+            while (cls != null && cls != ViewGroup.class && cls != Object.class) {
+                try {
+                    gen = cls.getDeclaredMethod("generateDefaultLayoutParams");
+                    break;
+                } catch (NoSuchMethodException ignored2) {
+                    cls = cls.getSuperclass();
+                }
+            }
+            if (gen == null) throw new NoSuchMethodException("generateDefaultLayoutParams not found");
             gen.setAccessible(true);
             LayoutParams appParams = (LayoutParams) gen.invoke(this);
             if (appParams != null && !(appParams instanceof MarginLayoutParams
                     && appParams.getClass() == MarginLayoutParams.class)) {
-                // Got a real subtype — set its dimensions via reflection if possible
-                try {
-                    appParams.width = width;
-                    appParams.height = height;
-                } catch (Exception ignored) {}
+                appParams.width = width;
+                appParams.height = height;
                 if (appParams instanceof MarginLayoutParams) {
                     MarginLayoutParams mp = (MarginLayoutParams) appParams;
                     mp.leftMargin = child.novaGetLayoutMarginLeft();
@@ -280,6 +293,14 @@ public class ViewGroup extends View implements ViewParent {
 
     public int getChildCount() {
         return mChildren.size();
+    }
+
+    public View getFocusedChild() {
+        for (int i = 0; i < mChildren.size(); i++) {
+            View child = mChildren.get(i);
+            if (child != null && child.isFocused()) return child;
+        }
+        return null;
     }
 
     public View getChildAt(int index) {

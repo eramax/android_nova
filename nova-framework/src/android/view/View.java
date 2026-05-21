@@ -94,6 +94,7 @@ public class View {
     public interface OnKeyListener { boolean onKey(View v, int keyCode, KeyEvent event); }
     public interface OnFocusChangeListener { void onFocusChange(View v, boolean hasFocus); }
     public interface OnScrollChangeListener { void onScrollChange(View v, int scrollX, int scrollY, int oldScrollX, int oldScrollY); }
+    public interface OnUnhandledKeyEventListener { boolean onUnhandledKeyEvent(View v, android.view.KeyEvent event); }
     public interface OnLayoutChangeListener { void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom); }
     public interface OnAttachStateChangeListener {
         void onViewAttachedToWindow(View v);
@@ -226,6 +227,8 @@ public class View {
     public void setOnKeyListener(OnKeyListener listener) {}
     public void setOnFocusChangeListener(OnFocusChangeListener listener) {}
     public void setOnScrollChangeListener(OnScrollChangeListener listener) {}
+    public void addOnUnhandledKeyEventListener(OnUnhandledKeyEventListener listener) {}
+    public void removeOnUnhandledKeyEventListener(OnUnhandledKeyEventListener listener) {}
     public void cancelPendingInputEvents() {}
     public android.view.Display getDisplay() { return new android.view.Display(); }
     public void addOnAttachStateChangeListener(OnAttachStateChangeListener listener) {}
@@ -508,6 +511,8 @@ public class View {
     public void setRotation(float r) {}
     public float getX() { return 0f; }
     public float getY() { return 0f; }
+    public android.graphics.Matrix getMatrix() { return new android.graphics.Matrix(); }
+    public boolean hasIdentityMatrix() { return true; }
     public void setX(float x) {}
     public void setY(float y) {}
     public int getWidth() { return Math.max(0, mRight - mLeft); }

@@ -32,6 +32,35 @@ public class Gravity {
 
     private Gravity() {}
 
+    public static void apply(int gravity, int w, int h, android.graphics.Rect container,
+            android.graphics.Rect outRect, int layoutDirection) {
+        int absGravity = getAbsoluteGravity(gravity, layoutDirection);
+        int x = container.left;
+        int y = container.top;
+        int horizGravity = absGravity & HORIZONTAL_GRAVITY_MASK;
+        if (horizGravity == CENTER_HORIZONTAL) {
+            x = container.left + (container.width() - w) / 2;
+        } else if (horizGravity == RIGHT) {
+            x = container.right - w;
+        } else if (horizGravity == FILL_HORIZONTAL) {
+            w = container.width();
+        }
+        int vertGravity = absGravity & VERTICAL_GRAVITY_MASK;
+        if (vertGravity == CENTER_VERTICAL) {
+            y = container.top + (container.height() - h) / 2;
+        } else if (vertGravity == BOTTOM) {
+            y = container.bottom - h;
+        } else if (vertGravity == FILL_VERTICAL) {
+            h = container.height();
+        }
+        outRect.set(x, y, x + w, y + h);
+    }
+
+    public static void apply(int gravity, int w, int h, android.graphics.Rect container,
+            android.graphics.Rect outRect) {
+        apply(gravity, w, h, container, outRect, android.view.View.LAYOUT_DIRECTION_LTR);
+    }
+
     public static int getAbsoluteGravity(int gravity, int layoutDirection) {
         int result = gravity;
         if ((result & RELATIVE_LAYOUT_DIRECTION) != 0) {

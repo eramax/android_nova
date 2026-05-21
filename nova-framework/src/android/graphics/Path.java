@@ -85,4 +85,9 @@ public class Path {
     public boolean isConvex() {
         return true;
     }
+
+    public enum Op { DIFFERENCE, INTERSECT, UNION, XOR, REVERSE_DIFFERENCE }
+
+    public boolean op(Path path, Op op) { return true; }
+    public boolean op(Path path1, Path path2, Op op) { return true; }
 }

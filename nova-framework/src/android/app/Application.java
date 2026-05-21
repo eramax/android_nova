@@ -122,6 +122,25 @@ public class Application extends ContextWrapper implements ComponentCallbacks2 {
         if (Context.LAYOUT_INFLATER_SERVICE.equals(name)) {
             return android.view.LayoutInflater.from(this);
         }
+        if (Context.ACTIVITY_SERVICE.equals(name)) {
+            return new android.app.ActivityManager();
+        }
+        if (Context.ACCESSIBILITY_SERVICE.equals(name)) {
+            return android.view.accessibility.AccessibilityManager.getInstance(this);
+        }
+        if (Context.WINDOW_SERVICE.equals(name)) {
+            return new android.view.WindowManager() {
+                private final android.view.Display mDefaultDisplay = new android.view.Display();
+                @Override public android.view.Display getDefaultDisplay() { return mDefaultDisplay; }
+                @Override public void addView(android.view.View view, android.view.ViewGroup.LayoutParams params) {}
+                @Override public void updateViewLayout(android.view.View view, android.view.ViewGroup.LayoutParams params) {}
+                @Override public void removeView(android.view.View view) {}
+                @Override public void removeViewImmediate(android.view.View view) {}
+            };
+        }
+        if (Context.VIBRATOR_SERVICE.equals(name)) {
+            return new android.os.NovaVibrator();
+        }
         return null;
     }
 

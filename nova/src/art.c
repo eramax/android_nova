@@ -319,7 +319,7 @@ int nova_art_init(struct nova_state *state, int argc, char *argv[]) {
     char bootclasspath[PATH_MAX * 4];
     char bootclasspath_locations[2048];
     char libart_path[PATH_MAX];
-    JavaVMOption options[12];
+    JavaVMOption options[16];
     int option_count = 0;
     int i;
 
@@ -423,7 +423,8 @@ int nova_art_init(struct nova_state *state, int argc, char *argv[]) {
     char arg[PATH_MAX * 2];
 
     if (append_option(options, &option_count, "-Xcompiler-option --compiler-filter=verify") != 0 ||
-        append_option(options, &option_count, "-Xmx256m") != 0) {
+        append_option(options, &option_count, "-Xmx256m") != 0 ||
+        append_option(options, &option_count, "-verbose:class") != 0) {
         fprintf(stderr, "[Nova] Failed to allocate JVM option\n");
         return -1;
     }

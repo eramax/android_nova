@@ -31,13 +31,24 @@ public class Matrix {
     public boolean postScale(float sx, float sy) { return true; }
     public boolean preRotate(float degrees) { return true; }
     public boolean postRotate(float degrees) { return true; }
-    public boolean setTranslate(float dx, float dy) { reset(); mValues[2]=dx; mValues[5]=dy; return true; }
-    public boolean setScale(float sx, float sy) { reset(); mValues[0]=sx; mValues[4]=sy; return true; }
-    public boolean setRotate(float degrees) { return true; }
+    public void setTranslate(float dx, float dy) { reset(); mValues[2]=dx; mValues[5]=dy; }
+    public void setScale(float sx, float sy) { reset(); mValues[0]=sx; mValues[4]=sy; }
+    public void setScale(float sx, float sy, float px, float py) { reset(); mValues[0]=sx; mValues[4]=sy; mValues[2]=px*(1-sx); mValues[5]=py*(1-sy); }
+    public void setRotate(float degrees) {}
+    public void setRotate(float degrees, float px, float py) {}
+    public void setSkew(float kx, float ky) {}
+    public void setSkew(float kx, float ky, float px, float py) {}
+    public void setConcat(Matrix a, Matrix b) {}
     public boolean invert(Matrix inverse) { return false; }
     public boolean mapRect(RectF rect) { return true; }
+    public boolean mapRect(RectF dst, RectF src) { if (dst != null && src != null) { dst.set(src); } return true; }
     public void mapPoints(float[] pts) {}
+    public void mapPoints(float[] dst, float[] src) { if (dst != null && src != null) System.arraycopy(src, 0, dst, 0, Math.min(dst.length, src.length)); }
     public float mapRadius(float radius) { return radius; }
     public boolean setRectToRect(RectF src, RectF dst, ScaleToFit stf) { return true; }
+    public boolean preConcat(Matrix other) { return true; }
+    public boolean postConcat(Matrix other) { return true; }
+    public boolean preSkew(float kx, float ky) { return true; }
+    public boolean postSkew(float kx, float ky) { return true; }
     public enum ScaleToFit { FILL, START, CENTER, END }
 }

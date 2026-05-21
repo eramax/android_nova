@@ -10,6 +10,7 @@ public class TextUtils {
         return sb.toString();
     }
     public static CharSequence ellipsize(CharSequence text, android.graphics.Paint p, float avail, TruncateAt where) { return text; }
+    public static CharSequence ellipsize(CharSequence text, TextPaint p, float avail, TruncateAt where) { return text; }
     public static boolean equals(CharSequence a, CharSequence b) {
         if (a == b) return true;
         if (a == null || b == null) return false;

@@ -395,7 +395,9 @@ public final class Launcher {
                     } catch (NoSuchMethodException e) {
                         // no custom onCreate, fine
                     } catch (Exception e) {
-                        System.out.println("[NovaLauncher] Application.onCreate() failed (non-fatal): " + e.getCause());
+                        Throwable cause = e.getCause() != null ? e.getCause() : e;
+                        System.out.println("[NovaLauncher] Application.onCreate() failed (non-fatal): " + cause);
+                        cause.printStackTrace(System.out);
                     }
                 }
             }
@@ -548,7 +550,43 @@ public final class Launcher {
         method.setAccessible(true);
         NovaTrace.recordLifecycle(activityClass.getName(), methodName);
         System.out.println("[NovaLauncher] Calling " + methodName);
-        method.invoke(instance, args);
+        // Watchdog: dump all thread stacks if this lifecycle method blocks for >5s
+        final Thread callerThread = Thread.currentThread();
+        final boolean[] completed = {false};
+        Thread watchdog = new Thread(() -> {
+            for (int sec : new int[]{1, 2, 3, 5, 8, 13}) {
+                try { Thread.sleep(1000); } catch (InterruptedException e) { return; }
+                if (completed[0]) return;
+                System.out.println("[NovaLauncher] WATCHDOG@" + sec + "s: " + methodName + " still running — main thread:");
+                Thread mainThread = Thread.currentThread(); // wrong, need caller
+                for (java.util.Map.Entry<Thread, StackTraceElement[]> entry
+                        : Thread.getAllStackTraces().entrySet()) {
+                    if ("main".equals(entry.getKey().getName())) {
+                        for (StackTraceElement e : entry.getValue()) {
+                            System.out.println("    at " + e);
+                        }
+                    }
+                }
+            }
+            if (!completed[0]) {
+                System.out.println("[NovaLauncher] WATCHDOG: " + methodName + " blocked for >13s — full thread dump:");
+                for (java.util.Map.Entry<Thread, StackTraceElement[]> entry
+                        : Thread.getAllStackTraces().entrySet()) {
+                    System.out.println("  Thread: " + entry.getKey().getName());
+                    for (StackTraceElement e : entry.getValue()) {
+                        System.out.println("    at " + e);
+                    }
+                }
+            }
+        }, "NovaWatchdog-" + methodName);
+        watchdog.setDaemon(true);
+        watchdog.start();
+        try {
+            method.invoke(instance, args);
+        } finally {
+            completed[0] = true;
+            watchdog.interrupt();
+        }
         System.out.println("[NovaLauncher] Completed " + methodName);
     }
 

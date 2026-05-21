@@ -1049,3 +1049,73 @@ make -f vendor/nova/Makefile test-ipc  # runs P4-T1 integration test
 make -f vendor/nova/Makefile daemon    # starts nova-daemon
 make -f vendor/nova/Makefile run APK=<path>  # runs app (connects to daemon if available)
 ```
+
+---
+
+## 2026-05-21 — Phase 3 Progress Update: NewPipe Investigation
+
+### Plan position
+
+We are at **Phase 3, final gate item**. Per plan-v7.md Phase 3 gate test:
+
+```
+# Simple Calculator: buttons render with text, digit input, result computed  ← ✅ DONE
+# KeePassDX: database list screen renders with text and icons               ← ✅ DONE
+# NewPipe: home screen renders, no crash on WebView (offline mode accepted) ← 🔧 BLOCKED
+```
+
+Phases 0, 1, 2 are fully complete. Phase 3 items 1 (Calculator) and 2 (KeePassDX) pass.
+**NewPipe is the only remaining gate item.**
+
+### NewPipe blocking issue: `ServiceList.<clinit>` blocks main thread indefinitely
+
+**Symptom**: `MainActivity.onCreate` starts but never returns. Main thread blocked from
+second 1 onwards. Block is permanent (>30 seconds confirmed).
+
+**Root cause chain** (confirmed via DEX disassembly + multi-interval watchdog):
+
+1. `MainActivity.onCreate` → accesses `ServiceHelper` class
+2. `ServiceHelper.<clinit>` (10 code units) → accesses `ServiceList.YouTube`
+3. `ServiceList.<clinit>` (114 code units) → creates `new YoutubeService()`
+4. `YoutubeService.<clinit>` (301 code units) → builds 65+ Locale objects for
+   supported languages/countries, uses `j$/util/Optional.map` with R8 synthetic
+   lambda classes — **this is the actual blocker**
+5. ART runs nested `<clinit>` via native machinery, so Java's `Thread.getAllStackTraces()`
+   shows only the outermost `ServiceList.<clinit>` frame at every watchdog interval
+
+**What was tried**:
+- Multi-interval watchdog (1s, 2s, 3s, 5s, 8s, 13s) — confirmed stack never changes
+- strace network/file trace — no blocking I/O (no network, no file waits)
+- `-verbose:class` ART option — no useful output
+- DEX bytecode disassembly (Python parser) — identified `YoutubeService.<clinit>` as
+  the 301-code-unit blocker with 65 Locale constructions + `j$/util/Optional` usage
+
+**Identified fix strategy** (not yet implemented):
+
+Add stub classes to nova-framework (parent classloader) that shadow NewPipe's
+slow-initializing extractor classes. Options:
+1. Stub `org.schabi.newpipe.extractor.ServiceList` with a minimal `<clinit>` that
+   provides non-null `YouTube`, `SoundCloud`, etc. instances
+2. Stub `org.schabi.newpipe.extractor.services.youtube.YoutubeService` with empty
+   `<clinit>` to let `ServiceList` construct a YoutubeService quickly
+
+This is analogous to how `android-stubs-dex.jar` shadows unavailable classes, but
+here the stub lives in the *parent* classloader (nova-framework-hostdex.jar is
+listed first in `java.class.path`) so it takes priority over the APK's version.
+
+### Phase gate status (all phases)
+
+| Phase | Status | Gate App(s) | Evidence |
+|-------|--------|-------------|----------|
+| 0 | ✅ Complete | Empty Wayland window | ART boots, EGL 1.5, aapt2 manifest parse |
+| 1 | ✅ Complete | gles3jni (rotating triangle) | 60fps GLES3 on Mesa/AMD |
+| 1.5 | ⏳ Deferred | N/A | Not started; low priority since Phase 2/3 apps are Java-only or host-native |
+| 2 | ✅ Complete | Material Life, Pixel Dungeon, 2048 | All render at 60fps |
+| 3 | 🔧 2/3 done | Calculator ✅, KeePassDX ✅, NewPipe 🔧 | NewPipe blocked on ServiceList.<clinit> |
+| 4 | ✅ Skeleton done | libnova_ipc test + daemon | IPC test passes, daemon starts, nova --install/--package work |
+| 5-7 | ⏳ Not started | N/A | Per plan schedule |
+
+### Next step
+
+Implement the NewPipe `ServiceList`/`YoutubeService` stub in nova-framework to
+bypass the slow `<clinit>` chain, then verify NewPipe home screen renders.
