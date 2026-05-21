@@ -10,6 +10,12 @@ public final class Choreographer {
     private final List<FrameCallback> mFrameCallbacks = new ArrayList<>();
     private final List<Runnable> mCommitCallbacks = new ArrayList<>();
 
+    public static final int CALLBACK_INPUT = 0;
+    public static final int CALLBACK_ANIMATION = 1;
+    public static final int CALLBACK_INSETS_ANIMATION = 2;
+    public static final int CALLBACK_TRAVERSAL = 3;
+    public static final int CALLBACK_COMMIT = 4;
+
     public interface FrameCallback {
         void doFrame(long frameTimeNanos);
     }

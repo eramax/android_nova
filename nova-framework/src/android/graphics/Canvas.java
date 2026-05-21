@@ -25,6 +25,16 @@ public class Canvas {
                 paint != null ? paint.getNativeInstance() : 0L);
     }
 
+    public void drawRect(int left, int top, int right, int bottom, Paint paint) {
+        drawRect((float) left, (float) top, (float) right, (float) bottom, paint);
+    }
+
+    public void drawRect(Rect rect, Paint paint) {
+        if (rect != null) {
+            drawRect((float) rect.left, (float) rect.top, (float) rect.right, (float) rect.bottom, paint);
+        }
+    }
+
     public int save() {
         return native_save(mNativeCanvasWrapper, ALL_SAVE_FLAG);
     }
@@ -89,6 +99,14 @@ public class Canvas {
 
     public void drawColor(int color) {
         native_drawColor(mNativeCanvasWrapper, color);
+    }
+
+    public void drawColor(int color, PorterDuff.Mode mode) {
+        drawColor(color);
+    }
+
+    public void drawColor(long color) {
+        drawColor((int) color);
     }
 
     public void drawText(String text, float x, float y, Paint paint) {
@@ -172,6 +190,7 @@ public class Canvas {
     public void getMatrix(Matrix ctm) {}
     public Matrix getMatrix() { return new Matrix(); }
     public boolean quickReject(float left, float top, float right, float bottom, EdgeType type) { return false; }
+    public boolean quickReject(int left, int top, int right, int bottom) { return false; }
     public boolean quickReject(RectF rect, EdgeType type) { return false; }
     public boolean quickReject(Path path, EdgeType type) { return false; }
     public enum EdgeType { BW, AA }

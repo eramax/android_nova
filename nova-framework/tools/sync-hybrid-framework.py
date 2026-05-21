@@ -188,6 +188,10 @@ def write_aosp_bp(bridge_files: set[str], aosp_sources: list[str]) -> None:
         "android/view/WindowId.java",
         "android/view/WindowInfo.java",
         "android/view/XrWindowProperties.java",
+        "android/view/PointerIcon.java",
+        "android/view/InputEventReceiver.java",
+        "android/view/InputEventSender.java",
+        "android/view/BatchedInputEventReceiver.java",
     ]
 
     INTERNAL_UTIL_EXTRA_EXCLUDES = [
@@ -198,7 +202,6 @@ def write_aosp_bp(bridge_files: set[str], aosp_sources: list[str]) -> None:
         "com/android/internal/util/AnnotationValidations.java",
         "com/android/internal/util/LatencyTracker.java",
         "com/android/internal/util/ContrastColorUtil.java",
-        "com/android/internal/util/XmlUtils.java",
         "com/android/internal/util/AsyncChannel.java",
         "com/android/internal/util/DumpUtils.java",
         "com/android/internal/util/MimeIconUtils.java",
@@ -217,6 +220,9 @@ def write_aosp_bp(bridge_files: set[str], aosp_sources: list[str]) -> None:
         "android/util/NtpTrustedTime.java",
         "android/util/Size.java",
         "android/util/Xml.java",
+        "android/util/CloseGuard.java",
+        "android/util/MemoryIntArray.java",
+        "android/util/jar/StrictJarFile.java",
         "android/util/apk/**/*.java",
     ]
 
@@ -244,16 +250,13 @@ def write_aosp_bp(bridge_files: set[str], aosp_sources: list[str]) -> None:
         "android/graphics/Shader.java",
         "android/graphics/Xfermode.java",
         "android/graphics/PixelFormat.java",
-        "android/graphics/drawable/Drawable.java",
-        "android/graphics/drawable/ColorDrawable.java",
-        "android/graphics/drawable/BitmapDrawable.java",
-        "android/graphics/drawable/GradientDrawable.java",
-        "android/graphics/drawable/LayerDrawable.java",
-        "android/graphics/drawable/StateListDrawable.java",
         "android/graphics/animation/HasNativeInterpolator.java",
         "android/graphics/animation/NativeInterpolator.java",
         "android/graphics/animation/NativeInterpolatorFactory.java",
     ]
+    # Drawable classes are Nova bridges (src/), NOT AOSP.
+    # AOSP drawables need full R.attr / R.styleable resource infrastructure
+    # which Nova's lightweight resource bridge does not provide.
 
     SLICES = [
         ("nova-hybrid-animation-sources", ["android/animation/**/*.java"]),

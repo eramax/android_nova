@@ -11,6 +11,12 @@ public final class Log {
     public static final int ERROR = 6;
     public static final int ASSERT = 7;
 
+    public static final int LOG_ID_MAIN = 0;
+    public static final int LOG_ID_RADIO = 1;
+    public static final int LOG_ID_EVENTS = 2;
+    public static final int LOG_ID_SYSTEM = 3;
+    public static final int LOG_ID_CRASH = 4;
+
     public @interface Level {}
 
     private Log() {}

@@ -3,12 +3,14 @@ package android.content.res;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.util.TypedValue;
+import java.util.Arrays;
 
 public class TypedArray {
     private final Resources mResources;
     private final AttributeSet mSet;
     private final int[] mAttrs;
     private final boolean mAssumePresent;
+    private int mChangingConfigurations;
 
     private TypedArray(Resources resources, AttributeSet set, int[] attrs, boolean assumePresent) {
         mResources = resources != null ? resources : Resources.getSystem();
@@ -19,6 +21,22 @@ public class TypedArray {
 
     public static TypedArray obtain(Resources resources, AttributeSet set, int[] attrs, boolean assumePresent) {
         return new TypedArray(resources, set, attrs, assumePresent);
+    }
+
+    public static TypedArray obtain(Resources resources, AttributeSet set, int[] attrs) {
+        return new TypedArray(resources, set, attrs, false);
+    }
+
+    public static TypedArray obtain(Resources resources, int len, int[] data, int[] indices, int valueCount) {
+        return new TypedArray(resources, null, new int[len], false);
+    }
+
+    public int getChangingConfigurations() {
+        return mChangingConfigurations;
+    }
+
+    public int[] extractThemeAttrs() {
+        return new int[0];
     }
 
     public int length() {

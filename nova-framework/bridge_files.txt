@@ -135,3 +135,32 @@ android/window/OnBackInvokedDispatcher.java
 
 # WebView stub
 android/webkit/WebView.java
+
+# Drawable bridges (Nova provides its own; AOSP drawables pulled from AOSP graphics are excluded)
+android/graphics/drawable/Drawable.java
+android/graphics/drawable/ColorDrawable.java
+android/graphics/drawable/GradientDrawable.java
+android/widget/ScrollBarDrawable.java
+
+# Input event bridge (Nova provides its own InputEvent base class)
+android/view/InputEvent.java
+android/view/InputEventReceiver.java
+
+# Graphics animation bridges
+android/graphics/animation/RenderNodeAnimator.java
+android/graphics/animation/FallbackLUTInterpolator.java
+
+# Additional view stubs
+android/view/InsetsController.java
+android/view/PointerIcon.java
+
+# Internal util bridges
+com/android/internal/util/GrowingArrayUtils.java
+
+# Internal widget bridges
+com/android/internal/widget/ScrollBarUtils.java
+
+# Util bridges (replace AOSP versions that depend on excluded packages)
+android/util/CloseGuard.java
+com/android/internal/util/XmlUtils.java
+com/android/internal/util/ArrayUtils.java

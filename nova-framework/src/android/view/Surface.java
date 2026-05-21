@@ -23,6 +23,12 @@ public class Surface implements android.os.Parcelable {
     public static final int FRAME_RATE_COMPATIBILITY_EXACT = 3;
     public static final int FRAME_RATE_COMPATIBILITY_MIN = 4;
 
+    public static final int FRAME_RATE_CATEGORY_NO_PREFERENCE = 0;
+    public static final int FRAME_RATE_CATEGORY_LOW = 1;
+    public static final int FRAME_RATE_CATEGORY_NORMAL = 3;
+    public static final int FRAME_RATE_CATEGORY_HIGH = 4;
+    public static final int FRAME_RATE_CATEGORY_HIGH_HINT = 5;
+
     private static final String TAG = "NovaSurface";
     private boolean valid = true;
     private android.graphics.SurfaceTexture mSurfaceTexture;

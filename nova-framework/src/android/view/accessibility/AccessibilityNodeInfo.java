@@ -1,5 +1,8 @@
 package android.view.accessibility;
 
+import android.graphics.Rect;
+import android.view.View;
+
 public class AccessibilityNodeInfo {
     public static final int ACTION_FOCUS = 0x00000001;
     public static final int ACTION_CLEAR_FOCUS = 0x00000002;
@@ -7,12 +10,32 @@ public class AccessibilityNodeInfo {
     public static final int ACTION_CLEAR_SELECTION = 0x00000008;
     public static final int ACTION_CLICK = 0x00000010;
     public static final int ACTION_LONG_CLICK = 0x00000020;
+    public static final int ACTION_ACCESSIBILITY_FOCUS = 0x00000040;
+    public static final int ACTION_CLEAR_ACCESSIBILITY_FOCUS = 0x00000080;
+    public static final int ACTION_NEXT_AT_MOVEMENT_GRANULARITY = 0x00000100;
+    public static final int ACTION_PREVIOUS_AT_MOVEMENT_GRANULARITY = 0x00000200;
     public static final int ACTION_SCROLL_FORWARD = 0x00001000;
     public static final int ACTION_SCROLL_BACKWARD = 0x00002000;
+    public static final int ACTION_SET_SELECTION = 0x00020000;
+    public static final int ACTION_SET_TEXT = 0x00200000;
     public static final int ACTION_SCROLL_UP = 0x00100000;
     public static final int ACTION_SCROLL_DOWN = 0x00200000;
     public static final int ACTION_SCROLL_LEFT = 0x00400000;
     public static final int ACTION_SCROLL_RIGHT = 0x00800000;
+
+    public static final int MOVEMENT_GRANULARITY_CHARACTER = 1;
+    public static final int MOVEMENT_GRANULARITY_WORD = 2;
+    public static final int MOVEMENT_GRANULARITY_LINE = 4;
+    public static final int MOVEMENT_GRANULARITY_PARAGRAPH = 8;
+
+    public static final int FLAG_SERVICE_REQUESTS_INCLUDE_NOT_IMPORTANT_VIEWS = 1;
+    public static final int FLAG_SERVICE_REQUESTS_REPORT_VIEW_IDS = 2;
+
+    public static final String ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE = "ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE";
+    public static final String ACTION_ARGUMENT_MOVEMENT_GRANULARITY_INT = "ACTION_ARGUMENT_MOVEMENT_GRANULARITY_INT";
+    public static final String ACTION_ARGUMENT_EXTEND_SELECTION_BOOLEAN = "ACTION_ARGUMENT_EXTEND_SELECTION_BOOLEAN";
+    public static final String ACTION_ARGUMENT_SELECTION_START_INT = "ACTION_ARGUMENT_SELECTION_START_INT";
+    public static final String ACTION_ARGUMENT_SELECTION_END_INT = "ACTION_ARGUMENT_SELECTION_END_INT";
 
     public static final class AccessibilityAction {
         public static final AccessibilityAction ACTION_FOCUS = new AccessibilityAction(AccessibilityNodeInfo.ACTION_FOCUS, null);
@@ -86,9 +109,9 @@ public class AccessibilityNodeInfo {
     public static final class TouchDelegateInfo {
     }
 
-    private android.view.View mSource;
+    private View mSource;
 
-    public static AccessibilityNodeInfo obtain(android.view.View source) {
+    public static AccessibilityNodeInfo obtain(View source) {
         AccessibilityNodeInfo info = new AccessibilityNodeInfo();
         info.mSource = source;
         return info;
@@ -98,30 +121,109 @@ public class AccessibilityNodeInfo {
         return new AccessibilityNodeInfo();
     }
 
-    public void setSource(android.view.View view) { mSource = view; }
+    public static AccessibilityNodeInfo obtain(AccessibilityNodeInfo info) {
+        return new AccessibilityNodeInfo();
+    }
+
+    public void setSource(View view) { mSource = view; }
+    public View getSource() { return mSource; }
     public void recycle() {}
     public void addAction(AccessibilityAction action) {}
     public void addAction(int action) {}
     public void removeAction(AccessibilityAction action) {}
     public boolean removeAction(int action) { return false; }
     public void setEnabled(boolean enabled) {}
+    public boolean isEnabled() { return true; }
     public void setFocusable(boolean focusable) {}
+    public boolean isFocusable() { return true; }
     public void setFocused(boolean focused) {}
+    public boolean isFocused() { return false; }
     public void setSelected(boolean selected) {}
+    public boolean isSelected() { return false; }
     public void setClickable(boolean clickable) {}
+    public boolean isClickable() { return true; }
     public void setLongClickable(boolean longClickable) {}
+    public boolean isLongClickable() { return true; }
     public void setScrollable(boolean scrollable) {}
     public void setCheckable(boolean checkable) {}
+    public boolean isCheckable() { return false; }
     public void setChecked(boolean checked) {}
+    public boolean isChecked() { return false; }
     public void setContentDescription(CharSequence desc) {}
+    public CharSequence getContentDescription() { return null; }
     public void setStateDescription(CharSequence desc) {}
     public void setText(CharSequence text) {}
+    public CharSequence getText() { return null; }
     public void setClassName(CharSequence className) {}
+    public CharSequence getClassName() { return null; }
     public void setPackageName(CharSequence packageName) {}
-    public void setBoundsInScreen(android.graphics.Rect bounds) {}
-    public void setBoundsInParent(android.graphics.Rect bounds) {}
+    public void setBoundsInScreen(Rect bounds) {}
+    public void setBoundsInParent(Rect bounds) {}
+    public void setBoundsInWindow(Rect bounds) {}
+    public Rect getBoundsInParent() { return new Rect(); }
+    public void getBoundsInParent(Rect outBounds) {}
+    public Rect getBoundsInScreen() { return new Rect(); }
+    public void getBoundsInScreen(Rect outBounds) {}
     public void setImportantForAccessibility(boolean important) {}
     public void setVisibleToUser(boolean visible) {}
+    public boolean isVisibleToUser() { return true; }
     public void setAccessibilityFocused(boolean focused) {}
+    public boolean isAccessibilityFocused() { return false; }
+    public void setTargetAccessibilityFocus(boolean target) {}
+    public boolean isTargetAccessibilityFocus() { return false; }
+    public void setContextClickable(boolean contextClickable) {}
+    public boolean isContextClickable() { return false; }
+    public void setScreenReaderFocusable(boolean screenReaderFocusable) {}
+    public void setAccessibilityDataSensitive(boolean sensitive) {}
+    public void setDrawingOrder(int drawingOrder) {}
+    public void setParent(View parent) {}
+    public void setViewIdResourceName(String viewIdResName) {}
+    public void setLabelFor(View labeled) {}
+    public void setLabeledBy(View label) {}
+    public void setTraversalBefore(View view) {}
+    public void setTraversalAfter(View view) {}
+    public void setLiveRegion(int mode) {}
+    public void setTooltipText(CharSequence tooltipText) {}
+    public void setTextSelection(int start, int end) {}
+    public void setPaneTitle(CharSequence paneTitle) {}
+    public void setHeading(boolean isHeading) {}
+    public void setTouchDelegateInfo(TouchDelegateInfo info) {}
+    public void setError(CharSequence error) {}
+    public CharSequence getError() { return null; }
+    public int getTextSelectionStart() { return -1; }
+    public int getTextSelectionEnd() { return -1; }
+    public int getInputType() { return 0; }
+    public boolean isPassword() { return false; }
+    public boolean isEditable() { return false; }
+    public int getMaxTextLength() { return -1; }
+    public CharSequence getHintText() { return null; }
+    public void addChild(View child) {}
+    public void addChild(View root, int virtualDescendantId) {}
+    public int getChildCount() { return 0; }
+    public int getChildId(int index) { return -1; }
+    public long getSourceNodeId() { return -1; }
+    public int getViewIdResourceName() { return 0; }
+    public boolean isNonVirtual() { return false; }
+    public void setCollectionInfo(android.view.accessibility.AccessibilityNodeInfo.CollectionInfo info) {}
+    public void setCollectionItemInfo(android.view.accessibility.AccessibilityNodeInfo.CollectionItemInfo info) {}
+    public void setHintText(CharSequence hintText) {}
+    public boolean refresh() { return false; }
     public java.util.List<AccessibilityAction> getActionList() { return new java.util.ArrayList<>(); }
+
+    public static final class CollectionInfo {
+        public static final int SELECTION_MODE_NONE = 0;
+        public static final int SELECTION_MODE_SINGLE = 1;
+        public static final int SELECTION_MODE_MULTIPLE = 2;
+
+        public static CollectionInfo obtain(int rowCount, int columnCount, boolean hierarchical) {
+            return new CollectionInfo();
+        }
+    }
+
+    public static final class CollectionItemInfo {
+        public static CollectionItemInfo obtain(int rowIndex, int rowSpan, int columnIndex,
+                int columnSpan, boolean heading) {
+            return new CollectionItemInfo();
+        }
+    }
 }
