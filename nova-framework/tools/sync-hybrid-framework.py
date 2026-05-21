@@ -131,11 +131,22 @@ def write_aosp_bp(bridge_files: set[str], aosp_sources: list[str]) -> None:
         "android/view/WindowLayout.java",
         "android/view/WindowlessWindowLayout.java",
         "android/view/WindowlessWindowManager.java",
+        "android/view/AccessibilityEmbeddedConnection.java",
         "android/view/AccessibilityInteractionController.java",
+        "android/view/AttachedSurfaceControl.java",
+        "android/view/CrossWindowBlurListeners.java",
+        "android/view/FrameMetricsObserver.java",
+        "android/view/InputFilter.java",
+        "android/view/NotificationHeaderView.java",
+        "android/view/PrivacyIndicatorBounds.java",
         "android/view/RemoteAccessibilityController.java",
         "android/view/RemoteAnimationAdapter.java",
         "android/view/RemoteAnimationDefinition.java",
         "android/view/RemoteAnimationTarget.java",
+        "android/view/ScreenRecordingCallbacks.java",
+        "android/view/SurfaceControlActivePicture.java",
+        "android/view/SurfaceControlActivePictureListener.java",
+        "android/view/SurfaceControlRegistry.java",
         "android/view/SyncRtSurfaceTransactionApplier.java",
         "android/view/ScrollCaptureConnection.java",
         "android/view/ScrollCaptureCallback.java",
@@ -150,11 +161,15 @@ def write_aosp_bp(bridge_files: set[str], aosp_sources: list[str]) -> None:
         "android/view/DisplayAdjustments.java",
         "android/view/DisplayEventReceiver.java",
         "android/view/Display.java",
+        "android/view/ContentRecordingSession.java",
+        "android/view/GestureDetector.java",
         "android/view/TextureView.java",
         "android/view/SurfaceControl.java",
+        "android/view/SurfaceControlHdrLayerInfoListener.java",
         "android/view/SurfaceControlViewHost.java",
         "android/view/SurfaceSession.java",
         "android/view/SurfaceHolder.java",
+        "android/view/FrameMetrics.java",
         "android/view/HardwareRenderer.java",
         "android/view/ThreadedRenderer.java",
         "android/view/RenderNodeAnimator.java",
@@ -163,14 +178,56 @@ def write_aosp_bp(bridge_files: set[str], aosp_sources: list[str]) -> None:
         "android/view/ImeFocusController.java",
         "android/view/HandwritingInitiator.java",
         "android/view/PixelCopy.java",
+        "android/view/TouchDelegate.java",
+        "android/view/VerifiedKeyEvent.java",
+        "android/view/VerifiedMotionEvent.java",
+        "android/view/ViewFrameInfo.java",
+        "android/view/ViewProtoLogGroups.java",
+        "android/view/ViewRootInsetsControllerHost.java",
+        "android/view/VelocityTracker.java",
+        "android/view/WindowId.java",
+        "android/view/WindowInfo.java",
+        "android/view/XrWindowProperties.java",
     ]
 
     INTERNAL_UTIL_EXTRA_EXCLUDES = [
+        "com/android/internal/util/ArtBinaryXmlPullParser.java",
+        "com/android/internal/util/ArtBinaryXmlSerializer.java",
+        "com/android/internal/util/ArtFastDataInput.java",
+        "com/android/internal/util/ArtFastDataOutput.java",
         "com/android/internal/util/AnnotationValidations.java",
         "com/android/internal/util/LatencyTracker.java",
         "com/android/internal/util/ContrastColorUtil.java",
         "com/android/internal/util/XmlUtils.java",
         "com/android/internal/util/AsyncChannel.java",
+        "com/android/internal/util/DumpUtils.java",
+        "com/android/internal/util/MimeIconUtils.java",
+        "com/android/internal/util/ProgressReporter.java",
+        "com/android/internal/util/ScreenshotHelper.java",
+        "com/android/internal/util/ScreenshotRequest.java",
+        "com/android/internal/util/SyncResultReceiver.java",
+    ]
+
+    UTIL_EXTRA_EXCLUDES = [
+        "android/util/JsonReader.java",
+        "android/util/IntArray.java",
+        "android/util/LongArray.java",
+        "android/util/LongSparseArray.java",
+        "android/util/LongSparseLongArray.java",
+        "android/util/NtpTrustedTime.java",
+        "android/util/Size.java",
+        "android/util/Xml.java",
+        "android/util/apk/**/*.java",
+    ]
+
+    MENU_EXTRA_EXCLUDES = [
+        "com/android/internal/view/menu/ActionMenuItemView.java",
+        "com/android/internal/view/menu/CascadingMenuPopup.java",
+        "com/android/internal/view/menu/StandardMenuPopup.java",
+    ]
+
+    ANIMATION_EXTRA_EXCLUDES = [
+        "android/animation/RevealAnimator.java",
     ]
 
     GRAPHICS_LITE_SRCS = [
@@ -184,7 +241,6 @@ def write_aosp_bp(bridge_files: set[str], aosp_sources: list[str]) -> None:
         "android/graphics/RenderNode.java",
         "android/graphics/Color.java",
         "android/graphics/PorterDuff.java",
-        "android/graphics/Typeface.java",
         "android/graphics/Shader.java",
         "android/graphics/Xfermode.java",
         "android/graphics/PixelFormat.java",
@@ -194,12 +250,9 @@ def write_aosp_bp(bridge_files: set[str], aosp_sources: list[str]) -> None:
         "android/graphics/drawable/GradientDrawable.java",
         "android/graphics/drawable/LayerDrawable.java",
         "android/graphics/drawable/StateListDrawable.java",
-        "android/graphics/drawable/RippleDrawable.java",
-        "android/graphics/drawable/VectorDrawable.java",
         "android/graphics/animation/HasNativeInterpolator.java",
         "android/graphics/animation/NativeInterpolator.java",
         "android/graphics/animation/NativeInterpolatorFactory.java",
-        "android/graphics/animation/RenderNodeAnimator.java",
     ]
 
     SLICES = [
@@ -250,6 +303,12 @@ def write_aosp_bp(bridge_files: set[str], aosp_sources: list[str]) -> None:
             excludes = sorted(set(excludes) | set(VIEW_AOSP_EXCLUDES))
         if slice_name == "nova-hybrid-internal-util-sources":
             excludes = sorted(set(excludes) | set(INTERNAL_UTIL_EXTRA_EXCLUDES))
+        if slice_name == "nova-hybrid-internal-menu-sources":
+            excludes = sorted(set(excludes) | set(MENU_EXTRA_EXCLUDES))
+        if slice_name == "nova-hybrid-util-sources":
+            excludes = sorted(set(excludes) | set(UTIL_EXTRA_EXCLUDES))
+        if slice_name == "nova-hybrid-animation-sources":
+            excludes = sorted(set(excludes) | set(ANIMATION_EXTRA_EXCLUDES))
         core_lines += core_filegroup(slice_name, patterns, excludes)
 
     graphics_lines = header + [

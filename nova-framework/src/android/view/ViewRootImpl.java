@@ -16,6 +16,9 @@ import nova.internal.ViewDispatcher;
  */
 public final class ViewRootImpl {
     private static final String TAG = "NovaViewRootImpl";
+    public interface ConfigChangedCallback {
+        void onConfigurationChanged(android.content.res.Configuration globalConfig);
+    }
 
     private final Context mContext;
     private View mView;
@@ -87,5 +90,11 @@ public final class ViewRootImpl {
     public static final class HandwritingInitiator {
         public void updateHandwritingAreasForView(View view) {
         }
+    }
+
+    public static void addConfigCallback(ConfigChangedCallback callback) {
+    }
+
+    public static void removeConfigCallback(ConfigChangedCallback callback) {
     }
 }

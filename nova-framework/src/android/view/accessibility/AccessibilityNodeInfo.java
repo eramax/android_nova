@@ -83,6 +83,9 @@ public class AccessibilityNodeInfo {
         public int hashCode() { return mActionId; }
     }
 
+    public static final class TouchDelegateInfo {
+    }
+
     private android.view.View mSource;
 
     public static AccessibilityNodeInfo obtain(android.view.View source) {

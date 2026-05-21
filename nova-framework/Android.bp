@@ -16,11 +16,8 @@ java_library {
     srcs: [
         "src/**/*.java",
         // Hybrid fork Step 4: real AOSP from frameworks/base (bridges in src/ win via exclude_srcs).
-        "//frameworks/base/core/java:nova-hybrid-internal-util-sources",
-        "//frameworks/base/core/java:nova-hybrid-internal-menu-sources",
-        "//frameworks/base/core/java:nova-hybrid-text-sources",
-        "//frameworks/base/core/java:nova-hybrid-widget-sources",
-        "//frameworks/base/core/java:nova-hybrid-window-sources",
+        // Keep the initial slice set narrow so we can land a clean real-View DEX before
+        // re-introducing heavier text/widget/window trees with additional bridge coverage.
         "//frameworks/base/core/java:nova-hybrid-util-sources",
         "//frameworks/base/core/java:nova-hybrid-view-sources",
         "//frameworks/base/core/java:nova-hybrid-animation-sources",
@@ -47,6 +44,8 @@ java_library {
         "android.os.vibrator.flags-aconfig-java",
         "android.app.jank.flags-aconfig-java",
         "android.companion.virtualdevice.flags-aconfig-java",
+        "com.android.window.flags.window-aconfig-java",
+        "framework_graphics_flags_java_lib",
         "app-compat-annotations",
         "framework-annotations-lib",
         "unsupportedappusage",
