@@ -12,6 +12,17 @@ public class Surface implements android.os.Parcelable {
     public static final int ROTATION_90  = 1;
     public static final int ROTATION_180 = 2;
     public static final int ROTATION_270 = 3;
+
+    public @interface FrameRateCompatibility {}
+
+    public @interface Rotation {}
+
+    public static final int FRAME_RATE_COMPATIBILITY_DEFAULT = 0;
+    public static final int FRAME_RATE_COMPATIBILITY_FIXED_SOURCE = 1;
+    public static final int FRAME_RATE_COMPATIBILITY_AT_LEAST = 2;
+    public static final int FRAME_RATE_COMPATIBILITY_EXACT = 3;
+    public static final int FRAME_RATE_COMPATIBILITY_MIN = 4;
+
     private static final String TAG = "NovaSurface";
     private boolean valid = true;
     private android.graphics.SurfaceTexture mSurfaceTexture;

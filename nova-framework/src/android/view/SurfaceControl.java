@@ -2,6 +2,8 @@ package android.view;
 
 /** Minimal SurfaceControl stub for Nova host runtime. */
 public class SurfaceControl {
+    public static class Transaction {}
+
     public SurfaceControl() {
     }
 

@@ -54,7 +54,10 @@ public class Build {
         public static final int Q = 29;
         public static final int R = 30;
         public static final int S = 31;
+        public static final int S_V2 = 32;
         public static final int TIRAMISU = 33;
         public static final int UPSIDE_DOWN_CAKE = 34;
+        public static final int VANILLA_ICE_CREAM = 35;
+        public static final int BAKLAVA = 36;
     }
 }

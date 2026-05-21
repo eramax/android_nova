@@ -45,4 +45,8 @@ public class HardwareRenderer {
     public static boolean isSupported() {
         return false;
     }
+
+    public interface PictureCapturedCallback {
+        void onPictureCaptured(android.graphics.Picture picture);
+    }
 }

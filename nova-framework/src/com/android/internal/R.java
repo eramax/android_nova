@@ -299,10 +299,28 @@ public final class R {
     public static final class styleable {
         private styleable() {}
 
+        public static final int[] AbsListView = new int[12];
+        public static final int AbsListView_cacheColorHint = 0;
+        public static final int AbsListView_choiceMode = 1;
+        public static final int AbsListView_drawSelectorOnTop = 2;
+        public static final int AbsListView_fastScrollAlwaysVisible = 3;
+        public static final int AbsListView_fastScrollEnabled = 4;
+        public static final int AbsListView_fastScrollStyle = 5;
+        public static final int AbsListView_listSelector = 6;
+        public static final int AbsListView_scrollingCache = 7;
+        public static final int AbsListView_smoothScrollbar = 8;
+        public static final int AbsListView_stackFromBottom = 9;
+        public static final int AbsListView_textFilterEnabled = 10;
+        public static final int AbsListView_transcriptMode = 11;
+
         public static final int[] AbsoluteLayout = new int[3];
         public static final int AbsoluteLayout_Layout = 0;
         public static final int AbsoluteLayout_Layout_layout_x = 1;
         public static final int AbsoluteLayout_Layout_layout_y = 2;
+
+        public static final int[] ActivityChooserView = new int[2];
+        public static final int ActivityChooserView_expandActivityOverflowButtonDrawable = 0;
+        public static final int ActivityChooserView_initialActivityCount = 1;
 
         public static final int[] AdapterViewAnimator = new int[4];
         public static final int AdapterViewAnimator_animateFirstView = 0;
@@ -333,6 +351,42 @@ public final class R {
         public static final int AnalogClock_hand_secondTintMode = 11;
         public static final int AnalogClock_timeZone = 12;
 
+        public static final int[] AnimatedImageDrawable = new int[4];
+        public static final int AnimatedImageDrawable_autoMirrored = 0;
+        public static final int AnimatedImageDrawable_autoStart = 1;
+        public static final int AnimatedImageDrawable_repeatCount = 2;
+        public static final int AnimatedImageDrawable_src = 3;
+
+        public static final int[] AnimatedRotateDrawable = new int[5];
+        public static final int AnimatedRotateDrawable_drawable = 0;
+        public static final int AnimatedRotateDrawable_frameDuration = 1;
+        public static final int AnimatedRotateDrawable_framesCount = 2;
+        public static final int AnimatedRotateDrawable_pivotX = 3;
+        public static final int AnimatedRotateDrawable_pivotY = 4;
+
+        public static final int[] AnimatedStateListDrawable = new int[7];
+        public static final int AnimatedStateListDrawable_autoMirrored = 0;
+        public static final int AnimatedStateListDrawable_constantSize = 1;
+        public static final int AnimatedStateListDrawable_dither = 2;
+        public static final int AnimatedStateListDrawable_enterFadeDuration = 3;
+        public static final int AnimatedStateListDrawable_exitFadeDuration = 4;
+        public static final int AnimatedStateListDrawable_variablePadding = 5;
+        public static final int AnimatedStateListDrawable_visible = 6;
+
+        public static final int[] AnimatedStateListDrawableItem = new int[2];
+        public static final int AnimatedStateListDrawableItem_drawable = 0;
+        public static final int AnimatedStateListDrawableItem_id = 1;
+
+        public static final int[] AnimatedStateListDrawableTransition = new int[4];
+        public static final int AnimatedStateListDrawableTransition_drawable = 0;
+        public static final int AnimatedStateListDrawableTransition_fromId = 1;
+        public static final int AnimatedStateListDrawableTransition_reversible = 2;
+        public static final int AnimatedStateListDrawableTransition_toId = 3;
+
+        public static final int[] AnimatedVectorDrawableTarget = new int[2];
+        public static final int AnimatedVectorDrawableTarget_animation = 0;
+        public static final int AnimatedVectorDrawableTarget_name = 1;
+
         public static final int[] Animation = new int[14];
         public static final int Animation_backdropColor = 0;
         public static final int Animation_detachWallpaper = 1;
@@ -349,6 +403,15 @@ public final class R {
         public static final int Animation_startOffset = 12;
         public static final int Animation_zAdjustment = 13;
 
+        public static final int[] AnimationDrawable = new int[3];
+        public static final int AnimationDrawable_oneshot = 0;
+        public static final int AnimationDrawable_variablePadding = 1;
+        public static final int AnimationDrawable_visible = 2;
+
+        public static final int[] AnimationDrawableItem = new int[2];
+        public static final int AnimationDrawableItem_drawable = 0;
+        public static final int AnimationDrawableItem_duration = 1;
+
         public static final int[] AnimationSet = new int[6];
         public static final int AnimationSet_duration = 0;
         public static final int AnimationSet_fillAfter = 1;
@@ -357,9 +420,78 @@ public final class R {
         public static final int AnimationSet_shareInterpolator = 4;
         public static final int AnimationSet_startOffset = 5;
 
+        public static final int[] Animator = new int[8];
+        public static final int Animator_duration = 0;
+        public static final int Animator_interpolator = 1;
+        public static final int Animator_repeatCount = 2;
+        public static final int Animator_repeatMode = 3;
+        public static final int Animator_startOffset = 4;
+        public static final int Animator_valueFrom = 5;
+        public static final int Animator_valueTo = 6;
+        public static final int Animator_valueType = 7;
+
         public static final int[] AnticipateOvershootInterpolator = new int[2];
         public static final int AnticipateOvershootInterpolator_extraTension = 0;
         public static final int AnticipateOvershootInterpolator_tension = 1;
+
+        public static final int[] AutoCompleteTextView = new int[8];
+        public static final int AutoCompleteTextView_completionHint = 0;
+        public static final int AutoCompleteTextView_completionHintView = 1;
+        public static final int AutoCompleteTextView_completionThreshold = 2;
+        public static final int AutoCompleteTextView_dropDownAnchor = 3;
+        public static final int AutoCompleteTextView_dropDownHeight = 4;
+        public static final int AutoCompleteTextView_dropDownSelector = 5;
+        public static final int AutoCompleteTextView_dropDownWidth = 6;
+        public static final int AutoCompleteTextView_popupTheme = 7;
+
+        public static final int[] BitmapDrawable = new int[13];
+        public static final int BitmapDrawable_alpha = 0;
+        public static final int BitmapDrawable_antialias = 1;
+        public static final int BitmapDrawable_autoMirrored = 2;
+        public static final int BitmapDrawable_dither = 3;
+        public static final int BitmapDrawable_filter = 4;
+        public static final int BitmapDrawable_gravity = 5;
+        public static final int BitmapDrawable_mipMap = 6;
+        public static final int BitmapDrawable_src = 7;
+        public static final int BitmapDrawable_tileMode = 8;
+        public static final int BitmapDrawable_tileModeX = 9;
+        public static final int BitmapDrawable_tileModeY = 10;
+        public static final int BitmapDrawable_tint = 11;
+        public static final int BitmapDrawable_tintMode = 12;
+
+        public static final int[] CalendarView = new int[16];
+        public static final int CalendarView_calendarViewMode = 0;
+        public static final int CalendarView_dateTextAppearance = 1;
+        public static final int CalendarView_daySelectorColor = 2;
+        public static final int CalendarView_firstDayOfWeek = 3;
+        public static final int CalendarView_focusedMonthDateColor = 4;
+        public static final int CalendarView_maxDate = 5;
+        public static final int CalendarView_minDate = 6;
+        public static final int CalendarView_monthTextAppearance = 7;
+        public static final int CalendarView_selectedDateVerticalBar = 8;
+        public static final int CalendarView_selectedWeekBackgroundColor = 9;
+        public static final int CalendarView_showWeekNumber = 10;
+        public static final int CalendarView_shownWeekCount = 11;
+        public static final int CalendarView_unfocusedMonthDateColor = 12;
+        public static final int CalendarView_weekDayTextAppearance = 13;
+        public static final int CalendarView_weekNumberColor = 14;
+        public static final int CalendarView_weekSeparatorLineColor = 15;
+
+        public static final int[] CheckedTextView = new int[5];
+        public static final int CheckedTextView_checkMark = 0;
+        public static final int CheckedTextView_checkMarkGravity = 1;
+        public static final int CheckedTextView_checkMarkTint = 2;
+        public static final int CheckedTextView_checkMarkTintMode = 3;
+        public static final int CheckedTextView_checked = 4;
+
+        public static final int[] Chronometer = new int[2];
+        public static final int Chronometer_countDown = 0;
+        public static final int Chronometer_format = 1;
+
+        public static final int[] ClipDrawable = new int[3];
+        public static final int ClipDrawable_clipOrientation = 0;
+        public static final int ClipDrawable_drawable = 1;
+        public static final int ClipDrawable_gravity = 2;
 
         public static final int[] ClipRectAnimation = new int[8];
         public static final int ClipRectAnimation_fromBottom = 0;
@@ -371,18 +503,27 @@ public final class R {
         public static final int ClipRectAnimation_toRight = 6;
         public static final int ClipRectAnimation_toTop = 7;
 
-        public static final int[] CompoundButton = new int[2];
+        public static final int[] CompoundButton = new int[4];
         public static final int CompoundButton_button = 0;
-        public static final int CompoundButton_checked = 1;
+        public static final int CompoundButton_buttonTint = 1;
+        public static final int CompoundButton_buttonTintMode = 2;
+        public static final int CompoundButton_checked = 3;
 
-        public static final int[] DatePicker = new int[7];
+        public static final int[] DatePicker = new int[14];
         public static final int DatePicker_calendarViewShown = 0;
-        public static final int DatePicker_endYear = 1;
-        public static final int DatePicker_legacyLayout = 2;
-        public static final int DatePicker_maxDate = 3;
-        public static final int DatePicker_minDate = 4;
-        public static final int DatePicker_spinnersShown = 5;
-        public static final int DatePicker_startYear = 6;
+        public static final int DatePicker_datePickerMode = 1;
+        public static final int DatePicker_dialogMode = 2;
+        public static final int DatePicker_endYear = 3;
+        public static final int DatePicker_firstDayOfWeek = 4;
+        public static final int DatePicker_headerBackground = 5;
+        public static final int DatePicker_headerMonthTextAppearance = 6;
+        public static final int DatePicker_headerTextColor = 7;
+        public static final int DatePicker_internalLayout = 8;
+        public static final int DatePicker_legacyLayout = 9;
+        public static final int DatePicker_maxDate = 10;
+        public static final int DatePicker_minDate = 11;
+        public static final int DatePicker_spinnersShown = 12;
+        public static final int DatePicker_startYear = 13;
 
         public static final int[] DrawableCorners = new int[5];
         public static final int DrawableCorners_bottomLeftRadius = 0;
@@ -414,11 +555,92 @@ public final class R {
         public static final int ExtendAnimation_toExtendRight = 6;
         public static final int ExtendAnimation_toExtendTop = 7;
 
+        public static final int[] FastScroll = new int[14];
+        public static final int FastScroll_backgroundLeft = 0;
+        public static final int FastScroll_backgroundRight = 1;
+        public static final int FastScroll_minHeight = 2;
+        public static final int FastScroll_minWidth = 3;
+        public static final int FastScroll_padding = 4;
+        public static final int FastScroll_position = 5;
+        public static final int FastScroll_textAppearance = 6;
+        public static final int FastScroll_textColor = 7;
+        public static final int FastScroll_textSize = 8;
+        public static final int FastScroll_thumbDrawable = 9;
+        public static final int FastScroll_thumbMinHeight = 10;
+        public static final int FastScroll_thumbMinWidth = 11;
+        public static final int FastScroll_thumbPosition = 12;
+        public static final int FastScroll_trackDrawable = 13;
+
+        public static final int[] FrameLayout = new int[3];
+        public static final int FrameLayout_Layout = 0;
+        public static final int FrameLayout_Layout_layout_gravity = 1;
+        public static final int FrameLayout_measureAllChildren = 2;
+
         public static final int[] Gallery = new int[4];
         public static final int Gallery_animationDuration = 0;
         public static final int Gallery_gravity = 1;
         public static final int Gallery_spacing = 2;
         public static final int Gallery_unselectedAlpha = 3;
+
+        public static final int[] GradientDrawable = new int[14];
+        public static final int GradientDrawable_dither = 0;
+        public static final int GradientDrawable_innerRadius = 1;
+        public static final int GradientDrawable_innerRadiusRatio = 2;
+        public static final int GradientDrawable_opticalInsetBottom = 3;
+        public static final int GradientDrawable_opticalInsetLeft = 4;
+        public static final int GradientDrawable_opticalInsetRight = 5;
+        public static final int GradientDrawable_opticalInsetTop = 6;
+        public static final int GradientDrawable_shape = 7;
+        public static final int GradientDrawable_strokeCap = 8;
+        public static final int GradientDrawable_thickness = 9;
+        public static final int GradientDrawable_thicknessRatio = 10;
+        public static final int GradientDrawable_tint = 11;
+        public static final int GradientDrawable_tintMode = 12;
+        public static final int GradientDrawable_useLevel = 13;
+
+        public static final int[] GradientDrawableGradient = new int[9];
+        public static final int GradientDrawableGradient_angle = 0;
+        public static final int GradientDrawableGradient_centerColor = 1;
+        public static final int GradientDrawableGradient_centerX = 2;
+        public static final int GradientDrawableGradient_centerY = 3;
+        public static final int GradientDrawableGradient_endColor = 4;
+        public static final int GradientDrawableGradient_gradientRadius = 5;
+        public static final int GradientDrawableGradient_startColor = 6;
+        public static final int GradientDrawableGradient_type = 7;
+        public static final int GradientDrawableGradient_useLevel = 8;
+
+        public static final int[] GradientDrawablePadding = new int[4];
+        public static final int GradientDrawablePadding_bottom = 0;
+        public static final int GradientDrawablePadding_left = 1;
+        public static final int GradientDrawablePadding_right = 2;
+        public static final int GradientDrawablePadding_top = 3;
+
+        public static final int[] GradientDrawableSize = new int[2];
+        public static final int GradientDrawableSize_height = 0;
+        public static final int GradientDrawableSize_width = 1;
+
+        public static final int[] GradientDrawableStroke = new int[4];
+        public static final int GradientDrawableStroke_color = 0;
+        public static final int GradientDrawableStroke_dashGap = 1;
+        public static final int GradientDrawableStroke_dashWidth = 2;
+        public static final int GradientDrawableStroke_width = 3;
+
+        public static final int[] GridLayout = new int[15];
+        public static final int GridLayout_Layout = 0;
+        public static final int GridLayout_Layout_layout_column = 1;
+        public static final int GridLayout_Layout_layout_columnSpan = 2;
+        public static final int GridLayout_Layout_layout_columnWeight = 3;
+        public static final int GridLayout_Layout_layout_gravity = 4;
+        public static final int GridLayout_Layout_layout_row = 5;
+        public static final int GridLayout_Layout_layout_rowSpan = 6;
+        public static final int GridLayout_Layout_layout_rowWeight = 7;
+        public static final int GridLayout_alignmentMode = 8;
+        public static final int GridLayout_columnCount = 9;
+        public static final int GridLayout_columnOrderPreserved = 10;
+        public static final int GridLayout_orientation = 11;
+        public static final int GridLayout_rowCount = 12;
+        public static final int GridLayout_rowOrderPreserved = 13;
+        public static final int GridLayout_useDefaultMargins = 14;
 
         public static final int[] GridLayoutAnimation = new int[4];
         public static final int GridLayoutAnimation_columnDelay = 0;
@@ -426,12 +648,37 @@ public final class R {
         public static final int GridLayoutAnimation_directionPriority = 2;
         public static final int GridLayoutAnimation_rowDelay = 3;
 
+        public static final int[] GridView = new int[6];
+        public static final int GridView_columnWidth = 0;
+        public static final int GridView_gravity = 1;
+        public static final int GridView_horizontalSpacing = 2;
+        public static final int GridView_numColumns = 3;
+        public static final int GridView_stretchMode = 4;
+        public static final int GridView_verticalSpacing = 5;
+
         public static final int[] IconMenuView = new int[5];
         public static final int IconMenuView_maxItems = 0;
         public static final int IconMenuView_maxItemsPerRow = 1;
         public static final int IconMenuView_maxRows = 2;
         public static final int IconMenuView_moreIcon = 3;
         public static final int IconMenuView_rowHeight = 4;
+
+        public static final int[] ImageView = new int[11];
+        public static final int ImageView_adjustViewBounds = 0;
+        public static final int ImageView_baseline = 1;
+        public static final int ImageView_baselineAlignBottom = 2;
+        public static final int ImageView_cropToPadding = 3;
+        public static final int ImageView_drawableAlpha = 4;
+        public static final int ImageView_maxHeight = 5;
+        public static final int ImageView_maxWidth = 6;
+        public static final int ImageView_scaleType = 7;
+        public static final int ImageView_src = 8;
+        public static final int ImageView_tint = 9;
+        public static final int ImageView_tintMode = 10;
+
+        public static final int[] Include = new int[2];
+        public static final int Include_id = 0;
+        public static final int Include_visibility = 1;
 
         public static final int[] InputMethod = new int[13];
         public static final int InputMethod_Subtype = 0;
@@ -448,6 +695,43 @@ public final class R {
         public static final int InputMethod_supportsSwitchingToNextInputMethod = 11;
         public static final int InputMethod_suppressesSpellChecker = 12;
 
+        public static final int[] InsetDrawable = new int[6];
+        public static final int InsetDrawable_drawable = 0;
+        public static final int InsetDrawable_inset = 1;
+        public static final int InsetDrawable_insetBottom = 2;
+        public static final int InsetDrawable_insetLeft = 3;
+        public static final int InsetDrawable_insetRight = 4;
+        public static final int InsetDrawable_insetTop = 5;
+
+        public static final int[] Keyframe = new int[3];
+        public static final int Keyframe_fraction = 0;
+        public static final int Keyframe_interpolator = 1;
+        public static final int Keyframe_value = 2;
+
+        public static final int[] LayerDrawable = new int[9];
+        public static final int LayerDrawable_autoMirrored = 0;
+        public static final int LayerDrawable_opacity = 1;
+        public static final int LayerDrawable_paddingBottom = 2;
+        public static final int LayerDrawable_paddingEnd = 3;
+        public static final int LayerDrawable_paddingLeft = 4;
+        public static final int LayerDrawable_paddingMode = 5;
+        public static final int LayerDrawable_paddingRight = 6;
+        public static final int LayerDrawable_paddingStart = 7;
+        public static final int LayerDrawable_paddingTop = 8;
+
+        public static final int[] LayerDrawableItem = new int[11];
+        public static final int LayerDrawableItem_bottom = 0;
+        public static final int LayerDrawableItem_drawable = 1;
+        public static final int LayerDrawableItem_end = 2;
+        public static final int LayerDrawableItem_gravity = 3;
+        public static final int LayerDrawableItem_height = 4;
+        public static final int LayerDrawableItem_id = 5;
+        public static final int LayerDrawableItem_left = 6;
+        public static final int LayerDrawableItem_right = 7;
+        public static final int LayerDrawableItem_start = 8;
+        public static final int LayerDrawableItem_top = 9;
+        public static final int LayerDrawableItem_width = 10;
+
         public static final int[] LayoutAnimation = new int[4];
         public static final int LayoutAnimation_animation = 0;
         public static final int LayoutAnimation_animationOrder = 1;
@@ -459,17 +743,48 @@ public final class R {
         public static final int LevelListDrawableItem_maxLevel = 1;
         public static final int LevelListDrawableItem_minLevel = 2;
 
-        public static final int[] LinearLayout = new int[6];
+        public static final int[] Lighting = new int[5];
+        public static final int Lighting_ambientShadowAlpha = 0;
+        public static final int Lighting_lightRadius = 1;
+        public static final int Lighting_lightY = 2;
+        public static final int Lighting_lightZ = 3;
+        public static final int Lighting_spotShadowAlpha = 4;
+
+        public static final int[] LinearLayout = new int[12];
         public static final int LinearLayout_Layout = 0;
         public static final int LinearLayout_Layout_layout_gravity = 1;
         public static final int LinearLayout_Layout_layout_weight = 2;
-        public static final int LinearLayout_baselineAlignedChildIndex = 3;
-        public static final int LinearLayout_gravity = 4;
-        public static final int LinearLayout_orientation = 5;
+        public static final int LinearLayout_baselineAligned = 3;
+        public static final int LinearLayout_baselineAlignedChildIndex = 4;
+        public static final int LinearLayout_divider = 5;
+        public static final int LinearLayout_dividerPadding = 6;
+        public static final int LinearLayout_gravity = 7;
+        public static final int LinearLayout_measureWithLargestChild = 8;
+        public static final int LinearLayout_orientation = 9;
+        public static final int LinearLayout_showDividers = 10;
+        public static final int LinearLayout_weightSum = 11;
 
-        public static final int[] Magnifier = new int[2];
-        public static final int Magnifier_magnifierHorizontalOffset = 0;
-        public static final int Magnifier_magnifierVerticalOffset = 1;
+        public static final int[] ListPopupWindow = new int[2];
+        public static final int ListPopupWindow_dropDownHorizontalOffset = 0;
+        public static final int ListPopupWindow_dropDownVerticalOffset = 1;
+
+        public static final int[] ListView = new int[7];
+        public static final int ListView_divider = 0;
+        public static final int ListView_dividerHeight = 1;
+        public static final int ListView_entries = 2;
+        public static final int ListView_footerDividersEnabled = 3;
+        public static final int ListView_headerDividersEnabled = 4;
+        public static final int ListView_overScrollFooter = 5;
+        public static final int ListView_overScrollHeader = 6;
+
+        public static final int[] Magnifier = new int[7];
+        public static final int Magnifier_magnifierColorOverlay = 0;
+        public static final int Magnifier_magnifierElevation = 1;
+        public static final int Magnifier_magnifierHeight = 2;
+        public static final int Magnifier_magnifierHorizontalOffset = 3;
+        public static final int Magnifier_magnifierVerticalOffset = 4;
+        public static final int Magnifier_magnifierWidth = 5;
+        public static final int Magnifier_magnifierZoom = 6;
 
         public static final int[] MenuGroup = new int[6];
         public static final int MenuGroup_checkableBehavior = 0;
@@ -513,6 +828,34 @@ public final class R {
         public static final int MenuView_verticalDivider = 5;
         public static final int MenuView_windowAnimationStyle = 6;
 
+        public static final int[] NinePatchDrawable = new int[6];
+        public static final int NinePatchDrawable_alpha = 0;
+        public static final int NinePatchDrawable_autoMirrored = 1;
+        public static final int NinePatchDrawable_dither = 2;
+        public static final int NinePatchDrawable_src = 3;
+        public static final int NinePatchDrawable_tint = 4;
+        public static final int NinePatchDrawable_tintMode = 5;
+
+        public static final int[] NumberPicker = new int[11];
+        public static final int NumberPicker_hideWheelUntilFocused = 0;
+        public static final int NumberPicker_internalLayout = 1;
+        public static final int NumberPicker_internalMaxHeight = 2;
+        public static final int NumberPicker_internalMaxWidth = 3;
+        public static final int NumberPicker_internalMinHeight = 4;
+        public static final int NumberPicker_internalMinWidth = 5;
+        public static final int NumberPicker_selectionDivider = 6;
+        public static final int NumberPicker_selectionDividerHeight = 7;
+        public static final int NumberPicker_selectionDividersDistance = 8;
+        public static final int NumberPicker_solidColor = 9;
+        public static final int NumberPicker_virtualButtonPressedDrawable = 10;
+
+        public static final int[] PathInterpolator = new int[5];
+        public static final int PathInterpolator_controlX1 = 0;
+        public static final int PathInterpolator_controlX2 = 1;
+        public static final int PathInterpolator_controlY1 = 2;
+        public static final int PathInterpolator_controlY2 = 3;
+        public static final int PathInterpolator_pathData = 4;
+
         public static final int[] Pointer = new int[23];
         public static final int Pointer_pointerIconAlias = 0;
         public static final int Pointer_pointerIconAllScroll = 1;
@@ -543,7 +886,63 @@ public final class R {
         public static final int PointerIcon_hotSpotX = 1;
         public static final int PointerIcon_hotSpotY = 2;
 
-        public static final int[] RelativeLayout = new int[24];
+        public static final int[] PopupWindow = new int[6];
+        public static final int PopupWindow_overlapAnchor = 0;
+        public static final int PopupWindow_popupAnimationStyle = 1;
+        public static final int PopupWindow_popupBackground = 2;
+        public static final int PopupWindow_popupElevation = 3;
+        public static final int PopupWindow_popupEnterTransition = 4;
+        public static final int PopupWindow_popupExitTransition = 5;
+
+        public static final int[] ProgressBar = new int[24];
+        public static final int ProgressBar_indeterminate = 0;
+        public static final int ProgressBar_indeterminateBehavior = 1;
+        public static final int ProgressBar_indeterminateDrawable = 2;
+        public static final int ProgressBar_indeterminateDuration = 3;
+        public static final int ProgressBar_indeterminateOnly = 4;
+        public static final int ProgressBar_indeterminateTint = 5;
+        public static final int ProgressBar_indeterminateTintMode = 6;
+        public static final int ProgressBar_interpolator = 7;
+        public static final int ProgressBar_max = 8;
+        public static final int ProgressBar_maxHeight = 9;
+        public static final int ProgressBar_maxWidth = 10;
+        public static final int ProgressBar_min = 11;
+        public static final int ProgressBar_minHeight = 12;
+        public static final int ProgressBar_minWidth = 13;
+        public static final int ProgressBar_mirrorForRtl = 14;
+        public static final int ProgressBar_progress = 15;
+        public static final int ProgressBar_progressBackgroundTint = 16;
+        public static final int ProgressBar_progressBackgroundTintMode = 17;
+        public static final int ProgressBar_progressDrawable = 18;
+        public static final int ProgressBar_progressTint = 19;
+        public static final int ProgressBar_progressTintMode = 20;
+        public static final int ProgressBar_secondaryProgress = 21;
+        public static final int ProgressBar_secondaryProgressTint = 22;
+        public static final int ProgressBar_secondaryProgressTintMode = 23;
+
+        public static final int[] PropertyAnimator = new int[4];
+        public static final int PropertyAnimator_pathData = 0;
+        public static final int PropertyAnimator_propertyName = 1;
+        public static final int PropertyAnimator_propertyXName = 2;
+        public static final int PropertyAnimator_propertyYName = 3;
+
+        public static final int[] PropertyValuesHolder = new int[4];
+        public static final int PropertyValuesHolder_propertyName = 0;
+        public static final int PropertyValuesHolder_valueFrom = 1;
+        public static final int PropertyValuesHolder_valueTo = 2;
+        public static final int PropertyValuesHolder_valueType = 3;
+
+        public static final int[] RadioGroup = new int[2];
+        public static final int RadioGroup_checkedButton = 0;
+        public static final int RadioGroup_orientation = 1;
+
+        public static final int[] RatingBar = new int[4];
+        public static final int RatingBar_isIndicator = 0;
+        public static final int RatingBar_numStars = 1;
+        public static final int RatingBar_rating = 2;
+        public static final int RatingBar_stepSize = 3;
+
+        public static final int[] RelativeLayout = new int[26];
         public static final int RelativeLayout_Layout = 0;
         public static final int RelativeLayout_Layout_layout_above = 1;
         public static final int RelativeLayout_Layout_layout_alignBaseline = 2;
@@ -568,12 +967,26 @@ public final class R {
         public static final int RelativeLayout_Layout_layout_toLeftOf = 21;
         public static final int RelativeLayout_Layout_layout_toRightOf = 22;
         public static final int RelativeLayout_Layout_layout_toStartOf = 23;
+        public static final int RelativeLayout_gravity = 24;
+        public static final int RelativeLayout_ignoreGravity = 25;
+
+        public static final int[] RippleDrawable = new int[3];
+        public static final int RippleDrawable_color = 0;
+        public static final int RippleDrawable_effectColor = 1;
+        public static final int RippleDrawable_radius = 2;
 
         public static final int[] RotateAnimation = new int[4];
         public static final int RotateAnimation_fromDegrees = 0;
         public static final int RotateAnimation_pivotX = 1;
         public static final int RotateAnimation_pivotY = 2;
         public static final int RotateAnimation_toDegrees = 3;
+
+        public static final int[] RotateDrawable = new int[5];
+        public static final int RotateDrawable_drawable = 0;
+        public static final int RotateDrawable_fromDegrees = 1;
+        public static final int RotateDrawable_pivotX = 2;
+        public static final int RotateDrawable_pivotY = 3;
+        public static final int RotateDrawable_toDegrees = 4;
 
         public static final int[] ScaleAnimation = new int[6];
         public static final int ScaleAnimation_fromXScale = 0;
@@ -582,6 +995,51 @@ public final class R {
         public static final int ScaleAnimation_pivotY = 3;
         public static final int ScaleAnimation_toXScale = 4;
         public static final int ScaleAnimation_toYScale = 5;
+
+        public static final int[] ScaleDrawable = new int[6];
+        public static final int ScaleDrawable_drawable = 0;
+        public static final int ScaleDrawable_level = 1;
+        public static final int ScaleDrawable_scaleGravity = 2;
+        public static final int ScaleDrawable_scaleHeight = 3;
+        public static final int ScaleDrawable_scaleWidth = 4;
+        public static final int ScaleDrawable_useIntrinsicSizeAsMinimum = 5;
+
+        public static final int[] SearchView = new int[16];
+        public static final int SearchView_closeIcon = 0;
+        public static final int SearchView_commitIcon = 1;
+        public static final int SearchView_defaultQueryHint = 2;
+        public static final int SearchView_goIcon = 3;
+        public static final int SearchView_iconifiedByDefault = 4;
+        public static final int SearchView_imeOptions = 5;
+        public static final int SearchView_inputType = 6;
+        public static final int SearchView_layout = 7;
+        public static final int SearchView_maxWidth = 8;
+        public static final int SearchView_queryBackground = 9;
+        public static final int SearchView_queryHint = 10;
+        public static final int SearchView_searchHintIcon = 11;
+        public static final int SearchView_searchIcon = 12;
+        public static final int SearchView_submitBackground = 13;
+        public static final int SearchView_suggestionRowLayout = 14;
+        public static final int SearchView_voiceIcon = 15;
+
+        public static final int[] SeekBar = new int[9];
+        public static final int SeekBar_splitTrack = 0;
+        public static final int SeekBar_thumb = 1;
+        public static final int SeekBar_thumbOffset = 2;
+        public static final int SeekBar_thumbTint = 3;
+        public static final int SeekBar_thumbTintMode = 4;
+        public static final int SeekBar_tickMark = 5;
+        public static final int SeekBar_tickMarkTint = 6;
+        public static final int SeekBar_tickMarkTintMode = 7;
+        public static final int SeekBar_useDisabledAlpha = 8;
+
+        public static final int[] ShapeDrawable = new int[6];
+        public static final int ShapeDrawable_color = 0;
+        public static final int ShapeDrawable_dither = 1;
+        public static final int ShapeDrawable_height = 2;
+        public static final int ShapeDrawable_tint = 3;
+        public static final int ShapeDrawable_tintMode = 4;
+        public static final int ShapeDrawable_width = 5;
 
         public static final int[] ShapeDrawablePadding = new int[4];
         public static final int ShapeDrawablePadding_bottom = 0;
@@ -594,9 +1052,28 @@ public final class R {
         public static final int SpellChecker_label = 1;
         public static final int SpellChecker_settingsActivity = 2;
 
+        public static final int[] Spinner = new int[8];
+        public static final int Spinner_disableChildrenWhenDisabled = 0;
+        public static final int Spinner_dropDownSelector = 1;
+        public static final int Spinner_dropDownWidth = 2;
+        public static final int Spinner_gravity = 3;
+        public static final int Spinner_popupBackground = 4;
+        public static final int Spinner_popupTheme = 5;
+        public static final int Spinner_prompt = 6;
+        public static final int Spinner_spinnerMode = 7;
+
         public static final int[] StackView = new int[2];
         public static final int StackView_clickColor = 0;
         public static final int StackView_resOutColor = 1;
+
+        public static final int[] StateListDrawable = new int[7];
+        public static final int StateListDrawable_autoMirrored = 0;
+        public static final int StateListDrawable_constantSize = 1;
+        public static final int StateListDrawable_dither = 2;
+        public static final int StateListDrawable_enterFadeDuration = 3;
+        public static final int StateListDrawable_exitFadeDuration = 4;
+        public static final int StateListDrawable_variablePadding = 5;
+        public static final int StateListDrawable_visible = 6;
 
         public static final int[] SuggestionSpan = new int[2];
         public static final int SuggestionSpan_textUnderlineColor = 0;
@@ -617,6 +1094,17 @@ public final class R {
         public static final int Switch_track = 11;
         public static final int Switch_trackTint = 12;
         public static final int Switch_trackTintMode = 13;
+
+        public static final int[] TabWidget = new int[4];
+        public static final int TabWidget_tabLayout = 0;
+        public static final int TabWidget_tabStripEnabled = 1;
+        public static final int TabWidget_tabStripLeft = 2;
+        public static final int TabWidget_tabStripRight = 3;
+
+        public static final int[] TableLayout = new int[3];
+        public static final int TableLayout_collapseColumns = 0;
+        public static final int TableLayout_shrinkColumns = 1;
+        public static final int TableLayout_stretchColumns = 2;
 
         public static final int[] TableRow = new int[3];
         public static final int TableRow_Cell = 0;
@@ -649,7 +1137,12 @@ public final class R {
         public static final int TextAppearance_textStyle = 22;
         public static final int TextAppearance_typeface = 23;
 
-        public static final int[] TextView = new int[99];
+        public static final int[] TextClock = new int[3];
+        public static final int TextClock_format12Hour = 0;
+        public static final int TextClock_format24Hour = 1;
+        public static final int TextClock_timeZone = 2;
+
+        public static final int[] TextView = new int[100];
         public static final int TextView_allowUndo = 0;
         public static final int TextView_autoLink = 1;
         public static final int TextView_autoSizeMaxTextSize = 2;
@@ -748,17 +1241,64 @@ public final class R {
         public static final int TextView_textStyle = 95;
         public static final int TextView_typeface = 96;
         public static final int TextView_useBoundsForWidth = 97;
-        public static final int TextView_width = 98;
+        public static final int TextView_useLocalePreferredLineHeightForMinimum = 98;
+        public static final int TextView_width = 99;
 
-        public static final int[] Theme = new int[3];
-        public static final int Theme_errorMessageAboveBackground = 0;
-        public static final int Theme_errorMessageBackground = 1;
-        public static final int Theme_quickContactBadgeOverlay = 2;
+        public static final int[] Theme = new int[6];
+        public static final int Theme_disabledAlpha = 0;
+        public static final int Theme_errorMessageAboveBackground = 1;
+        public static final int Theme_errorMessageBackground = 2;
+        public static final int Theme_forceDarkAllowed = 3;
+        public static final int Theme_isLightTheme = 4;
+        public static final int Theme_quickContactBadgeOverlay = 5;
+
+        public static final int[] TimePicker = new int[11];
+        public static final int TimePicker_dialogMode = 0;
+        public static final int TimePicker_headerBackground = 1;
+        public static final int TimePicker_headerTextColor = 2;
+        public static final int TimePicker_headerTimeTextAppearance = 3;
+        public static final int TimePicker_internalLayout = 4;
+        public static final int TimePicker_legacyLayout = 5;
+        public static final int TimePicker_numbersBackgroundColor = 6;
+        public static final int TimePicker_numbersInnerTextColor = 7;
+        public static final int TimePicker_numbersSelectorColor = 8;
+        public static final int TimePicker_numbersTextColor = 9;
+        public static final int TimePicker_timePickerMode = 10;
 
         public static final int[] ToggleButton = new int[3];
         public static final int ToggleButton_disabledAlpha = 0;
         public static final int ToggleButton_textOff = 1;
         public static final int ToggleButton_textOn = 2;
+
+        public static final int[] Toolbar = new int[28];
+        public static final int Toolbar_buttonGravity = 0;
+        public static final int Toolbar_collapseContentDescription = 1;
+        public static final int Toolbar_collapseIcon = 2;
+        public static final int Toolbar_contentInsetEnd = 3;
+        public static final int Toolbar_contentInsetEndWithActions = 4;
+        public static final int Toolbar_contentInsetLeft = 5;
+        public static final int Toolbar_contentInsetRight = 6;
+        public static final int Toolbar_contentInsetStart = 7;
+        public static final int Toolbar_contentInsetStartWithNavigation = 8;
+        public static final int Toolbar_gravity = 9;
+        public static final int Toolbar_logo = 10;
+        public static final int Toolbar_logoDescription = 11;
+        public static final int Toolbar_maxButtonHeight = 12;
+        public static final int Toolbar_navigationButtonStyle = 13;
+        public static final int Toolbar_navigationContentDescription = 14;
+        public static final int Toolbar_navigationIcon = 15;
+        public static final int Toolbar_popupTheme = 16;
+        public static final int Toolbar_subtitle = 17;
+        public static final int Toolbar_subtitleTextAppearance = 18;
+        public static final int Toolbar_subtitleTextColor = 19;
+        public static final int Toolbar_title = 20;
+        public static final int Toolbar_titleMargin = 21;
+        public static final int Toolbar_titleMarginBottom = 22;
+        public static final int Toolbar_titleMarginEnd = 23;
+        public static final int Toolbar_titleMarginStart = 24;
+        public static final int Toolbar_titleMarginTop = 25;
+        public static final int Toolbar_titleTextAppearance = 26;
+        public static final int Toolbar_titleTextColor = 27;
 
         public static final int[] TranslateAnimation = new int[4];
         public static final int TranslateAnimation_fromXDelta = 0;
@@ -766,56 +1306,169 @@ public final class R {
         public static final int TranslateAnimation_toXDelta = 2;
         public static final int TranslateAnimation_toYDelta = 3;
 
-        public static final int[] View = new int[49];
-        public static final int View_accessibilityHeading = 0;
-        public static final int View_accessibilityTraversalAfter = 1;
-        public static final int View_accessibilityTraversalBefore = 2;
-        public static final int View_allowClickWhenDisabled = 3;
-        public static final int View_alpha = 4;
-        public static final int View_autoHandwritingEnabled = 5;
-        public static final int View_background = 6;
-        public static final int View_clickable = 7;
-        public static final int View_contentDescription = 8;
-        public static final int View_contextClickable = 9;
-        public static final int View_drawingCacheQuality = 10;
-        public static final int View_duplicateParentState = 11;
-        public static final int View_elevation = 12;
-        public static final int View_fitsSystemWindows = 13;
-        public static final int View_focusable = 14;
-        public static final int View_focusableInTouchMode = 15;
-        public static final int View_hapticFeedbackEnabled = 16;
-        public static final int View_id = 17;
-        public static final int View_keepScreenOn = 18;
-        public static final int View_labelFor = 19;
-        public static final int View_layoutDirection = 20;
-        public static final int View_longClickable = 21;
-        public static final int View_padding = 22;
-        public static final int View_paddingBottom = 23;
-        public static final int View_paddingEnd = 24;
-        public static final int View_paddingHorizontal = 25;
-        public static final int View_paddingLeft = 26;
-        public static final int View_paddingRight = 27;
-        public static final int View_paddingStart = 28;
-        public static final int View_paddingTop = 29;
-        public static final int View_paddingVertical = 30;
-        public static final int View_rotation = 31;
-        public static final int View_rotationX = 32;
-        public static final int View_rotationY = 33;
-        public static final int View_saveEnabled = 34;
-        public static final int View_scaleX = 35;
-        public static final int View_scaleY = 36;
-        public static final int View_scrollX = 37;
-        public static final int View_scrollY = 38;
-        public static final int View_scrollbarSize = 39;
-        public static final int View_soundEffectsEnabled = 40;
-        public static final int View_supplementalDescription = 41;
-        public static final int View_tag = 42;
-        public static final int View_transformPivotX = 43;
-        public static final int View_transformPivotY = 44;
-        public static final int View_translationX = 45;
-        public static final int View_translationY = 46;
-        public static final int View_translationZ = 47;
-        public static final int View_visibility = 48;
+        public static final int[] VectorDrawable = new int[13];
+        public static final int VectorDrawable_alpha = 0;
+        public static final int VectorDrawable_autoMirrored = 1;
+        public static final int VectorDrawable_height = 2;
+        public static final int VectorDrawable_name = 3;
+        public static final int VectorDrawable_opticalInsetBottom = 4;
+        public static final int VectorDrawable_opticalInsetLeft = 5;
+        public static final int VectorDrawable_opticalInsetRight = 6;
+        public static final int VectorDrawable_opticalInsetTop = 7;
+        public static final int VectorDrawable_tint = 8;
+        public static final int VectorDrawable_tintMode = 9;
+        public static final int VectorDrawable_viewportHeight = 10;
+        public static final int VectorDrawable_viewportWidth = 11;
+        public static final int VectorDrawable_width = 12;
+
+        public static final int[] VectorDrawableClipPath = new int[2];
+        public static final int VectorDrawableClipPath_name = 0;
+        public static final int VectorDrawableClipPath_pathData = 1;
+
+        public static final int[] VectorDrawableGroup = new int[8];
+        public static final int VectorDrawableGroup_name = 0;
+        public static final int VectorDrawableGroup_pivotX = 1;
+        public static final int VectorDrawableGroup_pivotY = 2;
+        public static final int VectorDrawableGroup_rotation = 3;
+        public static final int VectorDrawableGroup_scaleX = 4;
+        public static final int VectorDrawableGroup_scaleY = 5;
+        public static final int VectorDrawableGroup_translateX = 6;
+        public static final int VectorDrawableGroup_translateY = 7;
+
+        public static final int[] VectorDrawablePath = new int[14];
+        public static final int VectorDrawablePath_fillAlpha = 0;
+        public static final int VectorDrawablePath_fillColor = 1;
+        public static final int VectorDrawablePath_fillType = 2;
+        public static final int VectorDrawablePath_name = 3;
+        public static final int VectorDrawablePath_pathData = 4;
+        public static final int VectorDrawablePath_strokeAlpha = 5;
+        public static final int VectorDrawablePath_strokeColor = 6;
+        public static final int VectorDrawablePath_strokeLineCap = 7;
+        public static final int VectorDrawablePath_strokeLineJoin = 8;
+        public static final int VectorDrawablePath_strokeMiterLimit = 9;
+        public static final int VectorDrawablePath_strokeWidth = 10;
+        public static final int VectorDrawablePath_trimPathEnd = 11;
+        public static final int VectorDrawablePath_trimPathOffset = 12;
+        public static final int VectorDrawablePath_trimPathStart = 13;
+
+        public static final int[] View = new int[117];
+        public static final int View_accessibilityDataSensitive = 0;
+        public static final int View_accessibilityHeading = 1;
+        public static final int View_accessibilityLiveRegion = 2;
+        public static final int View_accessibilityPaneTitle = 3;
+        public static final int View_accessibilityTraversalAfter = 4;
+        public static final int View_accessibilityTraversalBefore = 5;
+        public static final int View_allowClickWhenDisabled = 6;
+        public static final int View_alpha = 7;
+        public static final int View_autoHandwritingEnabled = 8;
+        public static final int View_autofillHints = 9;
+        public static final int View_background = 10;
+        public static final int View_backgroundTint = 11;
+        public static final int View_backgroundTintMode = 12;
+        public static final int View_clickable = 13;
+        public static final int View_clipToOutline = 14;
+        public static final int View_contentDescription = 15;
+        public static final int View_contentSensitivity = 16;
+        public static final int View_contextClickable = 17;
+        public static final int View_defaultFocusHighlightEnabled = 18;
+        public static final int View_drawingCacheQuality = 19;
+        public static final int View_duplicateParentState = 20;
+        public static final int View_elevation = 21;
+        public static final int View_fadeScrollbars = 22;
+        public static final int View_fadingEdge = 23;
+        public static final int View_fadingEdgeLength = 24;
+        public static final int View_filterTouchesWhenObscured = 25;
+        public static final int View_fitsSystemWindows = 26;
+        public static final int View_focusable = 27;
+        public static final int View_focusableInTouchMode = 28;
+        public static final int View_focusedByDefault = 29;
+        public static final int View_forceDarkAllowed = 30;
+        public static final int View_forceHasOverlappingRendering = 31;
+        public static final int View_foreground = 32;
+        public static final int View_foregroundGravity = 33;
+        public static final int View_foregroundInsidePadding = 34;
+        public static final int View_foregroundTint = 35;
+        public static final int View_foregroundTintMode = 36;
+        public static final int View_handwritingBoundsOffsetBottom = 37;
+        public static final int View_handwritingBoundsOffsetLeft = 38;
+        public static final int View_handwritingBoundsOffsetRight = 39;
+        public static final int View_handwritingBoundsOffsetTop = 40;
+        public static final int View_hapticFeedbackEnabled = 41;
+        public static final int View_id = 42;
+        public static final int View_importantForAccessibility = 43;
+        public static final int View_importantForAutofill = 44;
+        public static final int View_importantForContentCapture = 45;
+        public static final int View_isCredential = 46;
+        public static final int View_isScrollContainer = 47;
+        public static final int View_keepScreenOn = 48;
+        public static final int View_keyboardNavigationCluster = 49;
+        public static final int View_labelFor = 50;
+        public static final int View_layerType = 51;
+        public static final int View_layoutDirection = 52;
+        public static final int View_longClickable = 53;
+        public static final int View_minHeight = 54;
+        public static final int View_minWidth = 55;
+        public static final int View_nestedScrollingEnabled = 56;
+        public static final int View_nextClusterForward = 57;
+        public static final int View_nextFocusDown = 58;
+        public static final int View_nextFocusForward = 59;
+        public static final int View_nextFocusLeft = 60;
+        public static final int View_nextFocusRight = 61;
+        public static final int View_nextFocusUp = 62;
+        public static final int View_onClick = 63;
+        public static final int View_outlineAmbientShadowColor = 64;
+        public static final int View_outlineProvider = 65;
+        public static final int View_outlineSpotShadowColor = 66;
+        public static final int View_overScrollMode = 67;
+        public static final int View_padding = 68;
+        public static final int View_paddingBottom = 69;
+        public static final int View_paddingEnd = 70;
+        public static final int View_paddingHorizontal = 71;
+        public static final int View_paddingLeft = 72;
+        public static final int View_paddingRight = 73;
+        public static final int View_paddingStart = 74;
+        public static final int View_paddingTop = 75;
+        public static final int View_paddingVertical = 76;
+        public static final int View_pointerIcon = 77;
+        public static final int View_preferKeepClear = 78;
+        public static final int View_requiresFadingEdge = 79;
+        public static final int View_rotation = 80;
+        public static final int View_rotationX = 81;
+        public static final int View_rotationY = 82;
+        public static final int View_saveEnabled = 83;
+        public static final int View_scaleX = 84;
+        public static final int View_scaleY = 85;
+        public static final int View_screenReaderFocusable = 86;
+        public static final int View_scrollCaptureHint = 87;
+        public static final int View_scrollIndicators = 88;
+        public static final int View_scrollX = 89;
+        public static final int View_scrollY = 90;
+        public static final int View_scrollbarAlwaysDrawHorizontalTrack = 91;
+        public static final int View_scrollbarAlwaysDrawVerticalTrack = 92;
+        public static final int View_scrollbarDefaultDelayBeforeFade = 93;
+        public static final int View_scrollbarFadeDuration = 94;
+        public static final int View_scrollbarSize = 95;
+        public static final int View_scrollbarStyle = 96;
+        public static final int View_scrollbarThumbHorizontal = 97;
+        public static final int View_scrollbarThumbVertical = 98;
+        public static final int View_scrollbarTrackHorizontal = 99;
+        public static final int View_scrollbarTrackVertical = 100;
+        public static final int View_scrollbars = 101;
+        public static final int View_soundEffectsEnabled = 102;
+        public static final int View_stateListAnimator = 103;
+        public static final int View_supplementalDescription = 104;
+        public static final int View_tag = 105;
+        public static final int View_textAlignment = 106;
+        public static final int View_textDirection = 107;
+        public static final int View_tooltipText = 108;
+        public static final int View_transformPivotX = 109;
+        public static final int View_transformPivotY = 110;
+        public static final int View_transitionName = 111;
+        public static final int View_translationX = 112;
+        public static final int View_translationY = 113;
+        public static final int View_translationZ = 114;
+        public static final int View_verticalScrollbarPosition = 115;
+        public static final int View_visibility = 116;
 
         public static final int[] ViewAnimator = new int[3];
         public static final int ViewAnimator_animateFirstView = 0;
@@ -826,33 +1479,100 @@ public final class R {
         public static final int ViewFlipper_autoStart = 0;
         public static final int ViewFlipper_flipInterval = 1;
 
-        public static final int ActionMenuItemView = 16842984;
-        public static final int ActionMenuItemView_minWidth = 16842985;
-        public static final int Chronometer = 16842986;
-        public static final int EdgeEffect = 16842987;
-        public static final int EdgeEffect_colorEdgeEffect = 16842988;
-        public static final int EditText = 16842989;
-        public static final int EditText_enableTextStylingShortcuts = 16842990;
-        public static final int FrameLayout = 16842991;
-        public static final int FrameLayout_measureAllChildren = 16842992;
-        public static final int ProgressBar_interpolator = 16842993;
-        public static final int RadioGroup = 16842994;
-        public static final int RadioGroup_orientation = 16842995;
-        public static final int ScrollView = 16842996;
-        public static final int TabWidget = 16842997;
-        public static final int TextViewAppearance = 16842998;
-        public static final int TextViewAppearance_textAppearance = 16842999;
-        public static final int TwoLineListItem = 16843000;
-        public static final int ViewGroup_MarginLayout_layout_margin = 16843001;
-        public static final int Window = 16843002;
-        public static final int WindowAnimation = 16843003;
-        public static final int Window_windowAnimationStyle = 16843004;
+        public static final int[] ViewGroup = new int[28];
+        public static final int ViewGroup_Layout = 0;
+        public static final int ViewGroup_Layout_layout_height = 1;
+        public static final int ViewGroup_Layout_layout_width = 2;
+        public static final int ViewGroup_MarginLayout = 3;
+        public static final int ViewGroup_MarginLayout_layout_height = 4;
+        public static final int ViewGroup_MarginLayout_layout_margin = 5;
+        public static final int ViewGroup_MarginLayout_layout_marginBottom = 6;
+        public static final int ViewGroup_MarginLayout_layout_marginEnd = 7;
+        public static final int ViewGroup_MarginLayout_layout_marginHorizontal = 8;
+        public static final int ViewGroup_MarginLayout_layout_marginLeft = 9;
+        public static final int ViewGroup_MarginLayout_layout_marginRight = 10;
+        public static final int ViewGroup_MarginLayout_layout_marginStart = 11;
+        public static final int ViewGroup_MarginLayout_layout_marginTop = 12;
+        public static final int ViewGroup_MarginLayout_layout_marginVertical = 13;
+        public static final int ViewGroup_MarginLayout_layout_width = 14;
+        public static final int ViewGroup_addStatesFromChildren = 15;
+        public static final int ViewGroup_alwaysDrawnWithCache = 16;
+        public static final int ViewGroup_animateLayoutChanges = 17;
+        public static final int ViewGroup_animationCache = 18;
+        public static final int ViewGroup_clipChildren = 19;
+        public static final int ViewGroup_clipToPadding = 20;
+        public static final int ViewGroup_descendantFocusability = 21;
+        public static final int ViewGroup_layoutAnimation = 22;
+        public static final int ViewGroup_layoutMode = 23;
+        public static final int ViewGroup_persistentDrawingCache = 24;
+        public static final int ViewGroup_splitMotionEvents = 25;
+        public static final int ViewGroup_touchscreenBlocksFocus = 26;
+        public static final int ViewGroup_transitionGroup = 27;
+
+        public static final int[] ViewStub = new int[3];
+        public static final int ViewStub_id = 0;
+        public static final int ViewStub_inflatedId = 1;
+        public static final int ViewStub_layout = 2;
+
+        public static final int[] ViewTag = new int[2];
+        public static final int ViewTag_id = 0;
+        public static final int ViewTag_value = 1;
+
+        public static final int[] Window = new int[2];
+        public static final int Window_windowAnimationStyle = 0;
+        public static final int Window_windowOptOutEdgeToEdgeEnforcement = 1;
+
+        public static final int AbsSpinner = 16842984;
+        public static final int AbsSpinner_entries = 16842985;
+        public static final int AccelerateInterpolator = 16842986;
+        public static final int AccelerateInterpolator_factor = 16842987;
+        public static final int ActionMenuItemView = 16842988;
+        public static final int ActionMenuItemView_minWidth = 16842989;
+        public static final int AdaptiveIconDrawableLayer = 16842990;
+        public static final int AdaptiveIconDrawableLayer_drawable = 16842991;
+        public static final int AnimatedVectorDrawable = 16842992;
+        public static final int AnimatedVectorDrawable_drawable = 16842993;
+        public static final int AnimatorSet = 16842994;
+        public static final int AnimatorSet_ordering = 16842995;
+        public static final int AnticipateInterpolator = 16842996;
+        public static final int AnticipateInterpolator_tension = 16842997;
+        public static final int ColorDrawable = 16842998;
+        public static final int ColorDrawable_color = 16842999;
+        public static final int CycleInterpolator = 16843000;
+        public static final int CycleInterpolator_cycles = 16843001;
+        public static final int DateTimeView = 16843002;
+        public static final int DateTimeView_showRelative = 16843003;
+        public static final int DecelerateInterpolator = 16843004;
+        public static final int DecelerateInterpolator_factor = 16843005;
+        public static final int Drawable = 16843006;
+        public static final int DrawableWrapper = 16843007;
+        public static final int DrawableWrapper_drawable = 16843008;
+        public static final int Drawable_visible = 16843009;
+        public static final int EdgeEffect = 16843010;
+        public static final int EdgeEffect_colorEdgeEffect = 16843011;
+        public static final int EditText = 16843012;
+        public static final int EditText_enableTextStylingShortcuts = 16843013;
+        public static final int Foo = 16843014;
+        public static final int GradientDrawableSolid = 16843015;
+        public static final int GradientDrawableSolid_color = 16843016;
+        public static final int HorizontalScrollView = 16843017;
+        public static final int HorizontalScrollView_fillViewport = 16843018;
+        public static final int OvershootInterpolator = 16843019;
+        public static final int OvershootInterpolator_tension = 16843020;
+        public static final int ScrollView = 16843021;
+        public static final int ScrollView_fillViewport = 16843022;
+        public static final int StateListDrawableItem = 16843023;
+        public static final int StateListDrawableItem_drawable = 16843024;
+        public static final int TextViewAppearance = 16843025;
+        public static final int TextViewAppearance_textAppearance = 16843026;
+        public static final int TwoLineListItem = 16843027;
+        public static final int WindowAnimation = 16843028;
     }
 
     public static final class xml {
         private xml() {}
 
-        public static final int autotext = 16843005;
+        public static final int autotext = 16843029;
     }
 
 }

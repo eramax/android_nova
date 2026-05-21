@@ -104,10 +104,102 @@ def write_aosp_bp(bridge_files: set[str], aosp_sources: list[str]) -> None:
         "android/view/InputMonitor.java",
         "android/view/InputQueue.java",
         "android/view/SurfaceView.java",
+        # WMS / insets / display policy — Nova uses ViewRootImpl + Wayland, not AOSP WMS graph.
+        "android/view/InsetsController.java",
+        "android/view/InsetsAnimationControlImpl.java",
+        "android/view/InsetsAnimationThreadControlRunner.java",
+        "android/view/InsetsAnimationControlCallbacks.java",
+        "android/view/InsetsAnimationControlRunner.java",
+        "android/view/InsetsAnimationSpec.java",
+        "android/view/InsetsAnimationThread.java",
+        "android/view/InsetsSource.java",
+        "android/view/InsetsSourceConsumer.java",
+        "android/view/InsetsResizeAnimationRunner.java",
+        "android/view/InsetsFlags.java",
+        "android/view/InsetsFrameProvider.java",
+        "android/view/InsetsState.java",
+        "android/view/InsetsSourceControl.java",
+        "android/view/PendingInsetsController.java",
+        "android/view/InternalInsetsAnimationController.java",
+        "android/view/WindowManagerImpl.java",
+        "android/view/WindowManagerWrapper.java",
+        "android/view/WindowManagerGlobal.java",
+        "android/view/WindowManagerPolicyConstants.java",
+        "android/view/WindowMetrics.java",
+        "android/view/WindowMetricsController.java",
+        "android/view/WindowRelayoutResult.java",
+        "android/view/WindowLayout.java",
+        "android/view/WindowlessWindowLayout.java",
+        "android/view/WindowlessWindowManager.java",
+        "android/view/AccessibilityInteractionController.java",
+        "android/view/RemoteAccessibilityController.java",
+        "android/view/RemoteAnimationAdapter.java",
+        "android/view/RemoteAnimationDefinition.java",
+        "android/view/RemoteAnimationTarget.java",
+        "android/view/SyncRtSurfaceTransactionApplier.java",
+        "android/view/ScrollCaptureConnection.java",
+        "android/view/ScrollCaptureCallback.java",
+        "android/view/ScrollCaptureResponse.java",
+        "android/view/ScrollCaptureSearchResults.java",
+        "android/view/ScrollCaptureSession.java",
+        "android/view/ScrollCaptureTarget.java",
+        "android/view/DisplayInfo.java",
+        "android/view/DisplayShape.java",
+        "android/view/DisplayCutout.java",
+        "android/view/DisplayAddress.java",
+        "android/view/DisplayAdjustments.java",
+        "android/view/DisplayEventReceiver.java",
+        "android/view/Display.java",
+        "android/view/TextureView.java",
+        "android/view/SurfaceControl.java",
+        "android/view/SurfaceControlViewHost.java",
+        "android/view/SurfaceSession.java",
+        "android/view/SurfaceHolder.java",
+        "android/view/HardwareRenderer.java",
+        "android/view/ThreadedRenderer.java",
+        "android/view/RenderNodeAnimator.java",
+        "android/view/NativeVectorDrawableAnimator.java",
+        "android/view/ImeBackAnimationController.java",
+        "android/view/ImeFocusController.java",
+        "android/view/HandwritingInitiator.java",
+        "android/view/PixelCopy.java",
     ]
 
     INTERNAL_UTIL_EXTRA_EXCLUDES = [
         "com/android/internal/util/AnnotationValidations.java",
+        "com/android/internal/util/LatencyTracker.java",
+        "com/android/internal/util/ContrastColorUtil.java",
+        "com/android/internal/util/XmlUtils.java",
+        "com/android/internal/util/AsyncChannel.java",
+    ]
+
+    GRAPHICS_LITE_SRCS = [
+        "android/graphics/RectF.java",
+        "android/graphics/Point.java",
+        "android/graphics/PointF.java",
+        "android/graphics/Insets.java",
+        "android/graphics/Matrix.java",
+        "android/graphics/Region.java",
+        "android/graphics/Outline.java",
+        "android/graphics/RenderNode.java",
+        "android/graphics/Color.java",
+        "android/graphics/PorterDuff.java",
+        "android/graphics/Typeface.java",
+        "android/graphics/Shader.java",
+        "android/graphics/Xfermode.java",
+        "android/graphics/PixelFormat.java",
+        "android/graphics/drawable/Drawable.java",
+        "android/graphics/drawable/ColorDrawable.java",
+        "android/graphics/drawable/BitmapDrawable.java",
+        "android/graphics/drawable/GradientDrawable.java",
+        "android/graphics/drawable/LayerDrawable.java",
+        "android/graphics/drawable/StateListDrawable.java",
+        "android/graphics/drawable/RippleDrawable.java",
+        "android/graphics/drawable/VectorDrawable.java",
+        "android/graphics/animation/HasNativeInterpolator.java",
+        "android/graphics/animation/NativeInterpolator.java",
+        "android/graphics/animation/NativeInterpolatorFactory.java",
+        "android/graphics/animation/RenderNodeAnimator.java",
     ]
 
     SLICES = [
@@ -168,6 +260,19 @@ def write_aosp_bp(bridge_files: set[str], aosp_sources: list[str]) -> None:
         "    exclude_srcs: [",
     ]
     for rel in graphics_excludes:
+        graphics_lines.append(f'        "{rel}",')
+    graphics_lines.extend(["    ],", "}", ""])
+    graphics_lines += header + [
+        "filegroup {",
+        '    name: "nova-hybrid-graphics-lite-sources",',
+        '    visibility: ["//vendor:__subpackages__"],',
+        "    srcs: [",
+    ]
+    for rel in GRAPHICS_LITE_SRCS:
+        graphics_lines.append(f'        "{rel}",')
+    graphics_lite_excludes = [rel for rel in graphics_excludes if rel in GRAPHICS_LITE_SRCS]
+    graphics_lines.extend(["    ],", "    exclude_srcs: ["])
+    for rel in sorted(graphics_lite_excludes):
         graphics_lines.append(f'        "{rel}",')
     graphics_lines.extend(["    ],", "}", ""])
 

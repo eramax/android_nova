@@ -11,6 +11,8 @@ public final class Log {
     public static final int ERROR = 6;
     public static final int ASSERT = 7;
 
+    public @interface Level {}
+
     private Log() {}
 
     public static int v(String tag, String msg) {

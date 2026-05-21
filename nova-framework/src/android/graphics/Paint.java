@@ -28,6 +28,9 @@ public class Paint {
         Align(int n) { this.nativeInt = n; }
     }
 
+    public @interface StartHyphenEdit {}
+    public @interface EndHyphenEdit {}
+
     private long mNativePaint;
 
     public Paint() {

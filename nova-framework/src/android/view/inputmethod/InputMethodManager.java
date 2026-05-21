@@ -5,6 +5,8 @@ import android.view.View;
 
 /** No-op InputMethodManager stub for Nova host runtime. */
 public final class InputMethodManager {
+    public @interface HandwritingDelegateFlags {}
+
     public static final int SHOW_IMPLICIT = 0x1;
     public static final int SHOW_FORCED = 0x2;
     public static final int HIDE_IMPLICIT_ONLY = 0x1;
