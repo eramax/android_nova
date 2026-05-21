@@ -1,65 +1,23 @@
 package android.view;
 
-public class SurfaceControl implements android.os.Parcelable {
-    public SurfaceControl() {}
-
-    protected SurfaceControl(android.os.Parcel in) {
-        readFromParcel(in);
+/** Minimal SurfaceControl stub for Nova host runtime. */
+public class SurfaceControl {
+    public SurfaceControl() {
     }
 
-    public void readFromParcel(android.os.Parcel in) {
+    public void release() {
     }
 
-    @Override
-    public int describeContents() {
-        return 0;
-    }
-
-    @Override
-    public void writeToParcel(android.os.Parcel dest, int flags) {
-    }
-
-    public static final Creator<SurfaceControl> CREATOR = new Creator<>() {
-        @Override
-        public SurfaceControl createFromParcel(android.os.Parcel source) {
-            return new SurfaceControl(source);
+    public static final class Builder {
+        public Builder() {
         }
 
-        @Override
-        public SurfaceControl[] newArray(int size) {
-            return new SurfaceControl[size];
-        }
-    };
-
-    public static class Transaction implements android.os.Parcelable {
-        public Transaction() {}
-
-        protected Transaction(android.os.Parcel in) {
-            readFromParcel(in);
+        public Builder setName(String name) {
+            return this;
         }
 
-        public void readFromParcel(android.os.Parcel in) {
+        public SurfaceControl build() {
+            return new SurfaceControl();
         }
-
-        @Override
-        public int describeContents() {
-            return 0;
-        }
-
-        @Override
-        public void writeToParcel(android.os.Parcel dest, int flags) {
-        }
-
-        public static final Creator<Transaction> CREATOR = new Creator<>() {
-            @Override
-            public Transaction createFromParcel(android.os.Parcel source) {
-                return new Transaction(source);
-            }
-
-            @Override
-            public Transaction[] newArray(int size) {
-                return new Transaction[size];
-            }
-        };
     }
 }

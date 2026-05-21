@@ -1,0 +1,138 @@
+# Nova bridge classes — kept in src/; AOSP copies excluded via exclude_srcs.
+# One path per line, relative to android/... or com/... or nova/...
+
+# Nova internals
+nova/internal/Launcher.java
+nova/internal/RenderCoordinator.java
+nova/internal/ViewDispatcher.java
+nova/internal/CanvasRender.java
+nova/internal/NovaTrace.java
+nova/internal/NovaBinderTransport.java
+
+# GLES / EGL JNI
+com/google/android/gles_jni/EGLImpl.java
+com/google/android/gles_jni/EGLDisplayImpl.java
+com/google/android/gles_jni/EGLContextImpl.java
+com/google/android/gles_jni/EGLSurfaceImpl.java
+com/google/android/gles_jni/EGLConfigImpl.java
+com/google/android/gles_jni/GLImpl.java
+com/android/internal/graphics/NativeUtils.java
+
+# Lifecycle / process
+android/app/Activity.java
+android/app/Application.java
+android/app/ActivityManager.java
+android/app/ActivityThread.java
+
+# Content / context
+android/content/Context.java
+android/content/ContextWrapper.java
+android/content/ContentResolver.java
+android/content/Intent.java
+android/content/ComponentName.java
+android/content/SharedPreferences.java
+android/content/NovaSharedPreferences.java
+android/content/ContentValues.java
+android/content/DialogInterface.java
+
+# Package manager (all Nova)
+android/content/pm/AccessibilityServiceInfo.java
+android/content/pm/ActivityInfo.java
+android/content/pm/ApplicationInfo.java
+android/content/pm/ComponentInfo.java
+android/content/pm/IPackageManager.java
+android/content/pm/NovaPackageManager.java
+android/content/pm/PackageInfo.java
+android/content/pm/PackageItemInfo.java
+android/content/pm/PackageManager.java
+android/content/pm/ProviderInfo.java
+android/content/pm/ServiceInfo.java
+
+# Resources (Nova aapt2-based)
+android/content/res/AssetManager.java
+android/content/res/ResourceManager.java
+android/content/res/Resources.java
+android/content/res/Configuration.java
+android/content/res/TypedArray.java
+android/content/res/AssetFileDescriptor.java
+android/content/res/NovaXmlResourceParser.java
+android/content/res/XmlResourceParser.java
+
+# Graphics JNI bridges
+android/graphics/Rect.java
+android/graphics/Canvas.java
+android/graphics/Bitmap.java
+android/graphics/Paint.java
+android/graphics/BitmapFactory.java
+
+# OpenGL helpers
+android/opengl/GLES20.java
+android/opengl/GLUtils.java
+
+# Logging (no logd JNI)
+android/util/Log.java
+android/util/DisplayMetrics.java
+
+# OS bridge
+android/os/Looper.java
+android/os/Handler.java
+android/os/Message.java
+android/os/MessageQueue.java
+android/os/SystemProperties.java
+android/os/SystemClock.java
+android/os/Process.java
+android/os/Binder.java
+android/os/Environment.java
+android/os/Build.java
+android/os/Bundle.java
+android/os/Parcel.java
+android/os/CancellationSignal.java
+android/os/OperationCanceledException.java
+android/os/Trace.java
+
+# View / window bridge
+android/view/View.java
+android/view/ViewGroup.java
+android/view/SurfaceView.java
+android/view/Surface.java
+android/view/SurfaceControl.java
+android/view/Window.java
+android/view/WindowManager.java
+android/view/ViewRootImpl.java
+android/view/Choreographer.java
+android/view/KeyEvent.java
+android/view/MotionEvent.java
+android/view/InputChannel.java
+android/view/Display.java
+android/view/LayoutInflater.java
+android/view/MenuInflater.java
+android/view/WindowInsetsController.java
+android/view/NovaMenu.java
+android/view/NovaMenuItem.java
+android/view/WindowManagerGlobal.java
+android/view/ThreadedRenderer.java
+android/view/InsetsState.java
+android/view/InsetsSourceControl.java
+android/util/MergedConfiguration.java
+android/window/ClientWindowFrames.java
+
+# Render pipeline stubs
+android/graphics/HardwareRenderer.java
+
+# IME / accessibility stubs
+android/view/inputmethod/InputMethodManager.java
+android/view/inputmethod/EditorInfo.java
+android/view/accessibility/AccessibilityManager.java
+android/view/accessibility/AccessibilityNodeInfo.java
+android/view/accessibility/AccessibilityEvent.java
+
+# Media stubs
+android/media/SoundPool.java
+android/media/MediaPlayer.java
+
+# Window back gesture
+android/window/OnBackInvokedCallback.java
+android/window/OnBackInvokedDispatcher.java
+
+# WebView stub
+android/webkit/WebView.java

@@ -157,44 +157,19 @@ public class Resources {
         return new Theme(this);
     }
 
-    public static class NotFoundException extends RuntimeException {
-        public NotFoundException(String message) {
-            super(message);
-        }
-    }
-
-    public static class Theme {
-        private final Resources mResources;
-
+    public static class Theme extends ResourcesTheme {
         public Theme() {
-            this(Resources.getSystem());
+            super();
         }
 
         public Theme(Resources resources) {
-            mResources = resources != null ? resources : Resources.getSystem();
+            super(resources);
         }
+    }
 
-        public void applyStyle(int resId, boolean force) {}
-        public android.content.res.TypedArray obtainStyledAttributes(int[] attrs) {
-            return android.content.res.TypedArray.obtain(mResources, null, attrs, true);
-        }
-        public android.content.res.TypedArray obtainStyledAttributes(int resId, int[] attrs) {
-            return android.content.res.TypedArray.obtain(mResources, null, attrs, true);
-        }
-        public android.content.res.TypedArray obtainStyledAttributes(android.util.AttributeSet set, int[] attrs, int defStyleAttr, int defStyleRes) {
-            return android.content.res.TypedArray.obtain(mResources, set, attrs, true);
-        }
-        public boolean resolveAttribute(int resid, android.util.TypedValue outValue, boolean resolveRefs) {
-            return false;
-        }
-        public Resources getResources() { return mResources; }
-        public void setTo(Theme other) {}
-        public int[] activityInfoConfigChangesToNative(int changes) { return new int[0]; }
-        public boolean isOutOfDate() { return false; }
-        public int getChangingConfigurations() { return 0; }
-        public android.util.TypedValue getAttribute(int resId, android.util.TypedValue outValue, boolean resolveRefs) {
-            if (outValue != null) outValue.type = android.util.TypedValue.TYPE_NULL;
-            return null;
+    public static class NotFoundException extends RuntimeException {
+        public NotFoundException(String message) {
+            super(message);
         }
     }
 }

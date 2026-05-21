@@ -1,5 +1,6 @@
 package nova.internal;
 
+import android.app.ActivityThread;
 import android.view.ViewGroup;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -169,9 +170,6 @@ public final class Launcher {
 
         Constructor<?> ctor = activityType.getDeclaredConstructor();
         ctor.setAccessible(true);
-        if (initialLaunch) {
-            System.out.println("[NovaLauncher] Test new View attached: " + new android.view.View(null).isAttachedToWindow());
-        }
         Object instance = ctor.newInstance();
         System.out.println("[NovaLauncher] Activity instance created: " + instance.getClass().getName());
 
@@ -212,7 +210,7 @@ public final class Launcher {
             invokeLifecycle(sCurrentActivity.getClass(), sCurrentActivity, "onPause", new Class<?>[0], new Object[0]);
             android.view.View oldView = sCurrentActivity.getContentView();
             if (oldView != null) {
-                oldView.novaDetachFromWindow();
+                NovaViewHooks.detachFromWindow(oldView);
             }
             invokeLifecycle(sCurrentActivity.getClass(), sCurrentActivity, "onStop", new Class<?>[0], new Object[0]);
         }
@@ -404,6 +402,9 @@ public final class Launcher {
             if (appInstance == null) {
                 appInstance = androidAppClass.getDeclaredConstructor().newInstance();
                 System.out.println("[NovaLauncher] Created default Application instance");
+            }
+            if (appInstance instanceof android.app.Application) {
+                ActivityThread.novaSetApplication((android.app.Application) appInstance);
             }
         } catch (Exception e) {
             System.out.println("[NovaLauncher] Application init failed: " + e);

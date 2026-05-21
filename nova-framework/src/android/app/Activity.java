@@ -10,6 +10,7 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.webkit.WebView;
 import android.util.Log;
+import nova.internal.NovaViewHooks;
 import android.content.res.Configuration;
 import nova.internal.Launcher;
 
@@ -266,12 +267,12 @@ public class Activity extends ContextWrapper {
     public void setContentView(View view) {
         Log.d(TAG, "setContentView(View) called with " + (view != null ? view.getClass().getName() : "null"));
         if (mContentView != null) {
-            mContentView.novaDetachFromWindow();
+            NovaViewHooks.detachFromWindow(mContentView);
         }
         mContentView = view;
         mWindow.setContentView(view);
         if (mContentView != null) {
-            mContentView.novaAttachToWindow();
+            NovaViewHooks.attachToWindow(mContentView);
         }
     }
 
@@ -286,9 +287,10 @@ public class Activity extends ContextWrapper {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public <T extends View> T findViewById(int id) {
         if (mContentView == null) return null;
-        return mContentView.findViewById(id);
+        return (T) mContentView.findViewById(id);
     }
 
     public View getContentView() {

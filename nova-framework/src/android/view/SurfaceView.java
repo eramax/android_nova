@@ -1,14 +1,13 @@
 package android.view;
 
 import android.content.Context;
+import android.graphics.Canvas;
+import android.graphics.PixelFormat;
+import android.graphics.Rect;
 import android.util.AttributeSet;
-import android.util.Log;
-import java.util.ArrayList;
-import java.util.List;
 
 public class SurfaceView extends View {
-    private static final String TAG = "NovaSurfaceView";
-    private final SurfaceHolder mHolder = new SimpleSurfaceHolder();
+    private final NovaSurfaceHolder mHolder = new NovaSurfaceHolder();
 
     public SurfaceView(Context context) {
         super(context);
@@ -23,41 +22,83 @@ public class SurfaceView extends View {
     }
 
     public void novaSimulateSurfaceLifecycle(int width, int height) {
-        Log.d(TAG, "simulate lifecycle " + width + "x" + height + " for " + getClass().getName());
-        if (mHolder instanceof SimpleSurfaceHolder) {
-            SimpleSurfaceHolder holder = (SimpleSurfaceHolder) mHolder;
-            holder.dispatchCreated();
-            holder.dispatchChanged(0, width, height);
-        }
+        mHolder.notifyCreated(width, height);
     }
 
-    private static final class SimpleSurfaceHolder implements SurfaceHolder {
-        private final List<Callback> callbacks = new ArrayList<>();
-        private final Surface surface = new Surface();
-        private int mWidth = 960, mHeight = 540;
+    private final class NovaSurfaceHolder implements SurfaceHolder {
+        private final Surface mSurface = new Surface();
+        private final java.util.ArrayList<SurfaceHolder.Callback> mCallbacks = new java.util.ArrayList<>();
+        private final Rect mSurfaceFrame = new Rect();
 
-        @Override public void addCallback(Callback callback) { if (callback != null) callbacks.add(callback); }
-        @Override public void removeCallback(Callback callback) { callbacks.remove(callback); }
-        @Override public boolean isCreating() { return false; }
-        @Override public void setType(int type) {}
-        @Override public void setFixedSize(int width, int height) { mWidth = width; mHeight = height; }
-        @Override public void setSizeFromLayout() {}
-        @Override public void setFormat(int format) {}
-        @Override public void setKeepScreenOn(boolean screenOn) {}
-        @Override public android.graphics.Canvas lockCanvas() { return new android.graphics.Canvas(); }
-        @Override public android.graphics.Canvas lockCanvas(android.graphics.Rect dirty) { return new android.graphics.Canvas(); }
-        @Override public android.graphics.Canvas lockHardwareCanvas() { return new android.graphics.Canvas(); }
-        @Override public void unlockCanvasAndPost(android.graphics.Canvas canvas) {}
-        @Override public android.graphics.Rect getSurfaceFrame() { return new android.graphics.Rect(0, 0, mWidth, mHeight); }
-        @Override public Surface getSurface() { return surface; }
-
-        void dispatchCreated() {
-            for (Callback cb : new ArrayList<>(callbacks)) cb.surfaceCreated(this);
+        @Override
+        public void addCallback(SurfaceHolder.Callback callback) {
+            if (callback != null && !mCallbacks.contains(callback)) {
+                mCallbacks.add(callback);
+            }
         }
 
-        void dispatchChanged(int format, int width, int height) {
-            mWidth = width; mHeight = height;
-            for (Callback cb : new ArrayList<>(callbacks)) cb.surfaceChanged(this, format, width, height);
+        @Override
+        public void removeCallback(SurfaceHolder.Callback callback) {
+            mCallbacks.remove(callback);
+        }
+
+        @Override
+        public boolean isCreating() {
+            return true;
+        }
+
+        @Override
+        public void setType(int type) {
+        }
+
+        @Override
+        public void setFixedSize(int width, int height) {
+            mSurfaceFrame.set(0, 0, width, height);
+        }
+
+        @Override
+        public void setSizeFromLayout() {
+        }
+
+        @Override
+        public void setFormat(int format) {
+        }
+
+        @Override
+        public void setKeepScreenOn(boolean screenOn) {
+        }
+
+        @Override
+        public Canvas lockCanvas() {
+            return mSurface.lockCanvas(null);
+        }
+
+        @Override
+        public Canvas lockCanvas(Rect dirty) {
+            return mSurface.lockCanvas(dirty);
+        }
+
+        @Override
+        public void unlockCanvasAndPost(Canvas canvas) {
+            mSurface.unlockCanvasAndPost(canvas);
+        }
+
+        @Override
+        public Rect getSurfaceFrame() {
+            return mSurfaceFrame;
+        }
+
+        @Override
+        public Surface getSurface() {
+            return mSurface;
+        }
+
+        void notifyCreated(int width, int height) {
+            mSurfaceFrame.set(0, 0, width, height);
+            for (SurfaceHolder.Callback cb : new java.util.ArrayList<>(mCallbacks)) {
+                cb.surfaceCreated(this);
+                cb.surfaceChanged(this, PixelFormat.RGBA_8888, width, height);
+            }
         }
     }
 }

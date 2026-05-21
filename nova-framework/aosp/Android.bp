@@ -1,0 +1,14 @@
+package {
+    default_applicable_licenses: ["vendor_nova_license"],
+}
+
+// Re-export AOSP filegroups defined under frameworks/base (Soong globs require
+// filegroups to live in the same package directory as the .java sources).
+filegroup {
+    name: "nova-aosp-framework-srcs",
+    visibility: ["//vendor/nova/nova-framework:__subpackages__"],
+    srcs: [
+        "//frameworks/base/core/java:nova-hybrid-core-sources",
+        "//frameworks/base/graphics/java:nova-hybrid-graphics-sources",
+    ],
+}

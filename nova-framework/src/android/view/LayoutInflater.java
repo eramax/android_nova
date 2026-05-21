@@ -19,6 +19,7 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import nova.internal.NovaTrace;
+import nova.internal.NovaViewHooks;
 
 public class LayoutInflater {
     private static final String TAG = "LayoutInflater";
@@ -120,7 +121,7 @@ public class LayoutInflater {
             }
 
             byte[] data = new byte[(int) layoutEntry.getSize()];
-            try (var is = zipFile.getInputStream(layoutEntry)) {
+            try (java.io.InputStream is = zipFile.getInputStream(layoutEntry)) {
                 int read = 0;
                 while (read < data.length) {
                     int n = is.read(data, read, data.length - read);
@@ -390,7 +391,7 @@ public class LayoutInflater {
                         + " for " + currentView.getClass().getName());
             }
             if (width != null) {
-                currentView.novaSetLayoutWidth(width);
+                NovaViewHooks.setLayoutWidth(currentView, width);
                 syncLayoutParams(currentView);
             }
             return;
@@ -405,7 +406,7 @@ public class LayoutInflater {
                         + " for " + currentView.getClass().getName());
             }
             if (height != null) {
-                currentView.novaSetLayoutHeight(height);
+                NovaViewHooks.setLayoutHeight(currentView, height);
                 syncLayoutParams(currentView);
             }
             return;
@@ -413,7 +414,7 @@ public class LayoutInflater {
 
         if (trimmed.startsWith("A: android:layout_alignParentBottom") || trimmed.contains("0x0101018e")) {
             Integer alignParentBottom = extractBooleanTrue(trimmed);
-            currentView.novaSetAlignParentBottom(alignParentBottom != null && alignParentBottom != 0);
+            NovaViewHooks.setAlignParentBottom(currentView, alignParentBottom != null && alignParentBottom != 0);
             syncLayoutParams(currentView);
             return;
         }
@@ -424,7 +425,7 @@ public class LayoutInflater {
                 gravity = extractTypedIntValue(trimmed);
             }
             if (gravity != null) {
-                currentView.novaSetGravity(gravity);
+                NovaViewHooks.setGravity(currentView, gravity);
                 if (currentView instanceof android.widget.LinearLayout) {
                     ((android.widget.LinearLayout) currentView).setGravity(gravity);
                 }
@@ -438,7 +439,7 @@ public class LayoutInflater {
                 layoutGravity = extractTypedIntValue(trimmed);
             }
             if (layoutGravity != null) {
-                currentView.novaSetLayoutGravity(layoutGravity);
+                NovaViewHooks.setLayoutGravity(currentView, layoutGravity);
                 syncLayoutParams(currentView);
             }
             return;
@@ -447,7 +448,7 @@ public class LayoutInflater {
         if (trimmed.startsWith("A: android:layout_weight") || trimmed.contains("0x01010181")) {
             Float weight = extractFloatValue(trimmed);
             if (weight != null) {
-                currentView.novaSetLayoutWeight(weight);
+                NovaViewHooks.setLayoutWeight(currentView, weight);
                 syncLayoutParams(currentView);
             }
             return;
@@ -509,7 +510,7 @@ public class LayoutInflater {
         if (trimmed.startsWith("A: android:layout_margin") || trimmed.contains("0x010100f6")) {
             Integer margin = extractLayoutSizeValue(trimmed);
             if (margin != null) {
-                currentView.novaSetLayoutMargins(margin, margin, margin, margin);
+                NovaViewHooks.setLayoutMargins(currentView, margin, margin, margin, margin);
                 syncLayoutParams(currentView);
             }
             return;
@@ -518,8 +519,10 @@ public class LayoutInflater {
         if (trimmed.startsWith("A: android:layout_marginLeft") || trimmed.contains("0x010100f7")) {
             Integer margin = extractLayoutSizeValue(trimmed);
             if (margin != null) {
-                currentView.novaSetLayoutMargins(margin, currentView.novaGetLayoutMarginTop(),
-                        currentView.novaGetLayoutMarginRight(), currentView.novaGetLayoutMarginBottom());
+                NovaViewHooks.setLayoutMargins(currentView, margin,
+                        NovaViewHooks.getLayoutMarginTop(currentView),
+                        NovaViewHooks.getLayoutMarginRight(currentView),
+                        NovaViewHooks.getLayoutMarginBottom(currentView));
                 syncLayoutParams(currentView);
             }
             return;
@@ -528,8 +531,10 @@ public class LayoutInflater {
         if (trimmed.startsWith("A: android:layout_marginTop") || trimmed.contains("0x010100f8")) {
             Integer margin = extractLayoutSizeValue(trimmed);
             if (margin != null) {
-                currentView.novaSetLayoutMargins(currentView.novaGetLayoutMarginLeft(), margin,
-                        currentView.novaGetLayoutMarginRight(), currentView.novaGetLayoutMarginBottom());
+                NovaViewHooks.setLayoutMargins(currentView,
+                        NovaViewHooks.getLayoutMarginLeft(currentView), margin,
+                        NovaViewHooks.getLayoutMarginRight(currentView),
+                        NovaViewHooks.getLayoutMarginBottom(currentView));
                 syncLayoutParams(currentView);
             }
             return;
@@ -538,9 +543,10 @@ public class LayoutInflater {
         if (trimmed.startsWith("A: android:layout_marginRight") || trimmed.contains("0x010100f9")) {
             Integer margin = extractLayoutSizeValue(trimmed);
             if (margin != null) {
-                currentView.novaSetLayoutMargins(currentView.novaGetLayoutMarginLeft(),
-                        currentView.novaGetLayoutMarginTop(), margin,
-                        currentView.novaGetLayoutMarginBottom());
+                NovaViewHooks.setLayoutMargins(currentView,
+                        NovaViewHooks.getLayoutMarginLeft(currentView),
+                        NovaViewHooks.getLayoutMarginTop(currentView), margin,
+                        NovaViewHooks.getLayoutMarginBottom(currentView));
                 syncLayoutParams(currentView);
             }
             return;
@@ -549,9 +555,10 @@ public class LayoutInflater {
         if (trimmed.startsWith("A: android:layout_marginBottom") || trimmed.contains("0x010100fa")) {
             Integer margin = extractLayoutSizeValue(trimmed);
             if (margin != null) {
-                currentView.novaSetLayoutMargins(currentView.novaGetLayoutMarginLeft(),
-                        currentView.novaGetLayoutMarginTop(), currentView.novaGetLayoutMarginRight(),
-                        margin);
+                NovaViewHooks.setLayoutMargins(currentView,
+                        NovaViewHooks.getLayoutMarginLeft(currentView),
+                        NovaViewHooks.getLayoutMarginTop(currentView),
+                        NovaViewHooks.getLayoutMarginRight(currentView), margin);
                 syncLayoutParams(currentView);
             }
             return;
@@ -661,38 +668,7 @@ public class LayoutInflater {
     }
 
     private void syncLayoutParams(View view) {
-        if (view == null) {
-            return;
-        }
-        ViewGroup.LayoutParams params = view.getLayoutParams();
-        if (params == null) {
-            return;
-        }
-        params.width = view.novaGetLayoutWidth();
-        params.height = view.novaGetLayoutHeight();
-        if (params instanceof android.widget.LinearLayout.LayoutParams) {
-            android.widget.LinearLayout.LayoutParams linearParams =
-                    (android.widget.LinearLayout.LayoutParams) params;
-            linearParams.weight = view.novaGetLayoutWeight();
-            linearParams.gravity = view.novaGetLayoutGravity();
-        }
-        if (params instanceof ViewGroup.MarginLayoutParams) {
-            ViewGroup.MarginLayoutParams marginParams = (ViewGroup.MarginLayoutParams) params;
-            marginParams.leftMargin = view.novaGetLayoutMarginLeft();
-            marginParams.topMargin = view.novaGetLayoutMarginTop();
-            marginParams.rightMargin = view.novaGetLayoutMarginRight();
-            marginParams.bottomMargin = view.novaGetLayoutMarginBottom();
-        }
-        if (params instanceof android.widget.RelativeLayout.LayoutParams) {
-            android.widget.RelativeLayout.LayoutParams relativeParams =
-                    (android.widget.RelativeLayout.LayoutParams) params;
-            if (view.novaIsAlignParentBottom()) {
-                relativeParams.addRule(android.widget.RelativeLayout.ALIGN_PARENT_BOTTOM);
-            } else {
-                relativeParams.removeRule(android.widget.RelativeLayout.ALIGN_PARENT_BOTTOM);
-            }
-        }
-        view.requestLayout();
+        NovaViewHooks.syncLayoutParams(view);
     }
 
     private static final class InflateNode {

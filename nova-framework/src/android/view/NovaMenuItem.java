@@ -29,9 +29,9 @@ public class NovaMenuItem implements MenuItem {
     @Override public MenuItem setIntent(Intent intent) { return this; }
     @Override public Intent getIntent() { return null; }
     @Override public MenuItem setShortcut(char numericChar, char alphaChar) { return this; }
-    @Override public void setNumericShortcut(char numericChar) {}
+    @Override public MenuItem setNumericShortcut(char numericChar) { return this; }
     @Override public char getNumericShortcut() { return 0; }
-    @Override public void setAlphabeticShortcut(char alphaChar) {}
+    @Override public MenuItem setAlphabeticShortcut(char alphaChar) { return this; }
     @Override public char getAlphabeticShortcut() { return 0; }
     @Override public MenuItem setCheckable(boolean checkable) { mCheckable = checkable; return this; }
     @Override public boolean isCheckable() { return mCheckable; }

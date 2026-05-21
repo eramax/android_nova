@@ -85,7 +85,7 @@ public interface WindowManager extends ViewManager {
         public static final int SOFT_INPUT_ADJUST_NOTHING    = 0x30;
         public static final int SOFT_INPUT_IS_FORWARD_NAVIGATION = 0x100;
 
-        public static final int GRAVITY_DEFAULT = android.view.Gravity.DEFAULT_GRAVITY;
+        public static final int GRAVITY_DEFAULT = Gravity.TOP | Gravity.LEFT;
 
         public int type = TYPE_APPLICATION;
         public int flags;

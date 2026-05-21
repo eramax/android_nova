@@ -7,8 +7,22 @@ directly on a Linux desktop — with Wayland rendering, PipeWire audio, and host
 acceleration — without containers, virtual machines, or Android system images.
 
 Nova is built as a first-class AOSP product. It lives in `vendor/nova/`, uses AOSP's
-Soong build system, and provides a small set of wrapper libraries plus a Java
-framework delta over stock AOSP ART + framework.
+Soong build system, and provides a small set of wrapper libraries plus a **hybrid**
+Java framework: real AOSP `frameworks/base` sources where they compile, plus ~35 Nova
+bridge classes for Linux/Wayland/ART integration.
+
+### Hybrid framework architecture (2026-05)
+
+| Layer | Location | Role |
+|-------|----------|------|
+| AOSP sources | `frameworks/base/core/java` + `graphics/java` via `nova-hybrid-*-sources` filegroups (generated into `Android.bp` by `tools/sync-hybrid-framework.py`) | View/widget/text/util when compile-clean; wired incrementally |
+| Nova bridges | `vendor/nova/nova-framework/src/` (~185 Java files) | Log, View/SurfaceView, Canvas JNI, ActivityThread, EGL, Resources, GLES shims |
+| SDK fallback | `android-stubs-dex.jar` (classpath second) | Classes not in nova-framework DEX |
+| Internal R | `tools/generate-internal-r.py` → `com/android/internal/R.java` | Minimal `com.android.internal.R` without full `framework-res` |
+
+**Build:** `nova-framework-host` = `src/**/*.java` + optional `//frameworks/base/core/java:nova-hybrid-util-sources` (expand per slice). Filegroups **must** live under `frameworks/base` (Soong globs); `//frameworks/base/.../Foo.java` paths in `vendor/` do not resolve.
+
+**Prune:** `sync-hybrid-framework.py --prune` removes Nova shims duplicated by AOSP paths listed in `bridge_files.txt` (128 removed in initial pass).
 
 ---
 
@@ -46,8 +60,11 @@ vendor/nova/
 │   ├── Android.bp
 │   └── nova_native_bridge.c      # ARM64→x86_64 translation loader hooks
 ├── nova-framework/
-│   ├── Android.bp
-│   ├── nova-framework.jar         # Built via java_library, bootclasspath
+│   ├── Android.bp                 # java_library nova-framework-host + AOSP filegroup refs
+│   ├── aosp/Android.bp            # Re-exports //frameworks/base:nova-hybrid-*-sources
+│   ├── tools/sync-hybrid-framework.py
+│   ├── bridge_files.txt           # Nova-only sources (exclude from AOSP filegroups)
+│   ├── nova-framework.jar         # Built via java_library, hostdex
 │   └── src/
 │       ├── nova/internal/
 │       │   ├── Launcher.java         # APK boot, manifest, lifecycle
@@ -300,21 +317,19 @@ Move from `deps/NovaART/src/jni/` to `vendor/nova/libnova_*/`:
 
 Add `Android.bp` entries with `shared_libs: ["libart", "libnativehelper"]`.
 
-#### P1-T2: Port the Java framework overlay
+#### P1-T2: Hybrid Java framework (replaces monolithic shim tree)
 
-Move Java sources from `deps/NovaART/src/java/nova-shims/` and
-`deps/NovaART/src/java/aosp/` into `vendor/nova/nova-framework/src/`.
+**Done (staging):** ~185 Nova bridge classes in `vendor/nova/nova-framework/src/`,
+`bridge_files.txt` + `tools/sync-hybrid-framework.py` (prune + generate
+`nova-hybrid-core-sources` / `nova-hybrid-graphics-sources` in `frameworks/base`).
+128 duplicate shims removed in the first prune pass.
 
-Current inventory:
-- **153 Java shim files** in `src/java/nova-shims/` (under 3 package trees:
-  `android/`, `com/`, `nova/`)
-- **24 AOSP Java files** in `src/java/aosp/`
-- Total: **177 Java files**
+**Incremental AOSP compile:** enable filegroups in `nova-framework/Android.bp` one
+slice at a time (util → animation → view/widget after aconfig stubs). Full
+`View.java` needs `android.view.flags` and related generated deps.
 
-Build as a `java_library` in Soong with `installable: true` and add it to the
-bootclasspath (via `PRODUCT_BOOT_JARS`), **not** as `android_app` or
-`dex_import`, because these classes must be visible to all loaded APKs at
-boot time.
+Build as `java_library` `nova-framework-host` with `hostdex: true`; classpath order in
+`art.c` is `nova-framework-hostdex.jar` then `android-stubs-dex.jar`.
 
 #### P1-T3: Port Canvas + softgfx C code
 

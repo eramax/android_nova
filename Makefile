@@ -58,10 +58,10 @@ help:
 	'  LOG=/tmp/nova.log'
 
 framework:
-	cd $(ROOT) && $(ENVSETUP) >/tmp/nova-lunch.log && $(BUILD_ENV) && m $(FRAMEWORK_TARGETS)
+	cd $(ROOT) && $(ENVSETUP) >/tmp/nova-lunch.log && $(BUILD_ENV) && m --soong-only $(FRAMEWORK_TARGETS)
 
 native:
-	cd $(ROOT) && $(ENVSETUP) >/tmp/nova-lunch.log && $(BUILD_ENV) && m $(NATIVE_TARGETS)
+	cd $(ROOT) && $(ENVSETUP) >/tmp/nova-lunch.log && $(BUILD_ENV) && m --soong-only $(NATIVE_TARGETS)
 
 all: framework native
 

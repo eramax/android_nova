@@ -100,8 +100,6 @@ public class WebView extends View {
     public boolean pageDown(boolean bottom) { return false; }
     public void scrollTo(int x, int y) {}
     public void scrollBy(int x, int y) {}
-    public int getScrollX() { return 0; }
-    public int getScrollY() { return 0; }
 
     public void requestFocusNodeHref(android.os.Message hrefMsg) {}
     public void requestImageRef(android.os.Message msg) {}

@@ -23,7 +23,7 @@ public final class ViewDispatcher {
         }
         MotionEvent event = MotionEvent.obtain(eventTime, action, x, y);
         try {
-            sRootView.dispatchMotionEvent(event);
+            sRootView.dispatchTouchEvent(event);
         } finally {
             event.recycle();
         }

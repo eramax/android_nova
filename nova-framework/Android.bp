@@ -13,7 +13,10 @@ java_library {
     sdk_version: "none",
     system_modules: "core-public-stubs-system-modules",
 
-    srcs: ["src/**/*.java"],
+    srcs: [
+        "src/**/*.java",
+        // AOSP slices (nova-hybrid-*-sources) wired when compile-clean; run sync-hybrid-framework.py.
+    ],
 
     // Disable dexpreopt — boot-image-profile.txt not available in master-art partial checkout
     dex_preopt: {
