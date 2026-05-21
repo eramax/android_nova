@@ -78,6 +78,11 @@ public final class Message implements Parcelable {
     public void setData(Bundle data) { this.data = data; }
     public void setTarget(Handler target) { this.target = target; }
 
+    public Message setCallback(Runnable callback) {
+        this.callback = callback;
+        return this;
+    }
+
     public void sendToTarget() { target.sendMessage(this); }
 
     public void copyFrom(Message o) {

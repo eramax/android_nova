@@ -1,69 +1,74 @@
 # Nova — Hybrid Framework Progress (progress2)
 
-Focused log for the **Hybrid AOSP Framework Fork** work (May 2026). See `progress.md` for earlier milestones.
+Focused log for the **Hybrid AOSP Framework Fork** ([`hybrid-fork-plan.md`](hybrid-fork-plan.md)). See `progress.md` for earlier milestones.
 
 ---
 
-## 2026-05-21 — Hybrid framework infrastructure + gles3jni gate
+## Fork vs “nova-framework from scratch”
 
-### Summary
+| What the plan means | What we had until 2026-05-21 | What we are doing now |
+|---------------------|------------------------------|----------------------|
+| **Layer 1:** compile real `.java` from `frameworks/base/core/java` + `graphics/java` | Soong filegroups pointed at invalid `//frameworks/base/.../Foo.java` paths → **zero** AOSP sources in DEX | Filegroups under `frameworks/base` via `sync-hybrid-framework.py` |
+| **Layer 2:** ~35 Nova **bridges** in `vendor/nova/nova-framework/src/` | ~311 hand-written shims (many duplicates of AOSP) | 128 shims pruned; bridges listed in `bridge_files.txt` |
+| **Layer 3:** C/Wayland (unchanged) | Already built | Unchanged |
 
-Shifted `nova-framework-host` from “shims only (Soong silently dropped AOSP filegroups)” to a real hybrid layout: Nova bridges in `vendor/nova/nova-framework/src/`, AOSP sources via filegroups under `frameworks/base`, SDK stubs as classpath fallback.
+**Important:** Short-lived **minimal** `View`/`Log` classes were only to unblock the gles3jni gate when AOSP was not in the JAR. That was **not** the end state. The fork target is **AOSP `android.view.View`** (34k lines), with Nova replacing `ViewRootImpl`, `ActivityThread`, `Canvas`, etc.
 
-### Build / Soong
+---
 
-| Item | Status |
-|------|--------|
-| `m --soong-only nova-framework-host` | ✅ Passes |
-| `make -f vendor/nova/Makefile framework` | ✅ Uses `--soong-only` (avoids kati `ext` failure) |
-| AOSP filegroups in `vendor/.../Foo.java` globs | ❌ Do not resolve — use filegroups in `frameworks/base/core/java` |
-| `sync-hybrid-framework.py` | ✅ Generates `nova-hybrid-core-sources`, `nova-hybrid-util-sources`, `nova-hybrid-graphics-sources` into `frameworks/base/.../Android.bp` |
-| `bridge_files.txt` + `--prune` | ✅ 128 duplicate shim `.java` files removed |
-| `com.android.internal.R` | ✅ `tools/generate-internal-r.py` (no full `framework-res`) |
-| AOSP View/widget in DEX | ⏳ ~22k javac errors (needs `android.view.flags-aconfig-java`, etc.) — **not** wired into `nova-framework-host` yet |
+## 2026-05-21 — Hybrid Step 4 started (AOSP in javac)
 
-### Nova bridges added / restored (runtime)
+### Infrastructure (done)
 
-- `android/util/Log.java` — stderr logging (fixes `Stub!` from SDK)
-- `android/util/DisplayMetrics.java`
-- `android/view/View.java`, `ViewGroup.java`, `SurfaceView.java`, `Gravity.java`
-- `android/graphics/Rect.java`
-- `android/widget/RelativeLayout.java`
-- OS/window: `ActivityThread`, `ViewRootImpl`, `WindowManagerGlobal`, insets stubs, `NovaViewHooks`, `ResourcesTheme`, etc.
+- `tools/sync-hybrid-framework.py` — per-slice filegroups, `bridge_files.txt` excludes, splices `frameworks/base/core/java/Android.bp` + `graphics/java/Android.bp`
+- `android.view.flags-aconfig-java` + `app-compat-annotations` on `nova-framework-host` classpath
+- Prune pass: **128** duplicate shim files removed
+
+### Currently wired into `nova-framework-host` (compile WIP)
+
+```bp
+"//frameworks/base/core/java:nova-hybrid-internal-util-sources",
+"//frameworks/base/core/java:nova-hybrid-view-sources",      // AOSP View — excludes bridge paths
+"//frameworks/base/core/java:nova-hybrid-animation-sources",
+```
+
+- **Removed** from `src/`: scratch `View.java`, `ViewGroup.java` (AOSP versions compile instead when clean).
+- **Kept** Nova `SurfaceView.java` (EGL holder on top of AOSP `View`) + `ViewRootImpl` bridge.
+- View slice excludes IME/accessibility/autofill/inputdevice trees (Nova stubs in `src/`).
+
+### Compile status
+
+| Slice | Errors (approx.) | Notes |
+|-------|------------------|-------|
+| view + animation + internal-util | ~1833 | Down from ~8589 after flags + annotations + util |
+| + graphics/java `**` | ~3800 | Needs HWUI natives — deferred (Step 6) |
+| bridges only (no AOSP srcs) | 0 | gles3jni gate passed with Nova `Log` + scratch View (superseded) |
+
+**Next compile fixes:** trim `internal-util` further, add `com.android.window.flags`, enable `widget` + `text` slices, then `graphics` with Canvas JNI aligned to AOSP `nDraw*` names.
 
 ### Gate: gles3jni
 
-**APK:** `vendor/nova/apks/others/gles3jni.apk`
+Previously verified with **bridge-only** DEX (`Log`, minimal `View`). With hybrid javac in progress, re-run gate after `m nova-framework-host` is clean:
 
 ```bash
 make -f vendor/nova/Makefile framework native
 timeout 15 make -f vendor/nova/Makefile run APK=vendor/nova/apks/others/gles3jni.apk
 ```
 
-**Verified (15s timeout):**
+### AOSP tree (commit separately)
 
-- Package/activity resolve: `com.android.gles3jni.GLES3JNIActivity`
-- `onCreate` / `onResume` complete
-- `eglCreateWindowSurface` on Nova `SurfaceView` holder
-- GLES 3.2 Mesa, vendor AMD, **first frame** logged
-- `GLThread` alive `RUNNABLE`
-
-### Docs updated
-
-- `plan-v7.md` — hybrid architecture section + revised P1-T2
-- `bridge_files.txt`, `nova-framework/aosp/Android.bp`, `tools/sync-hybrid-framework.py`
-
-### AOSP tree note (not in `vendor/nova` git)
-
-`sync-hybrid-framework.py` splices markers into:
+Hybrid markers live in:
 
 - `frameworks/base/core/java/Android.bp` (`NOVA_HYBRID_FILEGROUP_BEGIN` … `END`)
 - `frameworks/base/graphics/java/Android.bp`
 
-Commit those separately in the full AOSP workspace if tracking framework changes.
+These are **not** in the `vendor/nova` git repo.
 
-### Next slices
+---
 
-1. Enable `//frameworks/base/core/java:nova-hybrid-util-sources` in `nova-framework/Android.bp`, fix compile errors, repeat for animation → view/widget.
-2. Re-run Phase 2/3 gate APKs (2048 Dialog, Material Life, Pixel Dungeon, etc.) — same pattern: replace SDK `Stub!` with minimal Nova bridge.
-3. Add `android.view.flags` / aconfig deps before full AOSP `View.java` lands in DEX.
+## How to continue (hybrid-fork-plan order)
+
+1. Drive javac errors to **0** for view + animation + util (then add widget, text, graphics).
+2. Confirm DEX contains `Landroid/view/View;` from AOSP (`dexdump` on `nova-framework-hostdex.jar`).
+3. Re-run gles3jni + Phase 2/3 APKs.
+4. Enable `nova-hybrid-graphics-sources` after Canvas JNI signature alignment (Step 6).

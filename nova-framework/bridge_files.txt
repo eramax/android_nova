@@ -91,8 +91,7 @@ android/os/OperationCanceledException.java
 android/os/Trace.java
 
 # View / window bridge
-android/view/View.java
-android/view/ViewGroup.java
+# View/ViewGroup: AOSP hybrid fork; SurfaceView: Nova holder (EGL) on AOSP View
 android/view/SurfaceView.java
 android/view/Surface.java
 android/view/SurfaceControl.java

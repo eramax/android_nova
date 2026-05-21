@@ -15,7 +15,10 @@ java_library {
 
     srcs: [
         "src/**/*.java",
-        // AOSP slices (nova-hybrid-*-sources) wired when compile-clean; run sync-hybrid-framework.py.
+        // Hybrid fork Step 4: real AOSP from frameworks/base (bridges in src/ win via exclude_srcs).
+        "//frameworks/base/core/java:nova-hybrid-internal-util-sources",
+        "//frameworks/base/core/java:nova-hybrid-view-sources",
+        "//frameworks/base/core/java:nova-hybrid-animation-sources",
     ],
 
     // Disable dexpreopt — boot-image-profile.txt not available in master-art partial checkout
@@ -27,6 +30,8 @@ java_library {
         "nova-sdk-android",
         "nova-sdk-art",
         "nova-sdk-framework-graphics",
+        "android.view.flags-aconfig-java",
+        "app-compat-annotations",
     ],
 
     visibility: ["//vendor/nova:__subpackages__"],

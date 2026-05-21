@@ -83,16 +83,58 @@ def write_aosp_bp(bridge_files: set[str], aosp_sources: list[str]) -> None:
         "",
     ]
 
-    core_patterns = []
-    util_patterns = []
-    for _name, _base, patterns in AOSP_PACKAGES:
-        if _name != "core":
-            continue
-        for pattern in patterns:
-            if pattern.startswith("android/util/"):
-                util_patterns.append(pattern)
-            else:
-                core_patterns.append(pattern)
+    # Per-package slices — enable incrementally in nova-framework/Android.bp (hybrid-fork Step 4).
+    # Subsystems we stub in src/ — exclude from AOSP view glob (hybrid-fork Step 2).
+    VIEW_AOSP_EXCLUDES = [
+        "android/view/accessibility/**/*.java",
+        "android/view/autofill/**/*.java",
+        "android/view/contentcapture/**/*.java",
+        "android/view/contentprotection/**/*.java",
+        "android/view/displayhash/**/*.java",
+        "android/view/inputmethod/**/*.java",
+        "android/view/selectiontoolbar/**/*.java",
+        "android/view/textclassifier/**/*.java",
+        "android/view/textservice/**/*.java",
+        "android/view/translation/**/*.java",
+        "android/view/inspector/**/*.java",
+        "android/view/InputDevice.java",
+        "android/view/InputWindowHandle.java",
+        "android/view/InputChannel.java",
+        "android/view/InputEvent.java",
+        "android/view/InputMonitor.java",
+        "android/view/InputQueue.java",
+        "android/view/SurfaceView.java",
+    ]
+
+    INTERNAL_UTIL_EXTRA_EXCLUDES = [
+        "com/android/internal/util/AnnotationValidations.java",
+    ]
+
+    SLICES = [
+        ("nova-hybrid-animation-sources", ["android/animation/**/*.java"]),
+        ("nova-hybrid-internal-util-sources", ["com/android/internal/util/**/*.java"]),
+        ("nova-hybrid-internal-menu-sources", ["com/android/internal/view/menu/**/*.java"]),
+        ("nova-hybrid-text-sources", ["android/text/**/*.java"]),
+        ("nova-hybrid-widget-sources", ["android/widget/**/*.java"]),
+        ("nova-hybrid-view-sources", ["android/view/**/*.java"]),
+        ("nova-hybrid-window-sources", ["android/window/**/*.java"]),
+        ("nova-hybrid-database-sources", ["android/database/**/*.java"]),
+        ("nova-hybrid-net-sources", ["android/net/**/*.java"]),
+        ("nova-hybrid-provider-sources", ["android/provider/**/*.java"]),
+        ("nova-hybrid-preference-sources", ["android/preference/**/*.java"]),
+        ("nova-hybrid-util-sources", ["android/util/**/*.java"]),
+    ]
+
+    def pattern_prefix(pattern: str) -> str:
+        return pattern.split("*")[0].rstrip("/")
+
+    def prefix_excludes(patterns: list[str]) -> list[str]:
+        prefixes = [pattern_prefix(p) for p in patterns]
+        out: list[str] = []
+        for rel in core_excludes:
+            if any(rel == p or rel.startswith(p + "/") for p in prefixes):
+                out.append(rel)
+        return sorted(out)
 
     def core_filegroup(name: str, patterns: list[str], excludes: list[str]) -> list[str]:
         lines = header + [
@@ -109,12 +151,14 @@ def write_aosp_bp(bridge_files: set[str], aosp_sources: list[str]) -> None:
         lines.extend(["    ],", "}", ""])
         return lines
 
-    core_excludes_all = core_excludes
-    util_excludes = [rel for rel in core_excludes if rel.startswith("android/util/")]
-    core_excludes_nonutil = [rel for rel in core_excludes if not rel.startswith("android/util/")]
-
-    core_lines = core_filegroup("nova-hybrid-core-sources", core_patterns, core_excludes_nonutil)
-    core_lines += core_filegroup("nova-hybrid-util-sources", util_patterns, util_excludes)
+    core_lines: list[str] = []
+    for slice_name, patterns in SLICES:
+        excludes = prefix_excludes(patterns)
+        if slice_name == "nova-hybrid-view-sources":
+            excludes = sorted(set(excludes) | set(VIEW_AOSP_EXCLUDES))
+        if slice_name == "nova-hybrid-internal-util-sources":
+            excludes = sorted(set(excludes) | set(INTERNAL_UTIL_EXTRA_EXCLUDES))
+        core_lines += core_filegroup(slice_name, patterns, excludes)
 
     graphics_lines = header + [
         "filegroup {",

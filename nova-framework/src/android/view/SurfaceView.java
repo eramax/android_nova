@@ -6,6 +6,9 @@ import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.util.AttributeSet;
 
+/**
+ * Nova EGL surface holder — extends AOSP {@link View} from hybrid fork; only holder wiring is Nova-specific.
+ */
 public class SurfaceView extends View {
     private final NovaSurfaceHolder mHolder = new NovaSurfaceHolder();
 

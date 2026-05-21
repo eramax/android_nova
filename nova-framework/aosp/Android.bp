@@ -2,13 +2,19 @@ package {
     default_applicable_licenses: ["vendor_nova_license"],
 }
 
-// Re-export AOSP filegroups defined under frameworks/base (Soong globs require
-// filegroups to live in the same package directory as the .java sources).
+// Re-export AOSP filegroups (defined under frameworks/base/*/Android.bp).
 filegroup {
     name: "nova-aosp-framework-srcs",
     visibility: ["//vendor/nova/nova-framework:__subpackages__"],
     srcs: [
-        "//frameworks/base/core/java:nova-hybrid-core-sources",
+        "//frameworks/base/core/java:nova-hybrid-animation-sources",
+        "//frameworks/base/core/java:nova-hybrid-internal-util-sources",
+        "//frameworks/base/core/java:nova-hybrid-internal-menu-sources",
+        "//frameworks/base/core/java:nova-hybrid-text-sources",
+        "//frameworks/base/core/java:nova-hybrid-widget-sources",
+        "//frameworks/base/core/java:nova-hybrid-view-sources",
+        "//frameworks/base/core/java:nova-hybrid-window-sources",
+        "//frameworks/base/core/java:nova-hybrid-util-sources",
         "//frameworks/base/graphics/java:nova-hybrid-graphics-sources",
     ],
 }

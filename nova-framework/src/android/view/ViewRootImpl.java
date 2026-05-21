@@ -75,6 +75,10 @@ public final class ViewRootImpl {
     public void dump(String prefix, java.io.PrintWriter writer) {
     }
 
+    /** Stub callback type referenced by AOSP {@link SurfaceView}. */
+    public interface SurfaceChangedCallback {
+    }
+
     public static final class ImeFocusController {
         public void onViewFocusChanged(View view, boolean hasFocus) {
         }
