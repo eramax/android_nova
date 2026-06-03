@@ -200,7 +200,7 @@ public class Activity extends ContextWrapper {
     public boolean onOptionsItemSelected(android.view.MenuItem item) { return false; }
     public void supportInvalidateOptionsMenu() {}
     public android.view.MenuInflater getMenuInflater() { return new android.view.MenuInflater(this); }
-    public void onBackPressed() {}
+    public void onBackPressed() { finish(); }
     public void onWindowFocusChanged(boolean hasFocus) {}
     public android.app.ActionBar getActionBar() { return null; }
 
@@ -258,6 +258,7 @@ public class Activity extends ContextWrapper {
 
     public void finish() {
         mFinished = true;
+        nova.internal.Launcher.finishActivity(this);
     }
 
     public void setIntent(Intent intent) {

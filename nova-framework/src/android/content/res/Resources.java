@@ -27,7 +27,8 @@ public class Resources {
     }
 
     public int getColor(int id) {
-        return 0;
+        Integer c = ResourceManager.getInstance().getColorResource(id);
+        return c != null ? c : 0;
     }
 
     public int getColor(int id, Theme theme) {
@@ -43,19 +44,25 @@ public class Resources {
     }
 
     public CharSequence getText(int id) {
-        return null;
+        String s = ResourceManager.getInstance().getStringResource(id);
+        return s != null ? s : null;
     }
 
     public CharSequence getText(int id, CharSequence def) {
-        return def;
+        String s = ResourceManager.getInstance().getStringResource(id);
+        return s != null ? s : def;
     }
 
     public String getString(int id) {
-        return null;
+        return ResourceManager.getInstance().getStringResource(id);
     }
 
     public String getString(int id, Object... formatArgs) {
-        return getString(id);
+        String s = ResourceManager.getInstance().getStringResource(id);
+        if (s != null && formatArgs != null && formatArgs.length > 0) {
+            return String.format(java.util.Locale.US, s, formatArgs);
+        }
+        return s;
     }
 
     public Configuration getConfiguration() {
@@ -96,15 +103,18 @@ public class Resources {
     }
 
     public float getDimension(int id) {
-        return 0;
+        Integer v = ResourceManager.getInstance().getDimensionPixelSize(id);
+        return v != null ? v.floatValue() : 0;
     }
 
     public int getDimensionPixelOffset(int id) {
-        return 0;
+        Integer v = ResourceManager.getInstance().getDimensionPixelSize(id);
+        return v != null ? v : 0;
     }
 
     public int getDimensionPixelSize(int id) {
-        return 0;
+        Integer v = ResourceManager.getInstance().getDimensionPixelSize(id);
+        return v != null ? v : 0;
     }
 
     public float getFraction(int id, int base, int pbase) {

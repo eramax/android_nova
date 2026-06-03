@@ -1,6 +1,7 @@
 package nova.internal;
 
 import android.app.ActivityThread;
+import android.view.View;
 import android.view.ViewGroup;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -43,12 +44,47 @@ public final class Launcher {
     private static ClassLoader sLoader;
     private static Object sApplication;
     private static android.app.Activity sCurrentActivity;
+    private static java.util.Stack<ActivityRecord> sActivityStack = new java.util.Stack<>();
     // Reentrancy guard: prevents startActivity from calling launchActivity directly
     // while another launchActivity is already on the call stack (avoids StackOverflow
     // when drain-loop dispatches a posted startActivity lambda during an active launch).
     private static volatile boolean sLaunching = false;
 
     private Launcher() {
+    }
+
+    static class ActivityRecord {
+        final android.app.Activity activity;
+        final String className;
+        final android.content.Intent intent;
+        ActivityRecord(android.app.Activity activity, String className, android.content.Intent intent) {
+            this.activity = activity; this.className = className; this.intent = intent;
+        }
+    }
+
+    public static void finishActivity(android.app.Activity activity) {
+        if (sActivityStack.isEmpty()) return;
+        ActivityRecord top = sActivityStack.peek();
+        if (top.activity != activity) return;
+        sActivityStack.pop();
+        invokeLifecycleSafely(activity, "onPause");
+        invokeLifecycleSafely(activity, "onStop");
+        invokeLifecycleSafely(activity, "onDestroy");
+        if (!sActivityStack.isEmpty()) {
+            ActivityRecord prev = sActivityStack.peek();
+            sCurrentActivity = prev.activity;
+            View oldView = activity.getContentView();
+            if (oldView != null) NovaViewHooks.detachFromWindow(oldView);
+            invokeLifecycleSafely(prev.activity, "onStart");
+            invokeLifecycleSafely(prev.activity, "onResume");
+        } else {
+            sCurrentActivity = null;
+        }
+    }
+
+    private static void invokeLifecycleSafely(android.app.Activity activity, String method) {
+        try { invokeLifecycle(activity.getClass(), activity, method, new Class<?>[0], new Object[0]); }
+        catch (Exception e) { System.out.println("[NovaLauncher] " + method + " failed: " + e); }
     }
 
     public static void launch(String apkPath, String activityClass, String packageName) throws Exception {
@@ -207,6 +243,7 @@ public final class Launcher {
         }
 
         if (!initialLaunch && sCurrentActivity != null) {
+            sActivityStack.push(new ActivityRecord(sCurrentActivity, sCurrentActivity.getClass().getName(), null));
             invokeLifecycle(sCurrentActivity.getClass(), sCurrentActivity, "onPause", new Class<?>[0], new Object[0]);
             android.view.View oldView = sCurrentActivity.getContentView();
             if (oldView != null) {
