@@ -78,6 +78,62 @@ SoundPool and MediaPlayer via PipeWire:
 2. **Rebuild + re-dex + test** — the app will get past `EdgeToEdge.<clinit>` and reach layout inflation with real framework methods
 3. **Add bridges for each subsequent Stub! crash** — typically 1-3 files per crash, converging quickly
 
+## Real Framework DEX — External Build + Deploy
+
+The partial checkout cannot build the full AOSP framework. The real `framework.jar` must be built on a full AOSP checkout, then transferred here.
+
+### On the full AOSP machine:
+
+```bash
+cd /path/to/full/aosp
+source build/envsetup.sh
+lunch aosp_arm64-trunk_staging-eng  # or your target
+m framework-minus-apex
+ls out/target/product/*/system/framework/framework.jar
+# Copy to this machine
+scp out/target/product/*/system/framework/framework.jar user@this-machine:/tmp/
+```
+
+### On this machine — deploy:
+
+```bash
+# 1. DEX the real framework
+rm -rf /tmp/nova-dex-fw && mkdir -p /tmp/nova-dex-fw
+/mnt/mydata/projects2/0/aosp-full/prebuilts/jdk/jdk21/linux-x86/bin/java \
+  -cp /mnt/mydata/projects2/0/aosp-full/prebuilts/r8/r8.jar \
+  com.android.tools.r8.D8 --debug \
+  --output /tmp/nova-dex-fw \
+  /tmp/framework.jar
+cd /tmp/nova-dex-fw && jar cf /mnt/mydata/projects2/0/aosp-full/out/host/linux-x86/framework/real-framework-hostdex.jar classes.dex
+
+# 2. Update art.c to use real framework on classpath
+#    Change: -Djava.class.path=nova-framework-hostdex.jar:android-stubs-dex.jar
+#        To: -Djava.class.path=real-framework-hostdex.jar:nova-framework-hostdex.jar
+#    (art.c:447 — replace ANDROID_STUBS_REL with REAL_FRAMEWORK_REL)
+
+# 3. Rebuild native binary
+cd /mnt/mydata/projects2/0/aosp-full
+m nova
+
+# 4. Re-dex Nova's framework too
+rm -f /tmp/nova-dex-out/classes.dex
+/mnt/mydata/projects2/0/aosp-full/prebuilts/jdk/jdk21/linux-x86/bin/java \
+  -cp /mnt/mydata/projects2/0/aosp-full/prebuilts/r8/r8.jar \
+  com.android.tools.r8.D8 --debug \
+  --output /tmp/nova-dex-out \
+  out/soong/.intermediates/vendor/nova/nova-framework/nova-framework-host/android_common/javac/nova-framework.jar
+cd /tmp/nova-dex-out && jar cf /mnt/mydata/projects2/0/aosp-full/out/host/linux-x86/framework/nova-framework-hostdex.jar classes.dex
+
+# 5. Test
+out/host/linux-x86/bin/nova --standalone -a org.piepmeyer.gauguin.ui.main.MainActivity /path/to/gauguin.apk
+```
+
+## Quick Wins
+
+1. **Restore Color.java, Window.java, WindowInsetsController.java, InsetsController.java** from git commit 195a183 — these were working before and fix Gauguin's crash chain in ~4 files
+2. **Rebuild + re-dex + test** — the app will get past `EdgeToEdge.<clinit>` and reach layout inflation with real framework methods
+3. **Add bridges for each subsequent Stub! crash** — typically 1-3 files per crash, converging quickly
+
 ## Build & Test Cycle
 
 ```bash
