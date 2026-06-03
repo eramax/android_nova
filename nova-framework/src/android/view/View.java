@@ -1172,6 +1172,8 @@ public class View implements Drawable.Callback, KeyEvent.Callback {
 
     void notifyEnterOrExitForScrollCapture() {}
 
+    public @interface RectangleOnScreenRequestSource {}
+
     // Listener interfaces
     public interface OnClickListener {
         void onClick(View v);
