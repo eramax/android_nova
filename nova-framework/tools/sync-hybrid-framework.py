@@ -98,6 +98,9 @@ def write_aosp_bp(bridge_files: set[str], aosp_sources: list[str]) -> None:
         "android/view/textservice/**/*.java",
         "android/view/translation/**/*.java",
         "android/view/inspector/**/*.java",
+        "android/view/ViewStub.java",
+        "android/view/FocusFinder.java",
+        "android/view/ViewStructure.java",
         "android/view/InputDevice.java",
         "android/view/InputWindowHandle.java",
         "android/view/InputChannel.java",
@@ -193,6 +196,52 @@ def write_aosp_bp(bridge_files: set[str], aosp_sources: list[str]) -> None:
         "android/view/InputEventReceiver.java",
         "android/view/InputEventSender.java",
         "android/view/BatchedInputEventReceiver.java",
+    ]
+
+    WIDGET_EXTRA_EXCLUDES = [
+        "android/widget/Editor.java",
+        "android/widget/Magnifier.java",
+        "android/widget/PopupWindow.java",
+        "android/widget/RemoteViews.java",
+        "android/widget/RemoteViewsAdapter.java",
+        "android/widget/RemoteViewsService.java",
+        "android/widget/Toast.java",
+        "android/widget/ToastPresenter.java",
+        "android/widget/VideoView.java",
+        "android/widget/DropDownListView.java",
+        "android/widget/ExpandableListView.java",
+        "android/widget/HorizontalScrollView.java",
+        "android/widget/NumberPicker.java",
+        "android/widget/ProgressBar.java",
+        "android/widget/RadialTimePickerView.java",
+        "android/widget/RadioGroup.java",
+        "android/widget/ScrollView.java",
+        "android/widget/SearchView.java",
+        "android/widget/SelectionActionModeHelper.java",
+        "android/widget/SimpleMonthView.java",
+        "android/widget/TabHost.java",
+        "android/widget/TableLayout.java",
+        "android/widget/TableRow.java",
+        "android/widget/TimePicker.java",
+        "android/widget/TimePickerClockDelegate.java",
+        "android/widget/Toolbar.java",
+        "android/widget/DifferentialMotionFlingHelper.java",
+        "android/widget/inline/InlineContentView.java",
+        "android/widget/AdapterViewAnimator.java",
+        "android/widget/CompoundButton.java",
+        "android/widget/GridView.java",
+        "android/widget/ListView.java",
+        "android/widget/Switch.java",
+        "android/widget/ImageView.java",
+    ]
+
+    TEXT_EXTRA_EXCLUDES = [
+        "android/text/Html.java",
+        "android/text/TextLine.java",
+        "android/text/format/Time.java",
+        "android/text/format/TimeFormatter.java",
+        "android/text/style/RasterizerSpan.java",
+        "android/text/style/StyleSpan.java",
     ]
 
     INTERNAL_UTIL_EXTRA_EXCLUDES = [
@@ -318,6 +367,10 @@ def write_aosp_bp(bridge_files: set[str], aosp_sources: list[str]) -> None:
             excludes = sorted(set(excludes) | set(UTIL_EXTRA_EXCLUDES))
         if slice_name == "nova-hybrid-animation-sources":
             excludes = sorted(set(excludes) | set(ANIMATION_EXTRA_EXCLUDES))
+        if slice_name == "nova-hybrid-widget-sources":
+            excludes = sorted(set(excludes) | set(WIDGET_EXTRA_EXCLUDES))
+        if slice_name == "nova-hybrid-text-sources":
+            excludes = sorted(set(excludes) | set(TEXT_EXTRA_EXCLUDES))
         core_lines += core_filegroup(slice_name, patterns, excludes)
 
     graphics_lines = header + [

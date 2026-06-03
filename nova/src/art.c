@@ -20,9 +20,13 @@ typedef jint (*JNI_CreateJavaVM_t)(JavaVM **pvm, void **penv, JavaVMInitArgs *ar
 /* Path to nova-framework DEX jar relative to host_out (out/host/linux-x86/).
  * Soong java_library with hostdex:true produces <name>-hostdex.jar in framework/. */
 #define NOVA_FRAMEWORK_REL "framework/nova-framework-hostdex.jar"
+/* Real AOSP framework DEX — built from a full AOSP checkout (m framework-minus-apex)
+ * and DEXed on this machine.  This provides real implementations of every Android
+ * framework class — no "Stub!" at runtime.  Nova's framework jar comes second,
+ * overriding specific bridge files.  Stubs are last as a fallback. */
+#define REAL_FRAMEWORK_REL "framework/real-framework-hostdex.jar"
 /* SDK API stubs (android.jar DEXed) — fallback for any android.* class not
- * overridden by nova-framework.  nova-framework is listed first so its classes
- * take priority; stubs are only consulted for classes we have not implemented. */
+ * overridden by nova-framework or the real framework. */
 #define ANDROID_STUBS_REL  "framework/android-stubs-dex.jar"
 
 static const char *kGlesV2Candidates[] = {
@@ -438,11 +442,19 @@ int nova_art_init(struct nova_state *state, int argc, char *argv[]) {
     if (append_option(options, &option_count, arg) != 0) goto opt_fail;
 
     {
+        char real_jar[PATH_MAX];
         char stubs_jar[PATH_MAX];
+        snprintf(real_jar, sizeof(real_jar), "%s/" REAL_FRAMEWORK_REL, host_out);
         snprintf(stubs_jar, sizeof(stubs_jar), "%s/" ANDROID_STUBS_REL, host_out);
 
-        if (file_exists(framework_jar) && file_exists(stubs_jar)) {
-            /* nova-framework first — its classes shadow the SDK stubs */
+        /* Classpath priority: real-framework > nova-framework > stubs.
+         * Real framework provides all android.* implementations (no Stub!).
+         * Nova's framework overrides specific bridge files.
+         * Stubs catch any remaining class not in either. */
+        if (file_exists(real_jar) && file_exists(framework_jar)) {
+            snprintf(arg, sizeof(arg), "-Djava.class.path=%s:%s:%s",
+                     real_jar, framework_jar, stubs_jar);
+        } else if (file_exists(framework_jar) && file_exists(stubs_jar)) {
             snprintf(arg, sizeof(arg), "-Djava.class.path=%s:%s", framework_jar, stubs_jar);
         } else if (file_exists(framework_jar)) {
             snprintf(arg, sizeof(arg), "-Djava.class.path=%s", framework_jar);
@@ -453,8 +465,8 @@ int nova_art_init(struct nova_state *state, int argc, char *argv[]) {
             arg[0] = '\0';
         }
         if (arg[0] && append_option(options, &option_count, arg) != 0) goto opt_fail;
-        if (!file_exists(framework_jar))
-            fprintf(stderr, "[Nova] WARNING: nova-framework jar not found at %s\n", framework_jar);
+        if (!file_exists(real_jar) && !file_exists(framework_jar))
+            fprintf(stderr, "[Nova] WARNING: no Nova framework jars found\n");
     }
 
     {
