@@ -1,5 +1,6 @@
 #include "softgfx.h"
 
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -319,6 +320,78 @@ void nova_canvas_draw_color(struct nova_canvas *canvas, uint32_t color) {
         return;
     }
     nova_bitmap_clear(canvas->bitmap, color);
+}
+
+static void draw_pixel(struct nova_bitmap *bitmap, int x, int y, uint32_t color) {
+    if (x < 0 || x >= bitmap->width || y < 0 || y >= bitmap->height) return;
+    bitmap->pixels[y * bitmap->width + x] = color;
+}
+
+static void draw_thick_line(struct nova_bitmap *bitmap, int x0, int y0, int x1, int y1, uint32_t color, int stroke) {
+    if (stroke < 1) stroke = 1;
+    int dx = abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
+    int dy = -abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
+    int err = dx + dy, e2;
+    while (1) {
+        for (int w = -(stroke/2); w <= stroke/2; w++) {
+            draw_pixel(bitmap, x0 + w, y0, color);
+            draw_pixel(bitmap, x0, y0 + w, color);
+        }
+        if (x0 == x1 && y0 == y1) break;
+        e2 = 2 * err;
+        if (e2 >= dy) { err += dy; x0 += sx; }
+        if (e2 <= dx) { err += dx; y0 += sy; }
+    }
+}
+
+void nova_canvas_draw_line(struct nova_canvas *canvas, float start_x, float start_y,
+                            float stop_x, float stop_y, const struct nova_paint *paint) {
+    if (!canvas || !canvas->bitmap || !paint) return;
+    int x0 = (int)(start_x + canvas->translate_x);
+    int y0 = (int)(start_y + canvas->translate_y);
+    int x1 = (int)(stop_x + canvas->translate_x);
+    int y1 = (int)(stop_y + canvas->translate_y);
+    int stroke = (int)paint->stroke_width;
+    if (stroke < 1) stroke = 1;
+    draw_thick_line(canvas->bitmap, x0, y0, x1, y1, paint->color, stroke);
+}
+
+void nova_canvas_draw_circle(struct nova_canvas *canvas, float cx, float cy,
+                              float radius, const struct nova_paint *paint) {
+    if (!canvas || !canvas->bitmap || !paint || radius < 0) return;
+    int cxi = (int)(cx + canvas->translate_x);
+    int cyi = (int)(cy + canvas->translate_y);
+    int ri = (int)radius;
+    uint32_t color = paint->color;
+    struct nova_bitmap *bitmap = canvas->bitmap;
+    int stroke = (int)paint->stroke_width;
+    if (stroke < 1) stroke = 1;
+
+    if (paint->style == NOVA_PAINT_STYLE_FILL || paint->style == NOVA_PAINT_STYLE_FILL_AND_STROKE) {
+        for (int y = -ri; y <= ri; y++) {
+            int x = (int)(sqrt(ri * ri - y * y) + 0.5f);
+            fill_span(bitmap, cxi - x, cyi + y, cxi + x, cyi + y + 1, color);
+        }
+    }
+    if (paint->style == NOVA_PAINT_STYLE_STROKE || paint->style == NOVA_PAINT_STYLE_FILL_AND_STROKE) {
+        int x = ri, y = 0;
+        int err = 1 - ri;
+        while (x >= y) {
+            for (int w = -(stroke/2); w <= stroke/2; w++) {
+                draw_pixel(bitmap, cxi + x, cyi + y + w, color);
+                draw_pixel(bitmap, cxi - x, cyi + y + w, color);
+                draw_pixel(bitmap, cxi + y, cyi + x + w, color);
+                draw_pixel(bitmap, cxi - y, cyi + x + w, color);
+                draw_pixel(bitmap, cxi + x, cyi - y + w, color);
+                draw_pixel(bitmap, cxi - x, cyi - y + w, color);
+                draw_pixel(bitmap, cxi + y, cyi - x + w, color);
+                draw_pixel(bitmap, cxi - y, cyi - x + w, color);
+            }
+            y++;
+            if (err <= 0) { err += 2 * y + 1; }
+            else { x--; err += 2 * (y - x) + 1; }
+        }
+    }
 }
 
 int nova_canvas_save(struct nova_canvas *canvas, int save_flags) {

@@ -37,6 +37,10 @@ void nova_canvas_set_bitmap(struct nova_canvas *canvas, struct nova_bitmap *bitm
 void nova_canvas_draw_rect(struct nova_canvas *canvas, float left, float top,
                            float right, float bottom, const struct nova_paint *paint);
 void nova_canvas_draw_color(struct nova_canvas *canvas, uint32_t color);
+void nova_canvas_draw_line(struct nova_canvas *canvas, float start_x, float start_y,
+                            float stop_x, float stop_y, const struct nova_paint *paint);
+void nova_canvas_draw_circle(struct nova_canvas *canvas, float cx, float cy,
+                              float radius, const struct nova_paint *paint);
 int nova_canvas_save(struct nova_canvas *canvas, int save_flags);
 void nova_canvas_restore(struct nova_canvas *canvas);
 void nova_canvas_translate(struct nova_canvas *canvas, float dx, float dy);

@@ -154,21 +154,16 @@ static void native_drawBitmap(JNIEnv *env, jobject, jlong canvasHandle, jlong bi
 
 static void native_drawCircle(JNIEnv *env, jobject, jlong canvasHandle, jfloat cx, jfloat cy, jfloat radius, jlong paintHandle) {
     (void)env;
-    (void)canvasHandle;
-    (void)cx;
-    (void)cy;
-    (void)radius;
-    (void)paintHandle;
+    nova_canvas_draw_circle((struct nova_canvas *)(intptr_t)canvasHandle,
+                            cx, cy, radius,
+                            (const struct nova_paint *)(intptr_t)paintHandle);
 }
 
 static void native_drawLine(JNIEnv *env, jobject, jlong canvasHandle, jfloat startX, jfloat startY, jfloat stopX, jfloat stopY, jlong paintHandle) {
     (void)env;
-    (void)canvasHandle;
-    (void)startX;
-    (void)startY;
-    (void)stopX;
-    (void)stopY;
-    (void)paintHandle;
+    nova_canvas_draw_line((struct nova_canvas *)(intptr_t)canvasHandle,
+                          startX, startY, stopX, stopY,
+                          (const struct nova_paint *)(intptr_t)paintHandle);
 }
 
 static jint native_save(JNIEnv *env, jobject, jlong canvasHandle, jint saveFlags) {
