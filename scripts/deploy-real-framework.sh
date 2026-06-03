@@ -25,14 +25,19 @@ AOSP_DIR="/mnt/mydata/projects2/0/aosp-full"
 OUT_DIR="$AOSP_DIR/out/host/linux-x86/framework"
 D8_JAR="$AOSP_DIR/prebuilts/r8/r8.jar"
 JAVA="$AOSP_DIR/prebuilts/jdk/jdk21/linux-x86/bin/java"
+JAVA_HOME="$AOSP_DIR/prebuilts/jdk/jdk21/linux-x86"
+
+# Also export for D8 which needs JDK home for bootstrap class resolution
+export JAVA_HOME
 
 echo "=== Deploying real framework DEX ==="
 echo "Source: $SRC_JAR"
 echo "Output: $OUT_DIR/real-framework-hostdex.jar"
 
-# DEX the real framework
+# DEX the real framework (--lib must point to JDK home for bootstrap classes)
 rm -rf /tmp/nova-dex-fw && mkdir -p /tmp/nova-dex-fw
-$JAVA -cp "$D8_JAR" com.android.tools.r8.D8 --debug \
+$JAVA -cp "$D8_JAR" com.android.tools.r8.D8 --release \
+    --lib $JAVA_HOME \
     --output /tmp/nova-dex-fw \
     "$SRC_JAR" 2>&1 | tail -3
 
@@ -44,7 +49,8 @@ echo "=== Rebuilding Nova framework DEX ==="
 NOVA_JAR="$AOSP_DIR/out/soong/.intermediates/vendor/nova/nova-framework/nova-framework-host/android_common/javac/nova-framework.jar"
 rm -f /tmp/nova-dex-out/classes.dex
 mkdir -p /tmp/nova-dex-out
-$JAVA -cp "$D8_JAR" com.android.tools.r8.D8 --debug \
+$JAVA -cp "$D8_JAR" com.android.tools.r8.D8 --release \
+    --lib $JAVA_HOME \
     --output /tmp/nova-dex-out \
     "$NOVA_JAR" 2>&1 | tail -1
 cd /tmp/nova-dex-out && jar cf "$OUT_DIR/nova-framework-hostdex.jar" classes.dex
