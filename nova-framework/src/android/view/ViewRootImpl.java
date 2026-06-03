@@ -45,12 +45,20 @@ public final class ViewRootImpl implements ViewParent {
             return;
         }
         mAdded = true;
-        ViewDispatcher.setRootView(view);
-        RenderCoordinator coordinator = RenderCoordinator.getInstance();
         int width = attrs != null && attrs.width > 0 ? attrs.width : 960;
         int height = attrs != null && attrs.height > 0 ? attrs.height : 540;
+        performTraversals(view, width, height);
+        ViewDispatcher.setRootView(view);
+        RenderCoordinator coordinator = RenderCoordinator.getInstance();
         coordinator.start(view, width, height);
         Log.d(TAG, "setView " + view.getClass().getName() + " " + width + "x" + height);
+    }
+
+    public void performTraversals(View view, int width, int height) {
+        view.measure(
+            View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY));
+        view.layout(0, 0, width, height);
     }
 
     public View getView() {

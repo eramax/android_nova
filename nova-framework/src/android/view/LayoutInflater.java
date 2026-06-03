@@ -6,8 +6,15 @@ import android.util.AttributeSet;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.res.ResourceManager;
-import android.webkit.WebView;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
+import android.widget.ScrollView;
+import android.widget.TextView;
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.lang.reflect.Constructor;
@@ -37,10 +44,24 @@ public class LayoutInflater {
 
     static {
         VIEW_CLASSES.put("android.widget.LinearLayout", LinearLayout.class);
-        VIEW_CLASSES.put("android.webkit.WebView", WebView.class);
+        VIEW_CLASSES.put("android.widget.FrameLayout", FrameLayout.class);
+        VIEW_CLASSES.put("android.widget.TextView", TextView.class);
+        VIEW_CLASSES.put("android.widget.Button", Button.class);
+        VIEW_CLASSES.put("android.widget.EditText", EditText.class);
+        VIEW_CLASSES.put("android.widget.ImageView", ImageView.class);
+        VIEW_CLASSES.put("android.widget.ProgressBar", ProgressBar.class);
+        VIEW_CLASSES.put("android.widget.RelativeLayout", RelativeLayout.class);
+        VIEW_CLASSES.put("android.widget.ScrollView", ScrollView.class);
         VIEW_CLASSES.put("android.view.View", View.class);
         VIEW_CLASSES.put("LinearLayout", LinearLayout.class);
-        VIEW_CLASSES.put("WebView", WebView.class);
+        VIEW_CLASSES.put("FrameLayout", FrameLayout.class);
+        VIEW_CLASSES.put("TextView", TextView.class);
+        VIEW_CLASSES.put("Button", Button.class);
+        VIEW_CLASSES.put("EditText", EditText.class);
+        VIEW_CLASSES.put("ImageView", ImageView.class);
+        VIEW_CLASSES.put("ProgressBar", ProgressBar.class);
+        VIEW_CLASSES.put("RelativeLayout", RelativeLayout.class);
+        VIEW_CLASSES.put("ScrollView", ScrollView.class);
         VIEW_CLASSES.put("View", View.class);
     }
 
