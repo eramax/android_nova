@@ -1172,6 +1172,10 @@ public class View implements Drawable.Callback, KeyEvent.Callback {
 
     void notifyEnterOrExitForScrollCapture() {}
 
+    public void saveAttributeDataForStyleable(Context context, int[] styleableRes, AttributeSet attrs, TypedArray values, int defStyleAttr, int defStyleRes) {}
+
+    public boolean getFitsSystemWindows() { return false; }
+
     public @interface RectangleOnScreenRequestSource {}
 
     // Listener interfaces
