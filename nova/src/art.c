@@ -423,8 +423,7 @@ int nova_art_init(struct nova_state *state, int argc, char *argv[]) {
     char arg[PATH_MAX * 2];
 
     if (append_option(options, &option_count, "-Xcompiler-option --compiler-filter=verify") != 0 ||
-        append_option(options, &option_count, "-Xmx256m") != 0 ||
-        append_option(options, &option_count, "-verbose:class") != 0) {
+        append_option(options, &option_count, "-Xmx256m") != 0) {
         fprintf(stderr, "[Nova] Failed to allocate JVM option\n");
         return -1;
     }

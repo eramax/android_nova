@@ -19,6 +19,11 @@ int RegisterMethodsOrDie(JNIEnv *env, const char *className,
     int ret = (*env)->RegisterNatives(env, clazz, methods, numMethods);
     if (ret < 0) {
         fprintf(stderr, "[NovaART] Failed to register natives for: %s\n", className);
+        /* RegisterNatives throws NoSuchMethodError on mismatch — clear it so
+         * ART doesn't abort later with "No pending exception expected". */
+        if ((*env)->ExceptionCheck(env)) {
+            (*env)->ExceptionClear(env);
+        }
     }
     return ret;
 }

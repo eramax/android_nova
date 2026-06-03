@@ -1,8 +1,11 @@
 package android.app;
 
+import android.content.ComponentCallbacks;
+import android.content.ComponentCallbacks2;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.view.Display;
 import android.view.View;
@@ -14,7 +17,7 @@ import nova.internal.NovaViewHooks;
 import android.content.res.Configuration;
 import nova.internal.Launcher;
 
-public class Activity extends ContextWrapper {
+public class Activity extends ContextWrapper implements ComponentCallbacks2 {
     private static final String TAG = "NovaActivity";
     private Application mApplication;
     private final Window mWindow = new Window(this);
@@ -189,7 +192,6 @@ public class Activity extends ContextWrapper {
 
     public Object getLastNonConfigurationInstance() { return null; }
     public Object onRetainNonConfigurationInstance() { return null; }
-    public void onConfigurationChanged(Configuration newConfig) {}
     public void onSaveInstanceState(android.os.Bundle outState) {}
     public void onRestoreInstanceState(android.os.Bundle savedInstanceState) {}
     public void onStart() {}
@@ -247,6 +249,10 @@ public class Activity extends ContextWrapper {
     public void setVolumeControlStream(int streamType) {}
     public void setRequestedOrientation(int requestedOrientation) {}
     public void runOnUiThread(Runnable action) { action.run(); }
+
+    @Override public void onConfigurationChanged(Configuration newConfig) {}
+    @Override public void onLowMemory() {}
+    @Override public void onTrimMemory(int level) {}
 
     public boolean isFinishing() {
         return mFinished;

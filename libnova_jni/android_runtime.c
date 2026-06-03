@@ -2,16 +2,15 @@
 #include <stddef.h>
 #include <stdio.h>
 
-/* Forward declarations for all JNI module registration functions.
- * These will be implemented in the generated stubs/ directory
- * and individual module files as we implement them. */
+/* Module registration functions — only register JNI for classes whose
+ * native methods are actually declared in Nova's Java implementations.
+ * Classes loaded from the boot classpath or SDK stubs whose native methods
+ * are NOT present in Nova's framework MUST be omitted — RegisterNatives
+ * fails if the Java class doesn't declare the native method. */
 
-/* Module registration functions we implement ourselves */
-int register_android_os_SystemProperties(JNIEnv *env);
 int register_android_os_SystemClock(JNIEnv *env);
 int register_android_os_Binder(JNIEnv *env);
 int register_android_os_Process(JNIEnv *env);
-int register_android_view_KeyEvent(JNIEnv *env);
 int register_android_view_MotionEvent(JNIEnv *env);
 int register_android_graphics_Canvas(JNIEnv *env);
 int register_android_graphics_Paint(JNIEnv *env);
@@ -32,13 +31,11 @@ int register_nova_canvas_render(JNIEnv *env);
  */
 static const RegJNIProc gRegJNI[] = {
     /* OS-level */
-    register_android_os_SystemProperties,
     register_android_os_SystemClock,
     register_android_os_Binder,
     register_android_os_Process,
 
     /* View/Input */
-    register_android_view_KeyEvent,
     register_android_view_MotionEvent,
 
     /* Graphics */

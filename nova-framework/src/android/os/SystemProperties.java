@@ -68,11 +68,11 @@ public final class SystemProperties {
         }
     }
 
-    private static native String native_get(String key, String def);
-    private static native String native_getString(String key, String def);
-    private static native int native_getInt(String key, int def);
-    private static native long native_getLong(String key, long def);
-    private static native boolean native_getBoolean(String key, boolean def);
+    private static String native_get(String key, String def) { return def; }
+    private static String native_getString(String key, String def) { return def; }
+    private static int native_getInt(String key, int def) { return def; }
+    private static long native_getLong(String key, long def) { return def; }
+    private static boolean native_getBoolean(String key, boolean def) { return def; }
     private static native void native_set(String key, String val);
     private static native void native_addChangeCallback();
 }
