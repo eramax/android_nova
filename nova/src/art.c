@@ -25,6 +25,9 @@ typedef jint (*JNI_CreateJavaVM_t)(JavaVM **pvm, void **penv, JavaVMInitArgs *ar
  * framework class — no "Stub!" at runtime.  Nova's framework jar comes second,
  * overriding specific bridge files.  Stubs are last as a fallback. */
 #define REAL_FRAMEWORK_REL "framework/real-framework-hostdex.jar"
+/* Compiled javac classes jar (non-DEX) — ART can load .class files from a jar.
+ * Used as fallback if the DEX version isn't available (d8 may fail on Java 21+). */
+#define NOVA_CLASSES_REL   "framework/nova-framework-dex.jar"
 /* SDK API stubs (android.jar DEXed) — fallback for any android.* class not
  * overridden by nova-framework or the real framework. */
 #define ANDROID_STUBS_REL  "framework/android-stubs-dex.jar"
