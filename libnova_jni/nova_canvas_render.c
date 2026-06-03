@@ -88,12 +88,48 @@ static void setRenderWindow(JNIEnv *env, jclass cls, jlong window) {
     g_window = (struct nova_window *)(intptr_t)window;
 }
 
-static void cleanupRender(JNIEnv *env, jclass cls) {
-    (void)env;
+static jint nativeDispatchEvents(JNIEnv *env, jclass cls) {
+    (void)env; (void)cls;
+    if (!g_state) return -1;
+    return nova_dispatch(g_state);
+}
+
+static jboolean nativeInitDisplay(JNIEnv *env, jclass cls, jint width, jint height, jstring title) {
+    (void)cls;
+    g_state = nova_state_create();
+    if (!g_state) return JNI_FALSE;
+
+    const char *title_utf = title ? (*env)->GetStringUTFChars(env, title, NULL) : "Nova";
+    g_window = nova_window_create(g_state, width, height, title_utf ? title_utf : "Nova");
+    if (title_utf) (*env)->ReleaseStringUTFChars(env, title, title_utf);
+
+    if (!g_window) {
+        nova_state_destroy(g_state);
+        g_state = NULL;
+        return JNI_FALSE;
+    }
+    return JNI_TRUE;
+}
+
+static void nativeDestroyDisplay(JNIEnv *env, jclass cls) {
+    (void)env; (void)cls;
     if (g_canvas_render) {
         nova_canvas_render_destroy(g_canvas_render);
         g_canvas_render = NULL;
     }
+    if (g_window) {
+        nova_window_destroy(g_window);
+        g_window = NULL;
+    }
+    if (g_state) {
+        nova_state_destroy(g_state);
+        g_state = NULL;
+    }
+}
+
+static void cleanupRender(JNIEnv *env, jclass cls) {
+    (void)env; (void)cls;
+    nativeDestroyDisplay(env, cls);
 }
 
 static void submitFrame(JNIEnv *env, jclass cls, jobject bitmap) {
@@ -171,6 +207,9 @@ static const JNINativeMethod gMethods[] = {
     { "getRenderWindow",     "()J",                  (void*)getRenderWindow },
     { "setRenderState",      "(J)V",                 (void*)setRenderState },
     { "setRenderWindow",     "(J)V",                 (void*)setRenderWindow },
+    { "nativeInitDisplay",   "(IILjava/lang/String;)Z", (void*)nativeInitDisplay },
+    { "nativeDestroyDisplay","()V",                  (void*)nativeDestroyDisplay },
+    { "nativeDispatchEvents","()I",                  (void*)nativeDispatchEvents },
     { "cleanupRender",       "()V",                  (void*)cleanupRender },
 };
 

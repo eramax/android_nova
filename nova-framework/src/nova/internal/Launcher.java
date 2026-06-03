@@ -301,7 +301,7 @@ public final class Launcher {
             System.out.println("[NovaLauncher] Starting Canvas render coordinator on root view");
             RenderCoordinator coordinator = RenderCoordinator.getInstance();
             coordinator.setRootView(viewInstance);
-            coordinator.start(viewInstance, WINDOW_WIDTH, WINDOW_HEIGHT);
+            coordinator.start(viewInstance, WINDOW_WIDTH, WINDOW_HEIGHT, "Nova Activity");
         }
         logGlThreadState(renderTarget);
     }

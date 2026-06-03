@@ -31,7 +31,7 @@ public final class RenderCoordinator {
         mFrameTimeNanos = System.nanoTime();
     }
 
-    public void start(View rootView, int width, int height) {
+    public void start(View rootView, int width, int height, String title) {
         synchronized (mLock) {
             mRootView = rootView;
             if (mRunning) {
@@ -42,6 +42,12 @@ public final class RenderCoordinator {
             NovaTrace.recordRenderTarget(rootView != null ? rootView.getClass().getName() : "null",
                     rootView != null ? rootView.getClass().getName() : "null");
             mRootView = rootView;
+
+            boolean displayOk = CanvasRender.nativeInitDisplay(width, height, title);
+            if (!displayOk) {
+                Log.e(TAG, "Failed to initialize Wayland display");
+            }
+
             mBackBuffer = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
             mBackCanvas = new Canvas(mBackBuffer);
             mRunning = true;
@@ -85,6 +91,7 @@ public final class RenderCoordinator {
         int frameCount = 0;
         while (mRunning) {
             try {
+                CanvasRender.nativeDispatchEvents();
                 synchronized (mLock) {
                     if (mBackCanvas != null && mRootView != null) {
                         android.os.Looper.dispatchPendingMain();

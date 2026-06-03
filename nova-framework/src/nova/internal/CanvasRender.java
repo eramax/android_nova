@@ -24,4 +24,10 @@ public final class CanvasRender {
     public static native void setRenderWindow(long window);
 
     public static native void cleanupRender();
+
+    public static native boolean nativeInitDisplay(int width, int height, String title);
+
+    public static native void nativeDestroyDisplay();
+
+    public static native int nativeDispatchEvents();
 }

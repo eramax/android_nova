@@ -50,7 +50,7 @@ public final class ViewRootImpl implements ViewParent {
         performTraversals(view, width, height);
         ViewDispatcher.setRootView(view);
         RenderCoordinator coordinator = RenderCoordinator.getInstance();
-        coordinator.start(view, width, height);
+        coordinator.start(view, width, height, "Nova Activity");
         Log.d(TAG, "setView " + view.getClass().getName() + " " + width + "x" + height);
     }
 
