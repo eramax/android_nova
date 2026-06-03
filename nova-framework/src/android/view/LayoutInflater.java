@@ -19,6 +19,7 @@ import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.lang.reflect.Constructor;
 import java.util.HashMap;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -814,37 +815,141 @@ public class LayoutInflater {
     }
 
     private String parseAxml(byte[] data) {
-        if (data == null || data.length < 8) {
-            return null;
-        }
-
-        StringBuilder sb = new StringBuilder("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
-
+        if (data == null || data.length < 8) return null;
         try {
             int magic = readInt(data, 0);
-            if (magic != 0x00080003) {
-                System.err.println("[LayoutInflater] Invalid AXML magic: " + Integer.toHexString(magic));
-                return null;
-            }
+            if (magic != 0x00080003) return null;
 
-            sb.append(parseAXmlStartTag(data));
+            StringPool strings = readStringPool(data);
+            StringBuilder sb = new StringBuilder();
+            int pos = 8;
+            int depth = 0;
+            while (pos + 8 <= data.length) {
+                int chunkType = readInt(data, pos);
+                int chunkSize = readInt(data, pos + 4);
+                if (chunkSize < 8 || pos + chunkSize > data.length) break;
+
+                if (chunkType == 0x00100102) {
+                    int line = readInt(data, pos + 8);
+                    int nsIdx = readInt(data, pos + 16);
+                    int nameIdx = readInt(data, pos + 20);
+                    int attrCount = readShort(data, pos + 24) & 0xFFFF;
+
+                    String name = strings.get(nameIdx);
+                    if (name == null) { pos += chunkSize; continue; }
+                    for (int i = 0; i < depth; i++) sb.append("  ");
+                    sb.append("E: ").append(name).append(" (line=").append(line).append(")\n");
+
+                    for (int i = 0; i < attrCount; i++) {
+                        int attrOff = pos + 28 + i * 20;
+                        if (attrOff + 20 > data.length) break;
+                        int attrNsIdx = readInt(data, attrOff);
+                        int attrNameIdx = readInt(data, attrOff + 4);
+                        int attrValStrIdx = readInt(data, attrOff + 8);
+                        int attrType = readByte(data, attrOff + 12) & 0xFF;
+                        int attrData = readInt(data, attrOff + 12) & 0x00FFFFFF;
+
+                        String attrName = strings.get(attrNameIdx);
+                        String attrNs = attrNsIdx >= 0 ? strings.get(attrNsIdx) : null;
+                        if (attrName == null) continue;
+
+                        for (int j = 0; j <= depth; j++) sb.append("  ");
+                        sb.append("A: ");
+                        if (attrNs != null) sb.append(attrNs).append(":");
+                        sb.append(attrName).append("=");
+
+                        if (attrType == 0x03 && attrValStrIdx >= 0) {
+                            String val = strings.get(attrValStrIdx);
+                            if (val != null && val.startsWith("res/")) {
+                                sb.append("@raw/").append(val);
+                            } else if (val != null && val.startsWith("0x")) {
+                                sb.append(val);
+                            } else if (val != null) {
+                                sb.append("\"").append(val).append("\"");
+                            } else {
+                                sb.append("(null)");
+                            }
+                        } else if (attrType == 0x10) {
+                            sb.append("@0x").append(Integer.toHexString(attrData));
+                        } else if (attrType == 0x11) {
+                            sb.append(attrData != 0 ? "true" : "false");
+                        } else if (attrType == 0x01) {
+                            sb.append("@null");
+                        } else if (attrType == 0x05) {
+                            sb.append(attrData);
+                        } else {
+                            sb.append("0x").append(Integer.toHexString(attrData));
+                        }
+                        sb.append("\n");
+                    }
+                    depth++;
+                } else if (chunkType == 0x00100103) {
+                    depth--;
+                }
+                pos += chunkSize;
+            }
+            return sb.toString();
         } catch (Exception e) {
             System.err.println("[LayoutInflater] AXML parse error: " + e.getMessage());
             return null;
         }
-
-        return sb.toString();
     }
 
-    private String parseAXmlStartTag(byte[] data) {
-        return "<LinearLayout>\n<WebView />\n</LinearLayout>";
+    static class StringPool {
+        String[] strings;
+        String get(int idx) { return (idx >= 0 && idx < strings.length) ? strings[idx] : null; }
+    }
+
+    private StringPool readStringPool(byte[] data) {
+        StringPool pool = new StringPool();
+        int pos = 8;
+        while (pos + 8 <= data.length) {
+            int type = readInt(data, pos);
+            int size = readInt(data, pos + 4);
+            if (type == 0x00080001) {
+                int count = readInt(data, pos + 8);
+                int flags = readInt(data, pos + 16);
+                int stringsOffset = readInt(data, pos + 20);
+                boolean isUtf8 = (flags & 0x0100) != 0;
+                pool.strings = new String[count];
+                int[] offsets = new int[count];
+                for (int i = 0; i < count; i++) {
+                    offsets[i] = readInt(data, pos + 28 + i * 4);
+                }
+                for (int i = 0; i < count; i++) {
+                    int strOff = pos + stringsOffset + offsets[i];
+                    if (isUtf8) {
+                        int skip = readByte(data, strOff);
+                        int len = skip >= 0x80 ? readShort(data, strOff) & 0x7FFF : skip;
+                        int u16LenOffset = skip >= 0x80 ? 3 : 1;
+                        strOff += u16LenOffset;
+                        len = len * 2;
+                        if (strOff + len > data.length) { pool.strings[i] = ""; continue; }
+                        pool.strings[i] = new String(data, strOff, len, java.nio.charset.StandardCharsets.UTF_16LE);
+                    } else {
+                        int len = readShort(data, strOff);
+                        strOff += 2;
+                        if (strOff + len * 2 > data.length) { pool.strings[i] = ""; continue; }
+                        pool.strings[i] = new String(data, strOff, len * 2, java.nio.charset.StandardCharsets.UTF_16LE);
+                    }
+                }
+                return pool;
+            }
+            pos += size;
+        }
+        pool.strings = new String[0];
+        return pool;
     }
 
     private int readInt(byte[] data, int offset) {
-        return ((data[offset] & 0xFF) |
-                ((data[offset + 1] & 0xFF) << 8) |
-                ((data[offset + 2] & 0xFF) << 16) |
-                ((data[offset + 3] & 0xFF) << 24));
+        return ((data[offset] & 0xFF) | ((data[offset + 1] & 0xFF) << 8) |
+                ((data[offset + 2] & 0xFF) << 16) | ((data[offset + 3] & 0xFF) << 24));
+    }
+    private int readShort(byte[] data, int offset) {
+        return (data[offset] & 0xFF) | ((data[offset + 1] & 0xFF) << 8);
+    }
+    private int readByte(byte[] data, int offset) {
+        return data[offset] & 0xFF;
     }
 
     private String getApkPath() {
