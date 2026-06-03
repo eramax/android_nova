@@ -222,10 +222,10 @@ public class View implements Drawable.Callback, KeyEvent.Callback {
     private int mBottom;
     private int mScrollX;
     private int mScrollY;
-    private int mPaddingLeft;
-    private int mPaddingRight;
-    private int mPaddingTop;
-    private int mPaddingBottom;
+    protected int mPaddingLeft;
+    protected int mPaddingRight;
+    protected int mPaddingTop;
+    protected int mPaddingBottom;
     private int mUserPaddingLeft;
     private int mUserPaddingRight;
     private int mUserPaddingTop;

@@ -145,6 +145,23 @@ public class ViewGroup extends View implements ViewParent, ViewManager {
     public void childDrawableStateChanged(View child) { refreshDrawableState(); }
     public View focusSearch(View v, int direction) { return null; }
 
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        int maxWidth = 0;
+        int maxHeight = 0;
+        for (int i = 0; i < mChildCount; i++) {
+            View child = getChildAt(i);
+            if (child.getVisibility() == GONE) continue;
+            measureChild(child, widthMeasureSpec, heightMeasureSpec);
+            maxWidth = Math.max(maxWidth, child.getMeasuredWidth());
+            maxHeight = Math.max(maxHeight, child.getMeasuredHeight());
+        }
+        maxWidth += mPaddingLeft + mPaddingRight;
+        maxHeight += mPaddingTop + mPaddingBottom;
+        setMeasuredDimension(
+            resolveSize(Math.max(maxWidth, getSuggestedMinimumWidth()), widthMeasureSpec),
+            resolveSize(Math.max(maxHeight, getSuggestedMinimumHeight()), heightMeasureSpec));
+    }
+
     public void dispatchDraw(Canvas canvas) {
         for (int i = 0; i < mChildCount; i++) {
             View child = getChildAt(i);
@@ -222,6 +239,69 @@ public class ViewGroup extends View implements ViewParent, ViewManager {
         else mGroupFlags &= ~flag;
     }
 
+    protected void measureChild(View child, int parentWidthMeasureSpec, int parentHeightMeasureSpec) {
+        LayoutParams lp = child.getLayoutParams();
+        int childWidthMeasureSpec = getChildMeasureSpec(parentWidthMeasureSpec, mPaddingLeft + mPaddingRight, lp.width);
+        int childHeightMeasureSpec = getChildMeasureSpec(parentHeightMeasureSpec, mPaddingTop + mPaddingBottom, lp.height);
+        child.measure(childWidthMeasureSpec, childHeightMeasureSpec);
+    }
+
+    protected void measureChildWithMargins(View child, int parentWidthMeasureSpec, int widthUsed, int parentHeightMeasureSpec, int heightUsed) {
+        MarginLayoutParams lp = (MarginLayoutParams) child.getLayoutParams();
+        int childWidthMeasureSpec = getChildMeasureSpec(parentWidthMeasureSpec,
+            mPaddingLeft + mPaddingRight + lp.leftMargin + lp.rightMargin + widthUsed, lp.width);
+        int childHeightMeasureSpec = getChildMeasureSpec(parentHeightMeasureSpec,
+            mPaddingTop + mPaddingBottom + lp.topMargin + lp.bottomMargin + heightUsed, lp.height);
+        child.measure(childWidthMeasureSpec, childHeightMeasureSpec);
+    }
+
+    public static int getChildMeasureSpec(int spec, int padding, int childDimension) {
+        int specMode = MeasureSpec.getMode(spec);
+        int specSize = MeasureSpec.getSize(spec);
+        int size = Math.max(0, specSize - padding);
+        int resultSize = 0;
+        int resultMode = 0;
+        switch (specMode) {
+            case MeasureSpec.EXACTLY:
+                if (childDimension >= 0) {
+                    resultSize = childDimension;
+                    resultMode = MeasureSpec.EXACTLY;
+                } else if (childDimension == LayoutParams.MATCH_PARENT) {
+                    resultSize = size;
+                    resultMode = MeasureSpec.EXACTLY;
+                } else if (childDimension == LayoutParams.WRAP_CONTENT) {
+                    resultSize = size;
+                    resultMode = MeasureSpec.AT_MOST;
+                }
+                break;
+            case MeasureSpec.AT_MOST:
+                if (childDimension >= 0) {
+                    resultSize = childDimension;
+                    resultMode = MeasureSpec.EXACTLY;
+                } else if (childDimension == LayoutParams.MATCH_PARENT) {
+                    resultSize = size;
+                    resultMode = MeasureSpec.AT_MOST;
+                } else if (childDimension == LayoutParams.WRAP_CONTENT) {
+                    resultSize = size;
+                    resultMode = MeasureSpec.AT_MOST;
+                }
+                break;
+            case MeasureSpec.UNSPECIFIED:
+                if (childDimension >= 0) {
+                    resultSize = childDimension;
+                    resultMode = MeasureSpec.EXACTLY;
+                } else if (childDimension == LayoutParams.MATCH_PARENT) {
+                    resultSize = size;
+                    resultMode = MeasureSpec.UNSPECIFIED;
+                } else if (childDimension == LayoutParams.WRAP_CONTENT) {
+                    resultSize = size;
+                    resultMode = MeasureSpec.UNSPECIFIED;
+                }
+                break;
+        }
+        return MeasureSpec.makeMeasureSpec(resultSize, resultMode);
+    }
+
     public static class LayoutParams {
         public static final int MATCH_PARENT = -1;
         public static final int WRAP_CONTENT = -2;
@@ -236,6 +316,8 @@ public class ViewGroup extends View implements ViewParent, ViewManager {
         public int leftMargin, topMargin, rightMargin, bottomMargin;
         public MarginLayoutParams(int width, int height) { super(width, height); }
         public MarginLayoutParams(MarginLayoutParams source) { super(source); }
+        public MarginLayoutParams(Context c, AttributeSet attrs) { super(c, attrs); }
+        public MarginLayoutParams(ViewGroup.LayoutParams source) { super(source); }
         public void setMargins(int left, int top, int right, int bottom) {
             leftMargin = left; topMargin = top; rightMargin = right; bottomMargin = bottom;
         }
