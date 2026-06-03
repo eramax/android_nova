@@ -4,6 +4,16 @@ import android.view.accessibility.AccessibilityEvent;
 import java.util.List;
 
 public class Window {
+    private View mDecor;
+    private View mContent;
+
+    public Window(android.content.Context context) {
+    }
+
+    public View getDecorView() { return mDecor; }
+    public void setContentView(View view) { mContent = view; }
+    public View getContentView() { return mContent; }
+
     public interface Callback {
         boolean dispatchKeyEvent(KeyEvent event);
         boolean dispatchKeyShortcutEvent(KeyEvent event);

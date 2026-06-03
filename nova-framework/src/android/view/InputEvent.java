@@ -27,7 +27,7 @@ public abstract class InputEvent implements Parcelable {
     @Override
     public void writeToParcel(Parcel dest, int flags) {}
 
-    public final InputEvent copy() {
+    public InputEvent copy() {
         return null;
     }
 

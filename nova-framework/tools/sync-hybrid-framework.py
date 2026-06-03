@@ -86,6 +86,7 @@ def write_aosp_bp(bridge_files: set[str], aosp_sources: list[str]) -> None:
     # Per-package slices — enable incrementally in nova-framework/Android.bp (hybrid-fork Step 4).
     # Subsystems we stub in src/ — exclude from AOSP view glob (hybrid-fork Step 2).
     VIEW_AOSP_EXCLUDES = [
+        "android/view/OrientationEventListener.java",
         "android/view/accessibility/**/*.java",
         "android/view/autofill/**/*.java",
         "android/view/contentcapture/**/*.java",
@@ -223,7 +224,12 @@ def write_aosp_bp(bridge_files: set[str], aosp_sources: list[str]) -> None:
         "android/util/CloseGuard.java",
         "android/util/MemoryIntArray.java",
         "android/util/jar/StrictJarFile.java",
+        "android/util/jar/StrictJarVerifier.java",
         "android/util/apk/**/*.java",
+        "android/util/TimeUtils.java",
+        "android/util/EventLog_ravenwood.java",
+        "android/util/Log_ravenwood.java",
+        "android/util/SystemConfigFileCommitEventLogger.java",
     ]
 
     MENU_EXTRA_EXCLUDES = [

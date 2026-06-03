@@ -111,6 +111,10 @@ public class Resources {
         return 0;
     }
 
+    public ColorStateList getColorStateList(int id) {
+        return ColorStateList.valueOf(0);
+    }
+
     public int[] getIntArray(int id) {
         return new int[0];
     }

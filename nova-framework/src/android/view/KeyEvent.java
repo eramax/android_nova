@@ -208,6 +208,10 @@ public class KeyEvent extends InputEvent {
 
     public KeyEvent(KeyEvent origEvent, long eventTime, int newRepeat) {}
 
+    public static KeyEvent obtain(int action, int code) {
+        return new KeyEvent(0, 0, action, code, 0, 0, 0, 0, 0, 0);
+    }
+
     public static KeyEvent obtain(long downTime, long eventTime, int action,
             int code, int repeat, int metaState, int deviceId, int scancode,
             int flags, int source, String characters) {
@@ -300,7 +304,7 @@ public class KeyEvent extends InputEvent {
     public boolean isScrollLockOn() { return false; }
 
     @Override
-    public final InputEvent copy() { return null; }
+    public KeyEvent copy() { return null; }
 
     public int getUnicodeChar() { return 0; }
 

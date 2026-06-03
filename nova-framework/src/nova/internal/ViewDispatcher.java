@@ -34,7 +34,7 @@ public final class ViewDispatcher {
             Log.w(TAG, "dispatchKeyEvent called but no root view set");
             return;
         }
-        KeyEvent event = KeyEvent.obtain(action, keyCode, eventTime, metaState);
+        KeyEvent event = new KeyEvent(eventTime, eventTime, action, keyCode, 0, metaState, 0, 0, 0, 0);
         try {
             sRootView.dispatchKeyEvent(event);
         } finally {

@@ -77,6 +77,11 @@ public final class MotionEvent extends InputEvent {
         return ev;
     }
 
+    public static MotionEvent obtain(long eventTime, int action, float x, float y) {
+        MotionEvent ev = new MotionEvent();
+        return ev;
+    }
+
     public static MotionEvent obtain(long downTime, long eventTime, int action,
             float x, float y, int metaState) {
         MotionEvent ev = new MotionEvent();

@@ -147,7 +147,7 @@ public abstract class Drawable {
 
     public boolean setState(int[] stateSet) { return false; }
 
-    public int[] getState() { return StateSet.WILD_CARD; }
+    public int[] getState() { return new int[0]; }
 
     public void jumpToCurrentState() {}
 
@@ -204,7 +204,7 @@ public abstract class Drawable {
 
     public void inflate(Resources r, XmlPullParser parser, AttributeSet attrs, Resources.Theme theme) throws IOException, org.xmlpull.v1.XmlPullParserException {}
 
-    public boolean getConstantState() {
+    public ConstantState getConstantState() {
         throw new UnsupportedOperationException();
     }
 

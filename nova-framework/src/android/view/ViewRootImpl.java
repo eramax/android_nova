@@ -198,7 +198,6 @@ public final class ViewRootImpl implements ViewParent {
     @Override
     public boolean requestSendAccessibilityEvent(View child, AccessibilityEvent event) { return false; }
 
-    @Override
     public void requestChildFindAccessibilityNodeInfos(View child, AccessibilityNodeInfo info,
             List<AccessibilityNodeInfo> outList) {}
 
@@ -269,18 +268,12 @@ public final class ViewRootImpl implements ViewParent {
     @Override
     public void onDescendantInvalidated(View child, View target) {}
 
-    @Override
     public void onDescendantFocusChanged(View child, View focused, int direction) {}
-
-    @Override
-    public InputEventConsistencyVerifier getInputEventConsistencyVerifier() { return null; }
 
     @Override
     public OnBackInvokedDispatcher findOnBackInvokedDispatcherForChild(View child, View requester) { return null; }
 
-    @Override
     public int getChildIndex(View child) { return -1; }
 
-    @Override
     public int getChildCount() { return 1; }
 }

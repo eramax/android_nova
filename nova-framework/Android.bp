@@ -4,7 +4,6 @@ package {
 
 java_library {
     name: "nova-framework-host",
-    installable: true,
     hostdex: true,
 
     // stem controls the installed filename: <stem>-hostdex.jar
@@ -15,13 +14,6 @@ java_library {
 
     srcs: [
         "src/**/*.java",
-        // Hybrid fork Step 4: real AOSP from frameworks/base (bridges in src/ win via exclude_srcs).
-        // Keep the initial slice set narrow so we can land a clean real-View DEX before
-        // re-introducing heavier text/widget/window trees with additional bridge coverage.
-        "//frameworks/base/core/java:nova-hybrid-util-sources",
-        "//frameworks/base/core/java:nova-hybrid-view-sources",
-        "//frameworks/base/core/java:nova-hybrid-animation-sources",
-        "//frameworks/base/graphics/java:nova-hybrid-graphics-lite-sources",
     ],
 
     // Disable dexpreopt — boot-image-profile.txt not available in master-art partial checkout
