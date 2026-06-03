@@ -91,8 +91,10 @@ static const struct xdg_toplevel_listener kXdgToplevelListener = {
 static void pointer_enter(void *data, struct wl_pointer *wl_pointer,
                          uint32_t serial, struct wl_surface *surface,
                          wl_fixed_t surface_x, wl_fixed_t surface_y) {
-    (void)data; (void)wl_pointer; (void)serial;
-    (void)surface; (void)surface_x; (void)surface_y;
+    (void)wl_pointer; (void)serial; (void)surface;
+    struct nova_state *state = (struct nova_state *)data;
+    state->last_x = wl_fixed_to_double(surface_x);
+    state->last_y = wl_fixed_to_double(surface_y);
 }
 
 static void pointer_leave(void *data, struct wl_pointer *wl_pointer,
@@ -106,16 +108,37 @@ static void pointer_motion(void *data, struct wl_pointer *wl_pointer,
     struct nova_state *state = (struct nova_state *)data;
     if (!state->jvm || !state->env) return;
 
-    double x = wl_fixed_to_double(surface_x);
-    double y = wl_fixed_to_double(surface_y);
+    float x = wl_fixed_to_double(surface_x);
+    float y = wl_fixed_to_double(surface_y);
+    state->last_x = x;
+    state->last_y = y;
 
+    int action = state->pointer_pressed ? 2 : 7; /* ACTION_MOVE or ACTION_HOVER_MOVE */
     jclass canvas_render = (*state->env)->FindClass(state->env, "nova/internal/CanvasRender");
     if (canvas_render) {
         jmethodID dispatch = (*state->env)->GetStaticMethodID(state->env, canvas_render,
                                                                "dispatchMotionEvent", "(JIFF)V");
         if (dispatch) {
             (*state->env)->CallStaticVoidMethod(state->env, canvas_render, dispatch,
-                                               (jlong)time, (jint)2, (jfloat)x, (jfloat)y);
+                                               (jlong)time, (jint)action, (jfloat)x, (jfloat)y);
+        }
+        (*state->env)->DeleteLocalRef(state->env, canvas_render);
+    }
+}
+
+static void dispatch_pointer_button(struct nova_state *state, uint32_t time,
+                                     uint32_t button, uint32_t state_enum) {
+    if (button != BTN_LEFT) return;
+    state->pointer_pressed = state_enum; /* WL_POINTER_BUTTON_STATE_PRESSED = 1 */
+    int action = state_enum ? 0 : 1; /* ACTION_DOWN or ACTION_UP */
+    jclass canvas_render = (*state->env)->FindClass(state->env, "nova/internal/CanvasRender");
+    if (canvas_render) {
+        jmethodID dispatch = (*state->env)->GetStaticMethodID(state->env, canvas_render,
+                                                               "dispatchMotionEvent", "(JIFF)V");
+        if (dispatch) {
+            (*state->env)->CallStaticVoidMethod(state->env, canvas_render, dispatch,
+                                               (jlong)time, (jint)action,
+                                               (jfloat)state->last_x, (jfloat)state->last_y);
         }
         (*state->env)->DeleteLocalRef(state->env, canvas_render);
     }
@@ -126,19 +149,7 @@ static void pointer_button(void *data, struct wl_pointer *wl_pointer,
     (void)wl_pointer; (void)serial;
     struct nova_state *state = (struct nova_state *)data;
     if (!state->jvm || !state->env) return;
-    if (button != BTN_LEFT) return;
-
-    int action = state_enum ? 0 : 1; /* 0=down, 1=up */
-    jclass canvas_render = (*state->env)->FindClass(state->env, "nova/internal/CanvasRender");
-    if (canvas_render) {
-        jmethodID dispatch = (*state->env)->GetStaticMethodID(state->env, canvas_render,
-                                                               "dispatchMotionEvent", "(JIFF)V");
-        if (dispatch) {
-            (*state->env)->CallStaticVoidMethod(state->env, canvas_render, dispatch,
-                                               (jlong)time, (jint)action, (jfloat)0, (jfloat)0);
-        }
-        (*state->env)->DeleteLocalRef(state->env, canvas_render);
-    }
+    dispatch_pointer_button(state, time, button, state_enum);
 }
 
 static void pointer_axis(void *data, struct wl_pointer *wl_pointer,

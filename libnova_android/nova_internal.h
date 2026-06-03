@@ -25,6 +25,10 @@ struct nova_state {
     struct wl_keyboard *keyboard;
     struct wl_pointer *pointer;
 
+    float last_x;
+    float last_y;
+    int pointer_pressed;
+
     JavaVM *jvm;
     JNIEnv *env;
     void *libart_handle;
