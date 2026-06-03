@@ -145,5 +145,6 @@ public class LinearLayout extends ViewGroup {
         public LayoutParams(Context c, AttributeSet attrs) { super(c, attrs); }
         public LayoutParams(ViewGroup.LayoutParams source) { super(source); }
         public LayoutParams(MarginLayoutParams source) { super(source); }
+        public LayoutParams() { super(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT); }
     }
 }

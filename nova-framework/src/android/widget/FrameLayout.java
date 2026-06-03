@@ -81,5 +81,6 @@ public class FrameLayout extends ViewGroup {
         public LayoutParams(int width, int height) { super(width, height); }
         public LayoutParams(Context c, AttributeSet attrs) { super(c, attrs); }
         public LayoutParams(ViewGroup.LayoutParams source) { super(source); }
+        public LayoutParams(MarginLayoutParams source) { super(source); }
     }
 }

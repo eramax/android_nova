@@ -1,17 +1,10 @@
 package android.view;
 
-import java.lang.ref.WeakReference;
-
 public class InsetsController implements WindowInsetsController {
-    private int mAppearance;
-    private int mBehavior;
-
-    @Override public void setSystemBarsAppearance(int appearance, int mask) {
-        mAppearance = (mAppearance & ~mask) | (appearance & mask);
-    }
-    @Override public int getSystemBarsAppearance() { return mAppearance; }
+    public void setSystemBarsAppearance(int appearance, int mask) {}
+    public int getSystemBarsAppearance() { return 0; }
     @Override public void show(int types) {}
     @Override public void hide(int types) {}
-    @Override public void setSystemBarsBehavior(int behavior) { mBehavior = behavior; }
-    @Override public int getSystemBarsBehavior() { return mBehavior; }
+    public void setSystemBarsBehavior(int behavior) {}
+    public int getSystemBarsBehavior() { return 0; }
 }
