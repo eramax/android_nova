@@ -43,6 +43,7 @@ public final class Launcher {
     };
     private static ClassLoader sLoader;
     private static Object sApplication;
+    private static String sPackageName;
     private static android.app.Activity sCurrentActivity;
     private static java.util.Stack<ActivityRecord> sActivityStack = new java.util.Stack<>();
     // Reentrancy guard: prevents startActivity from calling launchActivity directly
@@ -108,12 +109,10 @@ public final class Launcher {
         System.out.println("[NovaLauncher] APK=" + apkPath);
         System.out.println("[NovaLauncher] Activity=" + activityClass);
         System.out.println("[NovaLauncher] Package=" + packageName);
+        sPackageName = packageName;
         System.out.println("[NovaLauncher] OptimizedDir=" + optimizedDir.getAbsolutePath());
         System.out.println("[NovaLauncher] NativeLibDir=" + nativeLibDir.getAbsolutePath());
 
-        /* B.1: Context.novaSetCurrentPackageName is a Nova-only bridge method
-         * that doesn't exist in the real AOSP framework.jar. Try it but don't
-         * crash if it's missing. NovaPackageManager tracks the current APK. */
         try {
             Class.forName("android.content.Context")
                 .getMethod("novaSetCurrentPackageName", String.class)
@@ -218,28 +217,33 @@ public final class Launcher {
         Object instance = ctor.newInstance();
         System.out.println("[NovaLauncher] Activity instance created: " + instance.getClass().getName());
 
+        // B.3: Set mApplication on Activity. The real attach() does this,
+        // but the Launcher creates activities via reflection. Try method
+        // first (setApplication), fall back to field (mApplication).
+        boolean appSet = false;
         try {
             Method setAppMethod = activityType.getMethod("setApplication",
                     Class.forName("android.app.Application", false, sLoader));
             setAppMethod.invoke(instance, sApplication);
             System.out.println("[NovaLauncher] Attached Application to Activity");
-        } catch (java.lang.reflect.InvocationTargetException e) {
-            Throwable cause = e.getCause();
-            System.out.println("[NovaLauncher] Failed to attach Application: " + cause);
-            if (cause != null) cause.printStackTrace();
-            // Retry with direct field set to still attach the Application
+            appSet = true;
+        } catch (NoSuchMethodException | SecurityException e) {
+            System.out.println("[NovaLauncher] setApplication not found, trying field: " + e.getClass().getSimpleName());
+        } catch (Exception e) {
+            System.out.println("[NovaLauncher] setApplication failed: " + e);
+        }
+        if (!appSet && sApplication != null) {
             try {
                 java.lang.reflect.Field f = findField(activityType, "mApplication");
                 if (f != null) {
                     f.setAccessible(true);
                     f.set(instance, sApplication);
                     System.out.println("[NovaLauncher] Attached Application via field");
+                    appSet = true;
                 }
             } catch (Exception fe) {
                 System.out.println("[NovaLauncher] Field attach also failed: " + fe);
             }
-        } catch (Exception e) {
-            System.out.println("[NovaLauncher] Failed to attach Application: " + e);
         }
 
         if (intent != null) {
@@ -259,6 +263,113 @@ public final class Launcher {
                 NovaViewHooks.detachFromWindow(oldView);
             }
             invokeLifecycle(sCurrentActivity.getClass(), sCurrentActivity, "onStop", new Class<?>[0], new Object[0]);
+        }
+
+        // B.3: Initialize Activity for real AOSP Activity.onCreate().
+        // Try Activity.attach() first (handles fragments, window, handler),
+        // fall back to field-by-field if attach() is inaccessible.
+        boolean attached = false;
+        try {
+            String pkg = sPackageName != null ? sPackageName : "";
+            Object appInfo = Class.forName("android.content.pm.ApplicationInfo")
+                .getDeclaredConstructor().newInstance();
+            setField(appInfo.getClass(), appInfo, "packageName", pkg);
+            setField(appInfo.getClass(), appInfo, "targetSdkVersion", 36);
+            setField(appInfo.getClass(), appInfo, "uid", 1000);
+            setField(appInfo.getClass(), appInfo, "processName", pkg);
+
+            Object novaCtx = Class.forName("android.content.NovaContext")
+                .getConstructor(Class.forName("android.content.pm.ApplicationInfo"))
+                .newInstance(appInfo);
+
+            Object activityInfo = Class.forName("android.content.pm.ActivityInfo")
+                .getDeclaredConstructor().newInstance();
+            setField(activityInfo.getClass(), activityInfo, "packageName", pkg);
+            setField(activityInfo.getClass(), activityInfo, "name", activityClass);
+            setField(activityInfo.getClass(), activityInfo, "parentActivityName", null);
+            setField(activityInfo.getClass(), activityInfo, "applicationInfo", appInfo);
+            setField(activityInfo.getClass(), activityInfo, "exported", true);
+            setField(activityInfo.getClass(), activityInfo, "processName", pkg);
+            setField(activityInfo.getClass(), activityInfo, "theme", 0);
+
+            // Give Application a base context
+            if (sApplication != null) {
+                java.lang.reflect.Field f = findField(sApplication.getClass(), "mBase");
+                if (f != null) { f.setAccessible(true); f.set(sApplication, novaCtx); }
+            }
+
+            // Try Activity.attach() — this sets mBase, mActivityInfo,
+            // mApplication, mFragments (attachHost), mWindow, mUiThread,
+            // mHandler and ~30 other fields.
+            Object instr = Class.forName("android.app.Instrumentation")
+                .getDeclaredConstructor().newInstance();
+            activityType.getMethod("attach",
+                Class.forName("android.content.Context"),
+                Class.forName("android.app.ActivityThread"),
+                Class.forName("android.app.Instrumentation"),
+                Class.forName("android.os.IBinder"), int.class,
+                Class.forName("android.app.Application"),
+                Class.forName("android.content.Intent"),
+                Class.forName("android.content.pm.ActivityInfo"),
+                Class.forName("java.lang.CharSequence"),
+                Class.forName("android.app.Activity"), String.class,
+                Class.forName("android.app.Activity$NonConfigurationInstances"),
+                Class.forName("android.content.res.Configuration"),
+                String.class,
+                Class.forName("android.os.IVoiceInteractor"),
+                Class.forName("android.view.Window"),
+                Class.forName("android.app.Activity$ActivityConfigCallback"),
+                Class.forName("android.os.IBinder"),
+                Class.forName("android.os.IBinder")
+            ).invoke(instance,
+                novaCtx, null, instr, null, 0, sApplication,
+                intent, activityInfo,
+                null, null, null, null, null, null, null, null, null, null, null);
+            attached = true;
+            System.out.println("[NovaLauncher] attach() OK");
+        } catch (Exception e) {
+            System.out.println("[NovaLauncher] attach() failed: " + e);
+        }
+
+        // Fallback: direct field init (if attach() wasn't accessible)
+        if (!attached) {
+            try {
+                String pkg = sPackageName != null ? sPackageName : "";
+                Object appInfo = Class.forName("android.content.pm.ApplicationInfo")
+                    .getDeclaredConstructor().newInstance();
+                setField(appInfo.getClass(), appInfo, "packageName", pkg);
+                setField(appInfo.getClass(), appInfo, "targetSdkVersion", 36);
+                setField(appInfo.getClass(), appInfo, "uid", 1000);
+                setField(appInfo.getClass(), appInfo, "processName", pkg);
+
+                // NovaContext for mBase
+                Object novaCtx = Class.forName("android.content.NovaContext")
+                    .getConstructor(Class.forName("android.content.pm.ApplicationInfo"))
+                    .newInstance(appInfo);
+                java.lang.reflect.Field f = findField(activityType, "mBase");
+                if (f != null) { f.setAccessible(true); f.set(instance, novaCtx); }
+
+                // mActivityInfo
+                Object activityInfo = Class.forName("android.content.pm.ActivityInfo")
+                    .getDeclaredConstructor().newInstance();
+                setField(activityInfo.getClass(), activityInfo, "packageName", pkg);
+                setField(activityInfo.getClass(), activityInfo, "name", activityClass);
+                setField(activityInfo.getClass(), activityInfo, "parentActivityName", null);
+                setField(activityInfo.getClass(), activityInfo, "applicationInfo", appInfo);
+                setField(activityInfo.getClass(), activityInfo, "exported", true);
+                setField(activityInfo.getClass(), activityInfo, "processName", pkg);
+                setField(activityInfo.getClass(), activityInfo, "theme", 0);
+                f = findField(activityType, "mActivityInfo");
+                if (f != null) { f.setAccessible(true); f.set(instance, activityInfo); }
+
+                // mUiThread
+                f = findField(activityType, "mUiThread");
+                if (f != null) { f.setAccessible(true); f.set(instance, Thread.currentThread()); }
+
+                System.out.println("[NovaLauncher] Field init OK (fallback)");
+            } catch (Exception e2) {
+                System.out.println("[NovaLauncher] Field init failed: " + e2);
+            }
         }
 
         invokeLifecycle(activityType, instance, "onCreate",
@@ -805,6 +916,20 @@ public final class Launcher {
             }
         }
         return null;
+    }
+
+    /** Set a field (public or private) on an object via reflection. */
+    private static void setField(Class<?> cls, Object obj, String name, Object value)
+            throws Exception {
+        java.lang.reflect.Field f = findField(cls, name);
+        if (f == null) {
+            // Try getField for public fields in superclasses
+            f = cls.getField(name);
+        }
+        if (f != null) {
+            f.setAccessible(true);
+            f.set(obj, value);
+        }
     }
 
     private static void copyOrLink(Path source, Path dest, String messagePrefix) throws IOException {
