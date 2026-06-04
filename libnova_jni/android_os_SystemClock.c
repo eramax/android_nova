@@ -1,16 +1,10 @@
 #include "core_jni_helpers.h"
 #include <time.h>
 
-/* android.os.SystemClock — implemented with clock_gettime */
-static jlong now(JNIEnv *env, jclass clazz) {
-    struct timespec ts;
-    if (clock_gettime(CLOCK_REALTIME, &ts) == 0) {
-        return (jlong)(ts.tv_sec * 1000LL + ts.tv_nsec / 1000000LL);
-    }
-    return 0;
-}
+/* android.os.SystemClock — @CriticalNative methods (no JNIEnv/jclass params).
+ * All methods are declared native in AOSP's SystemClock.java with @CriticalNative. */
 
-static jlong uptimeMillis(JNIEnv *env, jclass clazz) {
+static jlong uptimeMillis() {
     struct timespec ts;
     if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0) {
         return (jlong)(ts.tv_sec * 1000LL + ts.tv_nsec / 1000000LL);
@@ -18,7 +12,15 @@ static jlong uptimeMillis(JNIEnv *env, jclass clazz) {
     return 0;
 }
 
-static jlong elapsedRealtime(JNIEnv *env, jclass clazz) {
+static jlong uptimeNanos() {
+    struct timespec ts;
+    if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0) {
+        return (jlong)(ts.tv_sec * 1000000000LL + ts.tv_nsec);
+    }
+    return 0;
+}
+
+static jlong elapsedRealtime() {
     struct timespec ts;
 #ifdef CLOCK_BOOTTIME
     if (clock_gettime(CLOCK_BOOTTIME, &ts) == 0) {
@@ -31,7 +33,7 @@ static jlong elapsedRealtime(JNIEnv *env, jclass clazz) {
     return 0;
 }
 
-static jlong elapsedRealtimeNanos(JNIEnv *env, jclass clazz) {
+static jlong elapsedRealtimeNanos() {
     struct timespec ts;
 #ifdef CLOCK_BOOTTIME
     if (clock_gettime(CLOCK_BOOTTIME, &ts) == 0) {
@@ -44,7 +46,7 @@ static jlong elapsedRealtimeNanos(JNIEnv *env, jclass clazz) {
     return 0;
 }
 
-static jlong currentThreadTimeMillis(JNIEnv *env, jclass clazz) {
+static jlong currentThreadTimeMillis() {
     struct timespec ts;
     if (clock_gettime(CLOCK_THREAD_CPUTIME_ID, &ts) == 0) {
         return (jlong)(ts.tv_sec * 1000LL + ts.tv_nsec / 1000000LL);
@@ -52,7 +54,7 @@ static jlong currentThreadTimeMillis(JNIEnv *env, jclass clazz) {
     return 0;
 }
 
-static jlong currentThreadTimeMicro(JNIEnv *env, jclass clazz) {
+static jlong currentThreadTimeMicro() {
     struct timespec ts;
     if (clock_gettime(CLOCK_THREAD_CPUTIME_ID, &ts) == 0) {
         return (jlong)(ts.tv_sec * 1000000LL + ts.tv_nsec / 1000LL);
@@ -60,7 +62,7 @@ static jlong currentThreadTimeMicro(JNIEnv *env, jclass clazz) {
     return 0;
 }
 
-static jlong currentTimeMicro(JNIEnv *env, jclass clazz) {
+static jlong currentTimeMicro() {
     struct timespec ts;
     if (clock_gettime(CLOCK_REALTIME, &ts) == 0) {
         return (jlong)(ts.tv_sec * 1000000LL + ts.tv_nsec / 1000LL);
@@ -68,9 +70,12 @@ static jlong currentTimeMicro(JNIEnv *env, jclass clazz) {
     return 0;
 }
 
+/* Must match android_os_SystemClock.cpp from AOSP exactly — only methods
+ * that are actually declared native in frameworks/base/core/java/android/os/SystemClock.java.
+ * All are @CriticalNative (no JNIEnv/jclass params). */
 static const JNINativeMethod gMethods[] = {
-    { "now",                     "()J", (void*)now },
     { "uptimeMillis",            "()J", (void*)uptimeMillis },
+    { "uptimeNanos",             "()J", (void*)uptimeNanos },
     { "elapsedRealtime",         "()J", (void*)elapsedRealtime },
     { "elapsedRealtimeNanos",    "()J", (void*)elapsedRealtimeNanos },
     { "currentThreadTimeMillis", "()J", (void*)currentThreadTimeMillis },
@@ -80,5 +85,5 @@ static const JNINativeMethod gMethods[] = {
 
 int register_android_os_SystemClock(JNIEnv *env) {
     return RegisterMethodsOrDie(env, "android/os/SystemClock",
-                                 gMethods, sizeof(gMethods) / sizeof(gMethods[0]));
+                                gMethods, NELEM(gMethods));
 }

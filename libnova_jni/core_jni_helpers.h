@@ -24,4 +24,9 @@ jclass FindClassOrDie(JNIEnv *env, const char *className);
 /* Module registration function type */
 typedef int (*RegJNIProc)(JNIEnv *env);
 
+/* Array length macro (AOSP standard) */
+#ifndef NELEM
+#define NELEM(x) ((int)(sizeof(x) / sizeof((x)[0])))
+#endif
+
 #endif /* CORE_JNI_HELPERS_H */

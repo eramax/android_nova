@@ -10,6 +10,8 @@
 #include <unistd.h>
 #include <dlfcn.h>
 #include "nova_internal.h"
+// B.0 REVISED: bionic loader demoted from critical path.
+// Kept as include-only for optional leaf-lib loading later.
 #include "bionic_loader.h"
 #include "bionic_lib_path.h"
 
@@ -19,19 +21,8 @@ typedef jint (*JNI_CreateJavaVM_t)(JavaVM **pvm, void **penv, JavaVMInitArgs *ar
 #define PATH_MAX 4096
 #endif
 
-/* Path to nova-framework DEX jar relative to host_out (out/host/linux-x86/).
- * Soong java_library with hostdex:true produces <name>-hostdex.jar in framework/. */
+/* Nova overlay DEX jar (Launcher, CanvasRender, etc.) relative to host_out. */
 #define NOVA_FRAMEWORK_REL "framework/nova-framework-hostdex.jar"
-/* Real AOSP framework DEX — built from a full AOSP checkout (m framework-minus-apex)
- * and DEXed on this machine.  This provides real implementations of every Android
- * framework class — no "Stub!" at runtime.  Nova's framework jar comes second,
- * overriding specific bridge files.  Stubs are last as a fallback. */
-#define REAL_FRAMEWORK_REL "framework/real-framework-hostdex.jar"
-/* Real AOSP framework DEX — built from the full AOSP framework sources.
- * Nova's bridge files override specific classes. Stubs jar is kept as a
- * fallback for corner cases where classloader visibility breaks without it. */
-#define REAL_FRAMEWORK_REL "framework/real-framework-hostdex.jar"
-#define ANDROID_STUBS_REL  "framework/android-stubs-dex.jar"
 
 static const char *kGlesV2Candidates[] = {
     "/lib/x86_64-linux-gnu/libGLESv2.so.2",
@@ -325,7 +316,7 @@ int nova_art_init(struct nova_state *state, int argc, char *argv[]) {
     char framework_jar[PATH_MAX];
     char image_path[PATH_MAX];
     char bootclasspath[PATH_MAX * 4];
-    char bootclasspath_locations[2048];
+    char bootclasspath_locations[PATH_MAX * 4];
     char libart_path[PATH_MAX];
     JavaVMOption options[16];
     int option_count = 0;
@@ -376,12 +367,9 @@ int nova_art_init(struct nova_state *state, int argc, char *argv[]) {
     set_env_default("ANDROID_TZDATA_ROOT", android_tzdata_root);
     set_env_default("ANDROID_DATA", android_data);
 
-    /* B.0.b.3: initialize the bionic loader so it can resolve bionic .so files
-     * loaded later (libandroid_runtime.so, etc.). The lib_path is compiled in
-     * as a static const string generated from the GSI layout at vendor/nova
-     * build time. */
-    bionic_loader_set_lib_path(NOVA_BIONIC_LIB_PATH);
-
+    /* B.0 REVISED: bionic loader is no longer on the critical path (path Y).
+     * See plan-v11-master.md §"B.0 REVISED" for rationale. The loader
+     * infrastructure is kept for optional leaf-lib loading later. */
     if (mkdir_p(android_data) != 0) {
         fprintf(stderr, "[Nova] Failed to create ANDROID_DATA at %s\n", android_data);
         return -1;
@@ -427,6 +415,15 @@ int nova_art_init(struct nova_state *state, int argc, char *argv[]) {
     }
 
     /* Build bootclasspath from APEX jars */
+    /* B.1: bootclasspath = minimal 9-jar list from INSPECTION.md:
+     * core-oj, core-libart, okhttp, bouncycastle, apache-xml, core-icu4j,
+     * conscrypt, framework, ext. framework.jar and ext.jar from the
+     * aosp-prebuilt GSI provide the real Android framework implementations. */
+    char framework_jar_bcp[PATH_MAX], ext_jar_bcp[PATH_MAX];
+    snprintf(framework_jar_bcp, sizeof(framework_jar_bcp),
+             "%s/framework/framework.jar", root);
+    snprintf(ext_jar_bcp, sizeof(ext_jar_bcp),
+             "%s/framework/ext.jar", root);
     snprintf(bootclasspath, sizeof(bootclasspath),
              "%s/apex/com.android.art/javalib/core-oj.jar:"
              "%s/apex/com.android.art/javalib/core-libart.jar:"
@@ -434,8 +431,10 @@ int nova_art_init(struct nova_state *state, int argc, char *argv[]) {
              "%s/apex/com.android.art/javalib/bouncycastle.jar:"
              "%s/apex/com.android.art/javalib/apache-xml.jar:"
              "%s/apex/com.android.i18n/javalib/core-icu4j.jar:"
-             "%s/apex/com.android.conscrypt/javalib/conscrypt.jar",
-             host_out, host_out, host_out, host_out, host_out, host_out, host_out);
+             "%s/apex/com.android.conscrypt/javalib/conscrypt.jar:"
+             "%s:%s",
+             host_out, host_out, host_out, host_out, host_out, host_out, host_out,
+             framework_jar_bcp, ext_jar_bcp);
     snprintf(bootclasspath_locations, sizeof(bootclasspath_locations),
              "%s/apex/com.android.art/javalib/core-oj.jar:"
              "%s/apex/com.android.art/javalib/core-libart.jar:"
@@ -443,8 +442,10 @@ int nova_art_init(struct nova_state *state, int argc, char *argv[]) {
              "%s/apex/com.android.art/javalib/bouncycastle.jar:"
              "%s/apex/com.android.art/javalib/apache-xml.jar:"
              "%s/apex/com.android.i18n/javalib/core-icu4j.jar:"
-             "%s/apex/com.android.conscrypt/javalib/conscrypt.jar",
-             host_out, host_out, host_out, host_out, host_out, host_out, host_out);
+             "%s/apex/com.android.conscrypt/javalib/conscrypt.jar:"
+             "%s:%s",
+             host_out, host_out, host_out, host_out, host_out, host_out, host_out,
+             framework_jar_bcp, ext_jar_bcp);
 
     snprintf(image_path, sizeof(image_path), "%s/apex/com.android.art/framework/boot.art",
              host_out);
@@ -471,14 +472,12 @@ int nova_art_init(struct nova_state *state, int argc, char *argv[]) {
     if (append_option(options, &option_count, arg) != 0) goto opt_fail;
 
     {
-        char stubs_jar[PATH_MAX];
-        snprintf(stubs_jar, sizeof(stubs_jar), "%s/" ANDROID_STUBS_REL, host_out);
-
-        /* Classpath: nova-framework first (real AOSP + bridge impls),
-         * then stubs jar as fallback for any class not yet covered. */
+        /* B.1: classpath = Nova overlay classes only (Launcher, CanvasRender, etc.).
+          * AOSP framework.jar is on the bootclasspath (real 37180 classes).
+          * framework.jar from aosp-prebuilt supersedes all bridge AOSP shadows. */
         if (file_exists(framework_jar)) {
-            snprintf(arg, sizeof(arg), "-Djava.class.path=%s:%s",
-                     framework_jar, stubs_jar);
+            snprintf(arg, sizeof(arg), "-Djava.class.path=%s",
+                     framework_jar);
         } else {
             fprintf(stderr, "[Nova] WARNING: nova-framework jar not found at %s\n", framework_jar);
             arg[0] = '\0';
@@ -519,27 +518,9 @@ int nova_art_init(struct nova_state *state, int argc, char *argv[]) {
         register_all_jni_stubs(state->env);
     }
 
-    /* B.0.b.3: pre-load libandroid_runtime.so via bionic loader. This makes
-     * its JNI natives available to ART-loaded code. Failures are non-fatal —
-     * nova's bridge libraries (libnova_android) still provide the JNI surface
-     * needed for gles3jni and the existing smoke tests. */
-    if (root == aosp_prebuilt) {
-        char lib_path[PATH_MAX];
-        snprintf(lib_path, sizeof(lib_path),
-                 "%s/lib64/libandroid_runtime.so", root);
-        if (file_exists(lib_path)) {
-            fprintf(stderr, "[Nova] bionic_dlopen(%s)\n", lib_path);
-            void *h = bionic_dlopen(lib_path, 0);
-            if (h) {
-                fprintf(stderr, "[Nova] bionic_dlopen returned %p\n", h);
-            } else {
-                fprintf(stderr, "[Nova] bionic_dlopen failed: %s\n",
-                        bionic_dlerror());
-            }
-        } else {
-            fprintf(stderr, "[Nova] libandroid_runtime.so not found at %s\n", lib_path);
-        }
-    }
+    /* B.0 REVISED: real libandroid_runtime.so JNI registration is no longer
+     * performed at startup. See plan-v11-master.md §"B.0 REVISED" for the
+     * rationale. libnova_runtime.so (path Y) provides the native hot-set. */
 
     return 0;
 

@@ -111,7 +111,16 @@ public final class Launcher {
         System.out.println("[NovaLauncher] OptimizedDir=" + optimizedDir.getAbsolutePath());
         System.out.println("[NovaLauncher] NativeLibDir=" + nativeLibDir.getAbsolutePath());
 
-        android.content.Context.novaSetCurrentPackageName(packageName);
+        /* B.1: Context.novaSetCurrentPackageName is a Nova-only bridge method
+         * that doesn't exist in the real AOSP framework.jar. Try it but don't
+         * crash if it's missing. NovaPackageManager tracks the current APK. */
+        try {
+            Class.forName("android.content.Context")
+                .getMethod("novaSetCurrentPackageName", String.class)
+                .invoke(null, packageName);
+        } catch (Exception e) {
+            System.out.println("[NovaLauncher] novaSetCurrentPackageName not available (framework.jar): " + e);
+        }
         android.content.pm.NovaPackageManager.getInstance()
                 .setCurrentPackage(packageName, activityClass, apkPath);
         android.content.res.ResourceManager.getInstance().setApkPath(apkPath);
@@ -441,7 +450,13 @@ public final class Launcher {
                 System.out.println("[NovaLauncher] Created default Application instance");
             }
             if (appInstance instanceof android.app.Application) {
-                ActivityThread.novaSetApplication((android.app.Application) appInstance);
+                try {
+                    Class.forName("android.app.ActivityThread")
+                        .getMethod("novaSetApplication", Class.forName("android.app.Application"))
+                        .invoke(null, appInstance);
+                } catch (Exception e) {
+                    System.out.println("[NovaLauncher] ActivityThread.novaSetApplication not available (framework.jar): " + e);
+                }
             }
         } catch (Exception e) {
             System.out.println("[NovaLauncher] Application init failed: " + e);

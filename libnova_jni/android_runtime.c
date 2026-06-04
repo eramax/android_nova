@@ -9,16 +9,20 @@
  * fails if the Java class doesn't declare the native method. */
 
 int register_android_os_SystemClock(JNIEnv *env);
+int register_android_os_SystemProperties(JNIEnv *env);
+int register_android_os_MessageQueue(JNIEnv *env);
+int register_android_util_Log(JNIEnv *env);
 int register_android_os_Binder(JNIEnv *env);
 int register_android_os_Process(JNIEnv *env);
 int register_android_view_MotionEvent(JNIEnv *env);
+int register_android_view_KeyEvent(JNIEnv *env);
 int register_android_graphics_Canvas(JNIEnv *env);
 int register_android_graphics_Paint(JNIEnv *env);
 int register_android_graphics_Bitmap(JNIEnv *env);
 int register_android_graphics_BitmapFactory(JNIEnv *env);
+int register_com_android_internal_graphics_NativeUtils(JNIEnv *env);
 int register_android_opengl_GLES20(JNIEnv *env);
 int register_android_opengl_GLUtils(JNIEnv *env);
-int register_com_android_internal_graphics_NativeUtils(JNIEnv *env);
 int register_com_google_android_gles_jni_EGLImpl(JNIEnv *env);
 int register_com_google_android_gles_jni_GLImpl(JNIEnv *env);
 int register_nova_canvas_render(JNIEnv *env);
@@ -26,12 +30,15 @@ int register_nova_canvas_render(JNIEnv *env);
 /*
  * gRegJNI[] — central registration table mirroring AOSP's AndroidRuntime.cpp
  *
- * When stubs are generated (via scripts/generate_stubs.sh), the generated
- * functions are added here. For now, only our hand-written stubs are listed.
+ * The order should match AOSP's gRegJNI in AndroidRuntime.cpp for clarity,
+ * but registration is independent per class.
  */
 static const RegJNIProc gRegJNI[] = {
     /* OS-level */
     register_android_os_SystemClock,
+    register_android_os_SystemProperties,
+    register_android_os_MessageQueue,
+    register_android_util_Log,
     register_android_os_Binder,
     register_android_os_Process,
 

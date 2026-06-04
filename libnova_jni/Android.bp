@@ -10,6 +10,8 @@ cc_library_host_shared {
         "core_jni_helpers.c",
         "android_os_SystemProperties.c",
         "android_os_SystemClock.c",
+        "android_os_MessageQueue.c",
+        "android_util_Log.c",
         "android_os_Binder.c",
         "android_os_Process.c",
         "android_view_KeyEvent.c",
