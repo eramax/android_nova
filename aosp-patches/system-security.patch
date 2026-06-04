@@ -1,0 +1,3241 @@
+From 8c602c2a01fd2b9aa36df889da98b7f39fbd2c54 Mon Sep 17 00:00:00 2001
+From: Ahmed Morsi <eng.eramax@gmail.com>
+Date: Thu, 4 Jun 2026 10:31:20 +0200
+Subject: [PATCH] Nova: local changes for AIDL/build support
+
+Removed HIDL/AIDL Android.bp files not needed for host build.
+Added parcelable stubs for missing types and patched AIDL imports.
+
+Patch series for the Nova Android-on-Linux runtime.
+
+Change-Id: I9217623966cb3a52c7ff8c63f166930deb91c2db
+---
+ fsverity/Android.bp                         |  64 ------
+ fsverity/libfsverity_rs/Android.bp          |  17 --
+ hals/Android.bp                             |  18 --
+ hals/derive/Android.bp                      |  31 ---
+ hals/wire/Android.bp                        |  56 ------
+ identity/Android.bp                         | 142 --------------
+ identity/util/Android.bp                    |  43 ----
+ keystore-engine/Android.bp                  |  84 --------
+ keystore/Android.bp                         | 107 ----------
+ keystore/tests/Android.bp                   |  75 -------
+ keystore/tests/fuzzer/Android.bp            | 126 ------------
+ keystore2/Android.bp                        | 207 --------------------
+ keystore2/aaid/Android.bp                   |  68 -------
+ keystore2/aidl/Android.bp                   | 164 ----------------
+ keystore2/apc_compat/Android.bp             |  77 --------
+ keystore2/legacykeystore/Android.bp         |  72 -------
+ keystore2/message_macro/Android.bp          |  37 ----
+ keystore2/postprocessor_client/Android.bp   |  47 -----
+ keystore2/rkpd_client/Android.bp            |  55 ------
+ keystore2/selinux/Android.bp                |  83 --------
+ keystore2/src/crypto/Android.bp             | 156 ---------------
+ keystore2/src/fuzzers/Android.bp            |  65 ------
+ keystore2/src/hal_instance_names/Android.bp |  73 -------
+ keystore2/src/km_compat/Android.bp          | 134 -------------
+ keystore2/test_utils/Android.bp             | 109 -----------
+ keystore2/test_utils/attestation/Android.bp |  56 ------
+ keystore2/tests/Android.bp                  |  63 ------
+ keystore2/tests/keystore-engine/Android.bp  |  62 ------
+ keystore2/tests/legacy_blobs/Android.bp     |  52 -----
+ keystore2/watchdog/Android.bp               |  50 -----
+ mls/mls-rs-crypto-boringssl/Android.bp      |  49 -----
+ ondevice-signing/Android.bp                 | 144 --------------
+ ondevice-signing/proto/Android.bp           |  44 -----
+ ondevice-signing/tests/Android.bp           |  45 -----
+ prng_seeder/Android.bp                      |  70 -------
+ provisioner/Android.bp                      | 119 -----------
+ provisioner/support/Android.bp              |  64 ------
+ 37 files changed, 2928 deletions(-)
+ delete mode 100644 fsverity/Android.bp
+ delete mode 100644 fsverity/libfsverity_rs/Android.bp
+ delete mode 100644 hals/Android.bp
+ delete mode 100644 hals/derive/Android.bp
+ delete mode 100644 hals/wire/Android.bp
+ delete mode 100644 identity/Android.bp
+ delete mode 100644 identity/util/Android.bp
+ delete mode 100644 keystore-engine/Android.bp
+ delete mode 100644 keystore/Android.bp
+ delete mode 100644 keystore/tests/Android.bp
+ delete mode 100644 keystore/tests/fuzzer/Android.bp
+ delete mode 100644 keystore2/Android.bp
+ delete mode 100644 keystore2/aaid/Android.bp
+ delete mode 100644 keystore2/aidl/Android.bp
+ delete mode 100644 keystore2/apc_compat/Android.bp
+ delete mode 100644 keystore2/legacykeystore/Android.bp
+ delete mode 100644 keystore2/message_macro/Android.bp
+ delete mode 100644 keystore2/postprocessor_client/Android.bp
+ delete mode 100644 keystore2/rkpd_client/Android.bp
+ delete mode 100644 keystore2/selinux/Android.bp
+ delete mode 100644 keystore2/src/crypto/Android.bp
+ delete mode 100644 keystore2/src/fuzzers/Android.bp
+ delete mode 100644 keystore2/src/hal_instance_names/Android.bp
+ delete mode 100644 keystore2/src/km_compat/Android.bp
+ delete mode 100644 keystore2/test_utils/Android.bp
+ delete mode 100644 keystore2/test_utils/attestation/Android.bp
+ delete mode 100644 keystore2/tests/Android.bp
+ delete mode 100644 keystore2/tests/keystore-engine/Android.bp
+ delete mode 100644 keystore2/tests/legacy_blobs/Android.bp
+ delete mode 100644 keystore2/watchdog/Android.bp
+ delete mode 100644 mls/mls-rs-crypto-boringssl/Android.bp
+ delete mode 100644 ondevice-signing/Android.bp
+ delete mode 100644 ondevice-signing/proto/Android.bp
+ delete mode 100644 ondevice-signing/tests/Android.bp
+ delete mode 100644 prng_seeder/Android.bp
+ delete mode 100644 provisioner/Android.bp
+ delete mode 100644 provisioner/support/Android.bp
+
+diff --git a/fsverity/Android.bp b/fsverity/Android.bp
+deleted file mode 100644
+index ce3b4995..00000000
+--- a/fsverity/Android.bp
++++ /dev/null
+@@ -1,64 +0,0 @@
+-// Copyright (C) 2021 The Android Open Source Project
+-//
+-// Licensed under the Apache License, Version 2.0 (the "License");
+-// you may not use this file except in compliance with the License.
+-// You may obtain a copy of the License at
+-//
+-//      http://www.apache.org/licenses/LICENSE-2.0
+-//
+-// Unless required by applicable law or agreed to in writing, software
+-// distributed under the License is distributed on an "AS IS" BASIS,
+-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-// See the License for the specific language governing permissions and
+-// limitations under the License.
+-
+-package {
+-    // See: http://go/android-license-faq
+-    // A large-scale-change added 'default_applicable_licenses' to import
+-    // all of the 'license_kinds' from "system_security_license"
+-    // to get the below license kinds:
+-    //   SPDX-license-identifier-Apache-2.0
+-    default_applicable_licenses: ["system_security_license"],
+-}
+-
+-python_library_host {
+-    name: "fsverity_digests_proto_python",
+-    srcs: [
+-        "fsverity_digests.proto",
+-    ],
+-    required: [
+-        "fsverity",
+-    ],
+-    proto: {
+-        canonical_path_from_root: false,
+-    },
+-}
+-
+-python_binary_host {
+-    name: "fsverity_manifest_generator",
+-    srcs: ["fsverity_manifest_generator.py"],
+-    libs: ["fsverity_digests_proto_python"],
+-}
+-
+-rust_protobuf {
+-    name: "libfsverity_digests_proto_rust",
+-    crate_name: "fsverity_digests_proto",
+-    source_stem: "fsverity_digests_proto",
+-    protos: [
+-        "fsverity_digests.proto",
+-    ],
+-    apex_available: [
+-        "com.android.compos",
+-    ],
+-}
+-
+-cc_library_static {
+-    name: "libfsverity_digests_proto_cc",
+-    proto: {
+-        type: "lite",
+-        static: true,
+-        canonical_path_from_root: false,
+-        export_proto_headers: true,
+-    },
+-    srcs: ["fsverity_digests.proto"],
+-}
+diff --git a/fsverity/libfsverity_rs/Android.bp b/fsverity/libfsverity_rs/Android.bp
+deleted file mode 100644
+index 91b12486..00000000
+--- a/fsverity/libfsverity_rs/Android.bp
++++ /dev/null
+@@ -1,17 +0,0 @@
+-package {
+-    default_applicable_licenses: ["Android-Apache-2.0"],
+-}
+-
+-rust_library {
+-    name: "libfsverity_rs",
+-    crate_name: "fsverity",
+-    srcs: ["lib.rs"],
+-    edition: "2021",
+-    rustlibs: [
+-        "libnix",
+-    ],
+-    apex_available: [
+-        "com.android.compos",
+-        "com.android.virt",
+-    ],
+-}
+diff --git a/hals/Android.bp b/hals/Android.bp
+deleted file mode 100644
+index cda66e91..00000000
+--- a/hals/Android.bp
++++ /dev/null
+@@ -1,18 +0,0 @@
+-// Copyright 2025, The Android Open Source Project
+-//
+-// Licensed under the Apache License, Version 2.0 (the "License");
+-// you may not use this file except in compliance with the License.
+-// You may obtain a copy of the License at
+-//
+-//     http://www.apache.org/licenses/LICENSE-2.0
+-//
+-// Unless required by applicable law or agreed to in writing, software
+-// distributed under the License is distributed on an "AS IS" BASIS,
+-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-// See the License for the specific language governing permissions and
+-// limitations under the License.
+-
+-package {
+-    default_applicable_licenses: ["Android-Apache-2.0"],
+-    default_team: "trendy_team_android_hardware_backed_security",
+-}
+diff --git a/hals/derive/Android.bp b/hals/derive/Android.bp
+deleted file mode 100644
+index e3b73ba5..00000000
+--- a/hals/derive/Android.bp
++++ /dev/null
+@@ -1,31 +0,0 @@
+-// Copyright 2022, The Android Open Source Project
+-//
+-// Licensed under the Apache License, Version 2.0 (the "License");
+-// you may not use this file except in compliance with the License.
+-// You may obtain a copy of the License at
+-//
+-//     http://www.apache.org/licenses/LICENSE-2.0
+-//
+-// Unless required by applicable law or agreed to in writing, software
+-// distributed under the License is distributed on an "AS IS" BASIS,
+-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-// See the License for the specific language governing permissions and
+-// limitations under the License.
+-
+-package {
+-    default_applicable_licenses: ["Android-Apache-2.0"],
+-}
+-
+-rust_proc_macro {
+-    name: "libhal_wire_derive",
+-    crate_name: "hal_wire_derive",
+-    cargo_env_compat: true,
+-    cargo_pkg_version: "0.1.0",
+-    srcs: ["src/lib.rs"],
+-    edition: "2021",
+-    rustlibs: [
+-        "libproc_macro2",
+-        "libquote",
+-        "libsyn",
+-    ],
+-}
+diff --git a/hals/wire/Android.bp b/hals/wire/Android.bp
+deleted file mode 100644
+index d632aef8..00000000
+--- a/hals/wire/Android.bp
++++ /dev/null
+@@ -1,56 +0,0 @@
+-// Copyright 2025, The Android Open Source Project
+-//
+-// Licensed under the Apache License, Version 2.0 (the "License");
+-// you may not use this file except in compliance with the License.
+-// You may obtain a copy of the License at
+-//
+-//     http://www.apache.org/licenses/LICENSE-2.0
+-//
+-// Unless required by applicable law or agreed to in writing, software
+-// distributed under the License is distributed on an "AS IS" BASIS,
+-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-// See the License for the specific language governing permissions and
+-// limitations under the License.
+-
+-package {
+-    default_applicable_licenses: ["Android-Apache-2.0"],
+-}
+-
+-rust_library {
+-    name: "libhal_wire",
+-    crate_name: "hal_wire",
+-    srcs: ["src/lib.rs"],
+-    host_supported: true,
+-    vendor_available: true,
+-    edition: "2021",
+-    lints: "android",
+-    rustlibs: [
+-        "libciborium",
+-        "libciborium_io",
+-    ],
+-    proc_macros: [
+-        "libhal_wire_derive",
+-    ],
+-}
+-
+-rust_library_rlib {
+-    name: "libhal_wire_nostd",
+-    crate_name: "hal_wire",
+-    srcs: ["src/lib.rs"],
+-    vendor_available: true,
+-    edition: "2021",
+-    lints: "android",
+-    rustlibs: [
+-        "libciborium_nostd",
+-        "libciborium_io_nostd",
+-    ],
+-    proc_macros: [
+-        "libhal_wire_derive",
+-    ],
+-    prefer_rlib: true,
+-    no_stdlibs: true,
+-    stdlibs: [
+-        "libcompiler_builtins.rust_sysroot",
+-        "libcore.rust_sysroot",
+-    ],
+-}
+diff --git a/identity/Android.bp b/identity/Android.bp
+deleted file mode 100644
+index a5635321..00000000
+--- a/identity/Android.bp
++++ /dev/null
+@@ -1,142 +0,0 @@
+-package {
+-    default_team: "trendy_team_android_hardware_backed_security",
+-    // See: http://go/android-license-faq
+-    // A large-scale-change added 'default_applicable_licenses' to import
+-    // all of the 'license_kinds' from "system_security_license"
+-    // to get the below license kinds:
+-    //   SPDX-license-identifier-Apache-2.0
+-    default_applicable_licenses: ["system_security_license"],
+-}
+-
+-cc_defaults {
+-    name: "identity_defaults",
+-    cflags: [
+-        "-Wall",
+-        // "-Werror",
+-        "-Wextra",
+-        "-Wunused",
+-        "-Wno-deprecated-declarations",
+-    ],
+-    sanitize: {
+-        misc_undefined: ["integer"],
+-    },
+-
+-}
+-
+-cc_defaults {
+-    name: "credstore_defaults",
+-    defaults: [
+-        "identity_defaults",
+-        "identity_use_latest_hal_aidl_cpp_static",
+-        "keymint_use_latest_hal_aidl_ndk_shared",
+-        "keymint_use_latest_hal_aidl_cpp_static",
+-        "android.hardware.identity-support-lib-deps",
+-    ],
+-    srcs: [
+-        "Credential.cpp",
+-        "CredentialData.cpp",
+-        "CredentialStore.cpp",
+-        "CredentialStoreFactory.cpp",
+-        "Session.cpp",
+-        "Util.cpp",
+-        "WritableCredential.cpp",
+-    ],
+-    shared_libs: [
+-        "android.hardware.keymaster@4.0",
+-        "android.security.authorization-ndk",
+-        "libbase",
+-        "libbinder",
+-        "libbinder_ndk",
+-        "libcrypto",
+-        "libhidlbase",
+-        "liblog",
+-        "libutils",
+-        "libutilscallstack",
+-        "libkeystore-attestation-application-id",
+-    ],
+-    static_libs: [
+-        "android.hardware.keymaster-V3-cpp",
+-        "android.hardware.identity-support-lib",
+-        "android.hardware.security.rkp-V3-cpp",
+-        "android.security.rkp_aidl-cpp",
+-        "libcppbor",
+-        "libcredstore_aidl",
+-        "libkeymaster4support",
+-        "librkp_support",
+-    ],
+-}
+-
+-cc_binary {
+-    name: "credstore",
+-    defaults: [
+-        "credstore_defaults",
+-    ],
+-    srcs: [
+-        "main.cpp",
+-    ],
+-    init_rc: ["credstore.rc"],
+-}
+-
+-filegroup {
+-    name: "credstore_aidl",
+-    srcs: [
+-        "binder/android/security/identity/ICredential.aidl",
+-        "binder/android/security/identity/IWritableCredential.aidl",
+-        "binder/android/security/identity/ICredentialStore.aidl",
+-        "binder/android/security/identity/AccessControlProfileParcel.aidl",
+-        "binder/android/security/identity/EntryNamespaceParcel.aidl",
+-        "binder/android/security/identity/EntryParcel.aidl",
+-        "binder/android/security/identity/RequestNamespaceParcel.aidl",
+-        "binder/android/security/identity/RequestEntryParcel.aidl",
+-        "binder/android/security/identity/ResultNamespaceParcel.aidl",
+-        "binder/android/security/identity/ResultEntryParcel.aidl",
+-        "binder/android/security/identity/GetEntriesResultParcel.aidl",
+-        "binder/android/security/identity/AuthKeyParcel.aidl",
+-        "binder/android/security/identity/SecurityHardwareInfoParcel.aidl",
+-        "binder/android/security/identity/ICredentialStoreFactory.aidl",
+-        "binder/android/security/identity/ISession.aidl",
+-    ],
+-    path: "binder",
+-}
+-
+-cc_library_static {
+-    name: "libcredstore_aidl",
+-    srcs: [
+-        ":credstore_aidl",
+-    ],
+-    aidl: {
+-        export_aidl_headers: true,
+-        include_dirs: [
+-            "system/security/identity/binder",
+-        ],
+-    },
+-    shared_libs: [
+-        "libbinder",
+-        "libutils",
+-    ],
+-    static_libs: [
+-        "libkeymaster4support",
+-    ],
+-    export_shared_lib_headers: [
+-        "libbinder",
+-    ],
+-}
+-
+-cc_fuzz {
+-    name: "credstore_service_fuzzer",
+-    defaults: [
+-        "credstore_defaults",
+-        "service_fuzzer_defaults",
+-        "fuzzer_disable_leaks",
+-    ],
+-    srcs: [
+-        "fuzzers/credstore_service_fuzzer.cpp",
+-    ],
+-    fuzz_config: {
+-        triage_assignee: "waghpawan@google.com",
+-        cc: [
+-            "trong@google.com",
+-            "zeuthen@google.com",
+-        ],
+-    },
+-}
+diff --git a/identity/util/Android.bp b/identity/util/Android.bp
+deleted file mode 100644
+index 771fe792..00000000
+--- a/identity/util/Android.bp
++++ /dev/null
+@@ -1,43 +0,0 @@
+-// Copyright 2021 The Android Open Source Project
+-//
+-// Licensed under the Apache License, Version 2.0 (the "License");
+-// you may not use this file except in compliance with the License.
+-// You may obtain a copy of the License at
+-//
+-//      http://www.apache.org/licenses/LICENSE-2.0
+-//
+-// Unless required by applicable law or agreed to in writing, software
+-// distributed under the License is distributed on an "AS IS" BASIS,
+-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-// See the License for the specific language governing permissions and
+-// limitations under the License.
+-
+-package {
+-    default_team: "trendy_team_android_hardware_backed_security",
+-    default_applicable_licenses: ["Android-Apache-2.0"],
+-}
+-
+-java_library {
+-    name: "identity-credential-util",
+-    srcs: [
+-        "src/java/**/*.java",
+-    ],
+-    static_libs: [
+-        "androidx.annotation_annotation",
+-        "bouncycastle-unbundled",
+-        "cbor-java",
+-    ],
+-}
+-
+-android_test {
+-    name: "identity-credential-util-tests",
+-    test_suites: ["general-tests"],
+-    srcs: [
+-        "test/java/**/*.java",
+-    ],
+-    static_libs: [
+-        "androidx.test.rules",
+-        "identity-credential-util",
+-        "junit",
+-    ],
+-}
+diff --git a/keystore-engine/Android.bp b/keystore-engine/Android.bp
+deleted file mode 100644
+index d7634459..00000000
+--- a/keystore-engine/Android.bp
++++ /dev/null
+@@ -1,84 +0,0 @@
+-// Copyright (C) 2012 The Android Open Source Project
+-//
+-// Licensed under the Apache License, Version 2.0 (the "License");
+-// you may not use this file except in compliance with the License.
+-// You may obtain a copy of the License at
+-//
+-//      http://www.apache.org/licenses/LICENSE-2.0
+-//
+-// Unless required by applicable law or agreed to in writing, software
+-// distributed under the License is distributed on an "AS IS" BASIS,
+-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-// See the License for the specific language governing permissions and
+-// limitations under the License.
+-
+-package {
+-    // See: http://go/android-license-faq
+-    // A large-scale-change added 'default_applicable_licenses' to import
+-    // all of the 'license_kinds' from "system_security_license"
+-    // to get the below license kinds:
+-    //   SPDX-license-identifier-BSD
+-    default_applicable_licenses: ["system_security_license"],
+-}
+-
+-// This is expected to be cc_test_library but due to issue mentioned in b/298668920, b/314110490
+-// we are creating cc_library and using static library to link with `keystore_client_tests`.
+-cc_library {
+-    name: "libkeystore-engine",
+-
+-    defaults: [
+-        "keymint_use_latest_hal_aidl_ndk_static",
+-        "keystore2_use_latest_aidl_ndk_static",
+-    ],
+-    srcs: [
+-        "android_engine.cpp",
+-        "keystore2_engine.cpp",
+-    ],
+-
+-    cflags: [
+-        "-fvisibility=hidden",
+-        "-Wall",
+-        "-Werror",
+-    ],
+-
+-    shared_libs: [
+-        "libbinder_ndk",
+-        "libcrypto",
+-        "libcutils",
+-        "liblog",
+-        "libbase",
+-        "libutils",
+-    ],
+-
+-}
+-
+-// This builds a variant of libkeystore-engine that is available vendor.
+-// It used to use a HIDL interface to connect to keystore through wificond.
+-// Now That Keystore 2.0 has a vintf stable interface this library is
+-// actually identical to libkeystore-engine.
+-cc_library_shared {
+-    name: "libkeystore-engine-wifi-hidl",
+-
+-    srcs: [
+-        "android_engine.cpp",
+-        "keystore2_engine.cpp",
+-    ],
+-
+-    cflags: [
+-        "-fvisibility=hidden",
+-        "-Wall",
+-        "-Werror",
+-    ],
+-
+-    shared_libs: [
+-        "android.system.keystore2-V1-ndk",
+-        "libbase",
+-        "libbinder_ndk",
+-        "libcrypto",
+-        "liblog",
+-        "libcutils",
+-        "libutils",
+-    ],
+-
+-    vendor: true,
+-}
+diff --git a/keystore/Android.bp b/keystore/Android.bp
+deleted file mode 100644
+index 2d78f336..00000000
+--- a/keystore/Android.bp
++++ /dev/null
+@@ -1,107 +0,0 @@
+-package {
+-    // See: http://go/android-license-faq
+-    // A large-scale-change added 'default_applicable_licenses' to import
+-    // all of the 'license_kinds' from "system_security_license"
+-    // to get the below license kinds:
+-    //   SPDX-license-identifier-Apache-2.0
+-    //   SPDX-license-identifier-BSD
+-    default_applicable_licenses: ["system_security_license"],
+-}
+-
+-cc_defaults {
+-    name: "keystore_defaults",
+-
+-    cflags: [
+-        "-Wall",
+-        "-Werror",
+-        "-Wextra",
+-        "-Wunused",
+-    ],
+-
+-    sanitize: {
+-        misc_undefined: [
+-            "signed-integer-overflow",
+-            "unsigned-integer-overflow",
+-            "shift",
+-            "integer-divide-by-zero",
+-            "implicit-unsigned-integer-truncation",
+-            // BUG: 123630767
+-            //"implicit-signed-integer-truncation",
+-            "implicit-integer-sign-change",
+-        ],
+-    },
+-
+-}
+-
+-cc_binary {
+-    name: "keystore_cli_v2",
+-    defaults: [
+-        "keystore_defaults",
+-        "keystore2_use_latest_aidl_ndk_shared",
+-    ],
+-
+-    cflags: [
+-        "-DKEYMASTER_NAME_TAGS",
+-        "-Wno-unused-parameter",
+-    ],
+-    srcs: [
+-        "keystore_cli_v2.cpp",
+-        "keystore_client.proto",
+-    ],
+-    shared_libs: [
+-        "android.security.apc-ndk",
+-        "libbinder",
+-        "libbinder_ndk",
+-        "libchrome",
+-        "libcrypto",
+-        "libkeymint_support",
+-        "libprotobuf-cpp-lite",
+-        "libutils",
+-    ],
+-
+-    local_include_dirs: ["include"],
+-}
+-
+-// Library used by both keystore and credstore for generating the ASN.1 stored
+-// in Tag::ATTESTATION_APPLICATION_ID
+-cc_library {
+-    name: "libkeystore-attestation-application-id",
+-    defaults: [
+-        "keystore_defaults",
+-        "keystore2_use_latest_aidl_ndk_shared",
+-    ],
+-
+-    srcs: [
+-        "keystore_attestation_id.cpp",
+-    ],
+-    shared_libs: [
+-        "android.security.aaid_aidl-cpp",
+-        "libbase",
+-        "libbinder",
+-        "libcrypto",
+-        "libhidlbase",
+-        "liblog",
+-        "libutils",
+-    ],
+-
+-    export_include_dirs: ["include"],
+-}
+-
+-// Library for keystore clients using the WiFi HIDL interface
+-cc_library {
+-    name: "libkeystore-wifi-hidl",
+-    defaults: ["keystore_defaults"],
+-
+-    srcs: ["keystore_get_wifi_hidl.cpp"],
+-    shared_libs: [
+-        "android.system.wifi.keystore@1.0",
+-        "libbase",
+-        "libhidlbase",
+-        "liblog",
+-        "libutils",
+-    ],
+-
+-    export_include_dirs: ["include"],
+-
+-    vendor: true,
+-}
+diff --git a/keystore/tests/Android.bp b/keystore/tests/Android.bp
+deleted file mode 100644
+index c3a9e660..00000000
+--- a/keystore/tests/Android.bp
++++ /dev/null
+@@ -1,75 +0,0 @@
+-// Unit test for AuthTokenTable
+-
+-package {
+-    default_team: "trendy_team_android_hardware_backed_security",
+-    // See: http://go/android-license-faq
+-    // A large-scale-change added 'default_applicable_licenses' to import
+-    // all of the 'license_kinds' from "system_security_license"
+-    // to get the below license kinds:
+-    //   SPDX-license-identifier-Apache-2.0
+-    default_applicable_licenses: ["system_security_license"],
+-}
+-
+-cc_test {
+-    cflags: [
+-        "-Wall",
+-        "-Werror",
+-        "-Wextra",
+-        "-O0",
+-    ],
+-    srcs: [
+-        "aaid_truncation_test.cpp",
+-        "verification_token_seralization_test.cpp",
+-        "gtest_main.cpp",
+-    ],
+-    name: "keystore_unit_tests",
+-    static_libs: [
+-        "android.hardware.confirmationui@1.0",
+-        "libbase",
+-        "libcrypto_static",
+-        "libcutils",
+-        "libgtest_main",
+-        "libhidlbase",
+-        "libkeymaster4support",
+-        "libkeymaster4_1support",
+-        "liblog",
+-        "libutils",
+-    ],
+-    shared_libs: [
+-        "android.security.aaid_aidl-cpp",
+-        "libbinder",
+-        "libkeymaster_messages",
+-        "libkeystore-attestation-application-id",
+-        "libvndksupport",
+-    ],
+-    sanitize: {
+-        cfi: false,
+-    },
+-}
+-
+-cc_test {
+-    cflags: [
+-        "-Wall",
+-        "-Werror",
+-        "-Wextra",
+-        "-O0",
+-    ],
+-    srcs: [
+-        "confirmationui_invocation_test.cpp",
+-        "gtest_main.cpp",
+-    ],
+-    name: "confirmationui_invocation_test",
+-    static_libs: [
+-        "libbase",
+-        "libgtest_main",
+-        "libutils",
+-        "liblog",
+-        "android.security.apc-ndk",
+-    ],
+-    shared_libs: [
+-        "libbinder_ndk",
+-    ],
+-    sanitize: {
+-        cfi: false,
+-    },
+-}
+diff --git a/keystore/tests/fuzzer/Android.bp b/keystore/tests/fuzzer/Android.bp
+deleted file mode 100644
+index 55d8f83e..00000000
+--- a/keystore/tests/fuzzer/Android.bp
++++ /dev/null
+@@ -1,126 +0,0 @@
+-/*
+- * Copyright (C) 2021 The Android Open Source Project
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at:
+- *
+- * http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-
+-package {
+-    default_team: "trendy_team_android_hardware_backed_security",
+-    // See: http://go/android-license-faq
+-    // A large-scale-change added 'default_applicable_licenses' to import
+-    // all of the 'license_kinds' from "system_security_license"
+-    // to get the below license kinds:
+-    //   SPDX-license-identifier-Apache-2.0
+-    default_applicable_licenses: ["system_security_license"],
+-}
+-
+-cc_fuzz {
+-    name: "keystoreGetWifiHidl_fuzzer",
+-    vendor: true,
+-    srcs: [
+-        "keystoreGetWifiHidl_fuzzer.cpp",
+-    ],
+-    static_libs: [
+-        "libkeystore-wifi-hidl",
+-    ],
+-    shared_libs: [
+-        "android.system.wifi.keystore@1.0",
+-        "libhidlbase",
+-        "liblog",
+-        "libutils",
+-    ],
+-    fuzz_config: {
+-        cc: [
+-            "android-hardware-security@google.com",
+-        ],
+-        componentid: 1084732,
+-        hotlists: [
+-            "4593311",
+-        ],
+-        description: "The fuzzer targets the APIs of libkeystore-wifi-hidl",
+-        vector: "local_no_privileges_required",
+-        service_privilege: "privileged",
+-        users: "multi_user",
+-        fuzzed_code_usage: "shipped",
+-    },
+-}
+-
+-cc_defaults {
+-    name: "keystoreAttestation_defaults",
+-    static_libs: [
+-        "libkeystore-attestation-application-id",
+-        "liblog",
+-        "libbase",
+-        "libhidlbase",
+-    ],
+-    shared_libs: [
+-        "android.security.aaid_aidl-cpp",
+-        "libbinder",
+-        "libcrypto",
+-        "libutils",
+-    ],
+-    fuzz_config: {
+-        cc: [
+-            "android-hardware-security@google.com",
+-        ],
+-        componentid: 1084732,
+-        hotlists: [
+-            "4593311",
+-        ],
+-        description: "The fuzzer targets the APIs of libkeystore-attestation-application-id",
+-        vector: "local_no_privileges_required",
+-        service_privilege: "privileged",
+-        users: "multi_user",
+-        fuzzed_code_usage: "shipped",
+-    },
+-}
+-
+-cc_fuzz {
+-    name: "keystoreSignature_fuzzer",
+-    srcs: [
+-        "keystoreSignature_fuzzer.cpp",
+-    ],
+-    defaults: [
+-        "keystoreAttestation_defaults",
+-    ],
+-}
+-
+-cc_fuzz {
+-    name: "keystorePackageInfo_fuzzer",
+-    srcs: [
+-        "keystorePackageInfo_fuzzer.cpp",
+-    ],
+-    defaults: [
+-        "keystoreAttestation_defaults",
+-    ],
+-}
+-
+-cc_fuzz {
+-    name: "keystoreApplicationId_fuzzer",
+-    srcs: [
+-        "keystoreApplicationId_fuzzer.cpp",
+-    ],
+-    defaults: [
+-        "keystoreAttestation_defaults",
+-    ],
+-}
+-
+-cc_fuzz {
+-    name: "keystoreAttestationId_fuzzer",
+-    srcs: [
+-        "keystoreAttestationId_fuzzer.cpp",
+-    ],
+-    defaults: [
+-        "keystoreAttestation_defaults",
+-    ],
+-}
+diff --git a/keystore2/Android.bp b/keystore2/Android.bp
+deleted file mode 100644
+index fdd643b7..00000000
+--- a/keystore2/Android.bp
++++ /dev/null
+@@ -1,207 +0,0 @@
+-// Copyright 2020, The Android Open Source Project
+-//
+-// Licensed under the Apache License, Version 2.0 (the "License");
+-// you may not use this file except in compliance with the License.
+-// You may obtain a copy of the License at
+-//
+-//     http://www.apache.org/licenses/LICENSE-2.0
+-//
+-// Unless required by applicable law or agreed to in writing, software
+-// distributed under the License is distributed on an "AS IS" BASIS,
+-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-// See the License for the specific language governing permissions and
+-// limitations under the License.
+-
+-package {
+-    default_team: "trendy_team_android_hardware_backed_security",
+-    // See: http://go/android-license-faq
+-    // A large-scale-change added 'default_applicable_licenses' to import
+-    // all of the 'license_kinds' from "system_security_license"
+-    // to get the below license kinds:
+-    //   SPDX-license-identifier-Apache-2.0
+-    default_applicable_licenses: ["system_security_license"],
+-}
+-
+-rust_defaults {
+-    name: "libkeystore2_defaults",
+-    crate_name: "keystore2",
+-    srcs: ["src/lib.rs"],
+-    defaults: [
+-        "keymint_use_latest_hal_aidl_rust",
+-        "keystore2_use_latest_aidl_rust",
+-        "structured_log_rust_defaults",
+-    ],
+-    rustlibs: [
+-        "android.hardware.security.rkp-V3-rust",
+-        "android.hardware.security.secureclock-V1-rust",
+-        "android.hardware.security.sharedsecret-V1-rust",
+-        "android.os.permissions_aidl-rust",
+-        "android.security.apc-rust",
+-        "android.security.authorization-rust",
+-        "android.security.compat-rust",
+-        "android.security.maintenance-rust",
+-        "android.security.metrics-rust",
+-        "android.security.rkp_aidl-rust",
+-        "apex_aidl_interface-rust",
+-        "libaconfig_android_hardware_biometrics_rust",
+-        "libandroid_security_flags_rust",
+-        "libanyhow",
+-        "libbinder_rs",
+-        "libbssl_crypto",
+-        "libder",
+-        "libhex",
+-        "libkeystore2_aaid-rust",
+-        "libkeystore2_apc_compat-rust",
+-        "libkeystore2_crypto_rust",
+-        "libkeystore2_flags_rust",
+-        "libkeystore2_hal_names_rust",
+-        "libkeystore2_km_compat",
+-        "libkeystore2_selinux",
+-        "liblibc",
+-        "liblog_rust",
+-        "libmessage_macro",
+-        "libpostprocessor_client",
+-        "librand",
+-        "librkpd_client",
+-        "librustutils",
+-        "libserde",
+-        "libserde_cbor",
+-        "libthiserror",
+-        "libtokio",
+-        "libwatchdog_rs",
+-        "packagemanager_aidl-rust",
+-    ],
+-    shared_libs: [
+-        "libcutils",
+-    ],
+-    features: [
+-        "watchdog",
+-    ],
+-}
+-
+-rust_library {
+-    name: "libkeystore2",
+-    defaults: ["libkeystore2_defaults"],
+-    rustlibs: [
+-        "liblibsqlite3_sys",
+-        "librusqlite",
+-    ],
+-}
+-
+-rust_library {
+-    name: "libkeystore2_with_test_utils",
+-    defaults: ["libkeystore2_defaults"],
+-    features: [
+-        "keystore2_blob_test_utils",
+-    ],
+-    rustlibs: [
+-        "libkeystore2_test_utils",
+-        "liblibsqlite3_sys",
+-        "librusqlite",
+-    ],
+-}
+-
+-rust_test {
+-    name: "keystore2_test",
+-    crate_name: "keystore2",
+-    test_suites: ["general-tests"],
+-    auto_gen_config: true,
+-    compile_multilib: "first",
+-    defaults: ["libkeystore2_defaults"],
+-    rustlibs: [
+-        "libandroid_logger",
+-        "libkeystore2_test_utils",
+-        "libkeystore2_with_test_utils",
+-        "liblibsqlite3_sys",
+-        "libnix",
+-        "librusqlite",
+-        "libtempfile",
+-    ],
+-    // The test should always include watchdog.
+-    features: [
+-        "keystore2_blob_test_utils",
+-        "watchdog",
+-    ],
+-    require_root: true,
+-}
+-
+-vintf_fragment {
+-    name: "android.system.keystore2-service.xml",
+-    src: "android.system.keystore2-service.xml",
+-}
+-
+-rust_defaults {
+-    name: "keystore2_defaults",
+-    srcs: ["src/keystore2_main.rs"],
+-    rustlibs: [
+-        "libandroid_logger",
+-        "libbinder_rs",
+-        "liblog_rust",
+-    ],
+-    init_rc: ["keystore2.rc"],
+-
+-    // In S, keystore2 is the only process using dynamically linked Rust from
+-    // /system. As a result, the usual savings from sharing libraries don't
+-    // apply.
+-    // Remove `prefer_rlib: true` once we have several processes, once a space
+-    // calculation shows net RAM savings, or once we have automatic variant
+-    // selection available in the build system.
+-    prefer_rlib: true,
+-
+-    vintf_fragment_modules: ["android.system.keystore2-service.xml"],
+-
+-    required: ["keystore_cli_v2"],
+-}
+-
+-rust_binary {
+-    name: "keystore2",
+-    defaults: ["keystore2_defaults"],
+-    rustlibs: [
+-        "libkeystore2",
+-        "liblegacykeystore-rust",
+-        "librusqlite",
+-    ],
+-    afdo: true,
+-}
+-
+-// Keystore Flag definitions
+-aconfig_declarations {
+-    name: "keystore2_flags",
+-    package: "android.security.keystore2",
+-    container: "system",
+-    srcs: ["aconfig/flags.aconfig"],
+-}
+-
+-java_aconfig_library {
+-    name: "keystore2_flags_java",
+-    aconfig_declarations: "keystore2_flags",
+-}
+-
+-java_aconfig_library {
+-    name: "keystore2_flags_java-host",
+-    aconfig_declarations: "keystore2_flags",
+-    host_supported: true,
+-}
+-
+-java_aconfig_library {
+-    name: "keystore2_flags_java-framework",
+-    aconfig_declarations: "keystore2_flags",
+-    defaults: ["framework-minus-apex-aconfig-java-defaults"],
+-}
+-
+-cc_aconfig_library {
+-    name: "libkeystore2_flags_cc",
+-    aconfig_declarations: "keystore2_flags",
+-}
+-
+-rust_aconfig_library {
+-    name: "libkeystore2_flags_rust",
+-    crate_name: "keystore2_flags",
+-    aconfig_declarations: "keystore2_flags",
+-}
+-
+-rust_aconfig_library {
+-    name: "libaconfig_android_hardware_biometrics_rust",
+-    crate_name: "aconfig_android_hardware_biometrics_rust",
+-    aconfig_declarations: "android.hardware.biometrics.flags-aconfig",
+-}
+diff --git a/keystore2/aaid/Android.bp b/keystore2/aaid/Android.bp
+deleted file mode 100644
+index 3e90a926..00000000
+--- a/keystore2/aaid/Android.bp
++++ /dev/null
+@@ -1,68 +0,0 @@
+-// Copyright 2020, The Android Open Source Project
+-//
+-// Licensed under the Apache License, Version 2.0 (the "License");
+-// you may not use this file except in compliance with the License.
+-// You may obtain a copy of the License at
+-//
+-//     http://www.apache.org/licenses/LICENSE-2.0
+-//
+-// Unless required by applicable law or agreed to in writing, software
+-// distributed under the License is distributed on an "AS IS" BASIS,
+-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-// See the License for the specific language governing permissions and
+-// limitations under the License.
+-
+-package {
+-    // See: http://go/android-license-faq
+-    // A large-scale-change added 'default_applicable_licenses' to import
+-    // all of the 'license_kinds' from "system_security_license"
+-    // to get the below license kinds:
+-    //   SPDX-license-identifier-Apache-2.0
+-    default_applicable_licenses: ["system_security_license"],
+-}
+-
+-cc_library {
+-    name: "libkeystore2_aaid",
+-    srcs: [
+-        "aaid.cpp",
+-    ],
+-    shared_libs: [
+-        "libkeystore-attestation-application-id",
+-    ],
+-}
+-
+-rust_bindgen {
+-    name: "libkeystore2_aaid_bindgen",
+-    wrapper_src: "aaid.hpp",
+-    crate_name: "keystore2_aaid_bindgen",
+-    source_stem: "bindings",
+-
+-    bindgen_flags: [
+-        "--allowlist-function=aaid_keystore_attestation_id",
+-        "--allowlist-var=KEY_ATTESTATION_APPLICATION_ID_MAX_SIZE",
+-    ],
+-}
+-
+-rust_library {
+-    name: "libkeystore2_aaid-rust",
+-    crate_name: "keystore2_aaid",
+-    srcs: [
+-        "lib.rs",
+-    ],
+-    rustlibs: [
+-        "libkeystore2_aaid_bindgen",
+-    ],
+-    shared_libs: [
+-        "libkeystore2_aaid",
+-    ],
+-}
+-
+-rust_test {
+-    name: "libkeystore2_aaid_bindgen_test",
+-    srcs: [":libkeystore2_aaid_bindgen"],
+-    crate_name: "keystore2_aaid_bindgen_test",
+-    test_suites: ["general-tests"],
+-    auto_gen_config: true,
+-    clippy_lints: "none",
+-    lints: "none",
+-}
+diff --git a/keystore2/aidl/Android.bp b/keystore2/aidl/Android.bp
+deleted file mode 100644
+index 30cff35c..00000000
+--- a/keystore2/aidl/Android.bp
++++ /dev/null
+@@ -1,164 +0,0 @@
+-// Copyright 2020, The Android Open Source Project
+-//
+-// Licensed under the Apache License, Version 2.0 (the "License");
+-// you may not use this file except in compliance with the License.
+-// You may obtain a copy of the License at
+-//
+-//     http://www.apache.org/licenses/LICENSE-2.0
+-//
+-// Unless required by applicable law or agreed to in writing, software
+-// distributed under the License is distributed on an "AS IS" BASIS,
+-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-// See the License for the specific language governing permissions and
+-// limitations under the License.
+-
+-package {
+-    // See: http://go/android-license-faq
+-    // A large-scale-change added 'default_applicable_licenses' to import
+-    // all of the 'license_kinds' from "system_security_license"
+-    // to get the below license kinds:
+-    //   SPDX-license-identifier-Apache-2.0
+-    default_applicable_licenses: ["system_security_license"],
+-}
+-
+-aidl_interface {
+-    name: "android.security.authorization",
+-    srcs: ["android/security/authorization/*.aidl"],
+-    defaults: ["android.hardware.security.keymint-latest-defaults"],
+-    imports: [
+-        "android.hardware.security.secureclock-V1",
+-    ],
+-    unstable: true,
+-    backend: {
+-        java: {
+-            platform_apis: true,
+-        },
+-        rust: {
+-            enabled: true,
+-        },
+-        ndk: {
+-            enabled: true,
+-            apps_enabled: false,
+-        },
+-    },
+-}
+-
+-aidl_interface {
+-    name: "android.security.apc",
+-    srcs: ["android/security/apc/*.aidl"],
+-    unstable: true,
+-    backend: {
+-        java: {
+-            enabled: true,
+-        },
+-        rust: {
+-            enabled: true,
+-        },
+-        ndk: {
+-            enabled: true,
+-        },
+-    },
+-}
+-
+-aidl_interface {
+-    name: "android.security.compat",
+-    srcs: ["android/security/compat/*.aidl"],
+-    defaults: ["android.hardware.security.keymint-latest-defaults"],
+-    imports: [
+-        "android.hardware.security.secureclock-V1",
+-        "android.hardware.security.sharedsecret-V1",
+-    ],
+-    unstable: true,
+-    backend: {
+-        java: {
+-            platform_apis: true,
+-        },
+-        rust: {
+-            enabled: true,
+-        },
+-        ndk: {
+-            enabled: true,
+-            apps_enabled: false,
+-        },
+-    },
+-}
+-
+-aidl_interface {
+-    name: "android.security.maintenance",
+-    srcs: ["android/security/maintenance/*.aidl"],
+-    defaults: [
+-        "android.system.keystore2-latest-defaults",
+-    ],
+-    unstable: true,
+-    backend: {
+-        java: {
+-            platform_apis: true,
+-        },
+-        rust: {
+-            enabled: true,
+-        },
+-        ndk: {
+-            enabled: true,
+-            apps_enabled: false,
+-        },
+-    },
+-}
+-
+-aidl_interface {
+-    name: "android.security.legacykeystore",
+-    srcs: ["android/security/legacykeystore/*.aidl"],
+-    unstable: true,
+-    backend: {
+-        java: {
+-            platform_apis: true,
+-        },
+-        rust: {
+-            enabled: true,
+-        },
+-        ndk: {
+-            enabled: true,
+-            apps_enabled: false,
+-        },
+-    },
+-}
+-
+-aidl_interface {
+-    name: "android.security.postprocessor",
+-    srcs: ["android/security/postprocessor/*.aidl"],
+-    unstable: true,
+-    backend: {
+-        java: {
+-            enabled: false,
+-        },
+-        cpp: {
+-            enabled: false,
+-        },
+-        ndk: {
+-            enabled: false,
+-        },
+-        rust: {
+-            enabled: true,
+-        },
+-    },
+-}
+-
+-aidl_interface {
+-    name: "android.security.metrics",
+-    srcs: ["android/security/metrics/*.aidl"],
+-    defaults: [
+-        "android.system.keystore2-latest-defaults",
+-    ],
+-    unstable: true,
+-    backend: {
+-        java: {
+-            platform_apis: true,
+-        },
+-        rust: {
+-            enabled: true,
+-        },
+-        ndk: {
+-            enabled: true,
+-            apps_enabled: false,
+-        },
+-    },
+-}
+diff --git a/keystore2/apc_compat/Android.bp b/keystore2/apc_compat/Android.bp
+deleted file mode 100644
+index 9ca4612a..00000000
+--- a/keystore2/apc_compat/Android.bp
++++ /dev/null
+@@ -1,77 +0,0 @@
+-// Copyright 2020, The Android Open Source Project
+-//
+-// Licensed under the Apache License, Version 2.0 (the "License");
+-// you may not use this file except in compliance with the License.
+-// You may obtain a copy of the License at
+-//
+-//     http://www.apache.org/licenses/LICENSE-2.0
+-//
+-// Unless required by applicable law or agreed to in writing, software
+-// distributed under the License is distributed on an "AS IS" BASIS,
+-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-// See the License for the specific language governing permissions and
+-// limitations under the License.
+-
+-package {
+-    // See: http://go/android-license-faq
+-    // A large-scale-change added 'default_applicable_licenses' to import
+-    // all of the 'license_kinds' from "system_security_license"
+-    // to get the below license kinds:
+-    //   SPDX-license-identifier-Apache-2.0
+-    default_applicable_licenses: ["system_security_license"],
+-}
+-
+-cc_library {
+-    name: "libkeystore2_apc_compat",
+-    srcs: [
+-        "apc_compat.cpp",
+-    ],
+-    shared_libs: [
+-        "android.hardware.confirmationui-V1-ndk",
+-        "android.hardware.confirmationui@1.0",
+-        "libbase",
+-        "libbinder_ndk",
+-        "libhidlbase",
+-        "libutils",
+-    ],
+-}
+-
+-rust_bindgen {
+-    name: "libkeystore2_apc_compat_bindgen",
+-    wrapper_src: "apc_compat.hpp",
+-    crate_name: "keystore2_apc_compat_bindgen",
+-    source_stem: "bindings",
+-
+-    bindgen_flags: [
+-        "--allowlist-function=abortUserConfirmation",
+-        "--allowlist-function=closeUserConfirmationService",
+-        "--allowlist-function=promptUserConfirmation",
+-        "--allowlist-function=tryGetUserConfirmationService",
+-        "--allowlist-var=APC_COMPAT_.*",
+-        "--allowlist-var=INVALID_SERVICE_HANDLE",
+-    ],
+-}
+-
+-rust_library {
+-    name: "libkeystore2_apc_compat-rust",
+-    crate_name: "keystore2_apc_compat",
+-    srcs: [
+-        "apc_compat.rs",
+-    ],
+-    rustlibs: [
+-        "libkeystore2_apc_compat_bindgen",
+-    ],
+-    shared_libs: [
+-        "libkeystore2_apc_compat",
+-    ],
+-}
+-
+-rust_test {
+-    name: "libkeystore2_apc_compat_bindgen_test",
+-    srcs: [":libkeystore2_apc_compat_bindgen"],
+-    crate_name: "keystore2_apc_compat_bindgen_test",
+-    test_suites: ["general-tests"],
+-    auto_gen_config: true,
+-    clippy_lints: "none",
+-    lints: "none",
+-}
+diff --git a/keystore2/legacykeystore/Android.bp b/keystore2/legacykeystore/Android.bp
+deleted file mode 100644
+index de2edc20..00000000
+--- a/keystore2/legacykeystore/Android.bp
++++ /dev/null
+@@ -1,72 +0,0 @@
+-// Copyright 2021, The Android Open Source Project
+-//
+-// Licensed under the Apache License, Version 2.0 (the "License");
+-// you may not use this file except in compliance with the License.
+-// You may obtain a copy of the License at
+-//
+-//     http://www.apache.org/licenses/LICENSE-2.0
+-//
+-// Unless required by applicable law or agreed to in writing, software
+-// distributed under the License is distributed on an "AS IS" BASIS,
+-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-// See the License for the specific language governing permissions and
+-// limitations under the License.
+-
+-package {
+-    // See: http://go/android-license-faq
+-    // A large-scale-change added 'default_applicable_licenses' to import
+-    // all of the 'license_kinds' from "system_security_license"
+-    // to get the below license kinds:
+-    //   SPDX-license-identifier-Apache-2.0
+-    default_applicable_licenses: ["system_security_license"],
+-}
+-
+-rust_defaults {
+-    name: "liblegacykeystore-rust_defaults",
+-    crate_name: "legacykeystore",
+-    srcs: [
+-        "lib.rs",
+-    ],
+-    rustlibs: [
+-        "android.security.legacykeystore-rust",
+-        "libanyhow",
+-        "libbinder_rs",
+-        "libkeystore2_flags_rust",
+-        "libkeystore2_flags_rust",
+-        "liblog_rust",
+-        "librusqlite",
+-        "librustutils",
+-        "libthiserror",
+-    ],
+-}
+-
+-rust_library {
+-    name: "liblegacykeystore-rust",
+-    defaults: ["liblegacykeystore-rust_defaults"],
+-    rustlibs: [
+-        "libkeystore2",
+-        "libkeystore2_flags_rust",
+-        "librusqlite",
+-    ],
+-}
+-
+-rust_test {
+-    name: "legacykeystore_test",
+-    crate_name: "legacykeystore",
+-    srcs: ["lib.rs"],
+-    test_suites: ["general-tests"],
+-    auto_gen_config: true,
+-    rustlibs: [
+-        "android.security.legacykeystore-rust",
+-        "libanyhow",
+-        "libbinder_rs",
+-        "libkeystore2",
+-        "libkeystore2_flags_rust",
+-        "libkeystore2_flags_rust",
+-        "libkeystore2_test_utils",
+-        "liblog_rust",
+-        "librusqlite",
+-        "librustutils",
+-        "libthiserror",
+-    ],
+-}
+diff --git a/keystore2/message_macro/Android.bp b/keystore2/message_macro/Android.bp
+deleted file mode 100644
+index f1fbad76..00000000
+--- a/keystore2/message_macro/Android.bp
++++ /dev/null
+@@ -1,37 +0,0 @@
+-// Copyright 2023, The Android Open Source Project
+-//
+-// Licensed under the Apache License, Version 2.0 (the "License");
+-// you may not use this file except in compliance with the License.
+-// You may obtain a copy of the License at
+-//
+-//     http://www.apache.org/licenses/LICENSE-2.0
+-//
+-// Unless required by applicable law or agreed to in writing, software
+-// distributed under the License is distributed on an "AS IS" BASIS,
+-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-// See the License for the specific language governing permissions and
+-// limitations under the License.
+-
+-package {
+-    // See: http://go/android-license-faq
+-    // A large-scale-change added 'default_applicable_licenses' to import
+-    // all of the 'license_kinds' from "system_security_license"
+-    // to get the below license kinds:
+-    //   SPDX-license-identifier-Apache-2.0
+-    default_applicable_licenses: ["system_security_license"],
+-}
+-
+-rust_defaults {
+-    name: "libmessage_macro_defaults",
+-    crate_name: "message_macro",
+-    srcs: ["src/lib.rs"],
+-}
+-
+-rust_library {
+-    name: "libmessage_macro",
+-    defaults: ["libmessage_macro_defaults"],
+-    apex_available: [
+-        "//apex_available:platform",
+-        "com.android.virt",
+-    ],
+-}
+diff --git a/keystore2/postprocessor_client/Android.bp b/keystore2/postprocessor_client/Android.bp
+deleted file mode 100644
+index 7f0194ac..00000000
+--- a/keystore2/postprocessor_client/Android.bp
++++ /dev/null
+@@ -1,47 +0,0 @@
+-//
+-// Copyright 2024, The Android Open Source Project
+-//
+-// Licensed under the Apache License, Version 2.0 (the "License");
+-// you may not use this file except in compliance with the License.
+-// You may obtain a copy of the License at
+-//
+-//     http://www.apache.org/licenses/LICENSE-2.0
+-//
+-// Unless required by applicable law or agreed to in writing, software
+-// distributed under the License is distributed on an "AS IS" BASIS,
+-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-// See the License for the specific language governing permissions and
+-// limitations under the License.
+-
+-package {
+-    // See: http://go/android-license-faq
+-    // A large-scale-change added 'default_applicable_licenses' to import
+-    // all of the 'license_kinds' from "system_security_license"
+-    // to get the below license kinds:
+-    //   SPDX-license-identifier-Apache-2.0
+-    default_applicable_licenses: ["system_security_license"],
+-}
+-
+-rust_defaults {
+-    name: "libpostprocessor_client_defaults",
+-    crate_name: "postprocessor_client",
+-    srcs: ["src/lib.rs"],
+-    rustlibs: [
+-        "android.security.postprocessor-rust",
+-        "libanyhow",
+-        "libbinder_rs",
+-        "liblog_rust",
+-        "libmessage_macro",
+-        "libthiserror",
+-    ],
+-    defaults: [
+-        "keymint_use_latest_hal_aidl_rust",
+-    ],
+-}
+-
+-rust_library {
+-    name: "libpostprocessor_client",
+-    defaults: [
+-        "libpostprocessor_client_defaults",
+-    ],
+-}
+diff --git a/keystore2/rkpd_client/Android.bp b/keystore2/rkpd_client/Android.bp
+deleted file mode 100644
+index d6a911fc..00000000
+--- a/keystore2/rkpd_client/Android.bp
++++ /dev/null
+@@ -1,55 +0,0 @@
+-// Copyright 2023, The Android Open Source Project
+-//
+-// Licensed under the Apache License, Version 2.0 (the "License");
+-// you may not use this file except in compliance with the License.
+-// You may obtain a copy of the License at
+-//
+-//     http://www.apache.org/licenses/LICENSE-2.0
+-//
+-// Unless required by applicable law or agreed to in writing, software
+-// distributed under the License is distributed on an "AS IS" BASIS,
+-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-// See the License for the specific language governing permissions and
+-// limitations under the License.
+-
+-package {
+-    // See: http://go/android-license-faq
+-    // A large-scale-change added 'default_applicable_licenses' to import
+-    // all of the 'license_kinds' from "system_security_license"
+-    // to get the below license kinds:
+-    //   SPDX-license-identifier-Apache-2.0
+-    default_applicable_licenses: ["system_security_license"],
+-}
+-
+-rust_defaults {
+-    name: "librkpd_client_defaults",
+-    crate_name: "rkpd_client",
+-    srcs: ["src/lib.rs"],
+-    rustlibs: [
+-        "android.security.rkp_aidl-rust",
+-        "libanyhow",
+-        "libbinder_rs",
+-        "liblog_rust",
+-        "libmessage_macro",
+-        "libthiserror",
+-        "libtokio",
+-    ],
+-}
+-
+-rust_library {
+-    name: "librkpd_client",
+-    defaults: ["librkpd_client_defaults"],
+-    apex_available: [
+-        "//apex_available:platform",
+-        "com.android.virt",
+-    ],
+-}
+-
+-rust_test {
+-    name: "librkpd_client.test",
+-    defaults: ["librkpd_client_defaults"],
+-    test_suites: ["general-tests"],
+-    rustlibs: [
+-        "librand",
+-    ],
+-}
+diff --git a/keystore2/selinux/Android.bp b/keystore2/selinux/Android.bp
+deleted file mode 100644
+index 8e644e64..00000000
+--- a/keystore2/selinux/Android.bp
++++ /dev/null
+@@ -1,83 +0,0 @@
+-// Copyright 2020, The Android Open Source Project
+-//
+-// Licensed under the Apache License, Version 2.0 (the "License");
+-// you may not use this file except in compliance with the License.
+-// You may obtain a copy of the License at
+-//
+-//     http://www.apache.org/licenses/LICENSE-2.0
+-//
+-// Unless required by applicable law or agreed to in writing, software
+-// distributed under the License is distributed on an "AS IS" BASIS,
+-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-// See the License for the specific language governing permissions and
+-// limitations under the License.
+-
+-package {
+-    // See: http://go/android-license-faq
+-    // A large-scale-change added 'default_applicable_licenses' to import
+-    // all of the 'license_kinds' from "system_security_license"
+-    // to get the below license kinds:
+-    //   SPDX-license-identifier-Apache-2.0
+-    default_applicable_licenses: ["system_security_license"],
+-}
+-
+-rust_library {
+-    name: "libkeystore2_selinux",
+-    crate_name: "keystore2_selinux",
+-    srcs: [
+-        "src/lib.rs",
+-    ],
+-
+-    shared_libs: [
+-        "libselinux",
+-    ],
+-
+-    rustlibs: [
+-        "libanyhow",
+-        "liblog_rust",
+-        "libselinux_bindgen",
+-        "libthiserror",
+-    ],
+-}
+-
+-rust_test {
+-    name: "keystore2_selinux_test",
+-    srcs: [
+-        "src/lib.rs",
+-    ],
+-    crate_name: "keystore2_selinux_test",
+-    test_suites: ["general-tests"],
+-    auto_gen_config: true,
+-
+-    shared_libs: [
+-        "libselinux",
+-    ],
+-
+-    rustlibs: [
+-        "libandroid_logger",
+-        "libanyhow",
+-        "liblog_rust",
+-        "libselinux_bindgen",
+-        "libthiserror",
+-    ],
+-}
+-
+-rust_test {
+-    name: "keystore2_selinux_concurrency_test",
+-    srcs: [
+-        "src/concurrency_test.rs",
+-    ],
+-    crate_name: "keystore2_selinux_concurrency_test",
+-    test_suites: ["general-tests"],
+-    auto_gen_config: true,
+-
+-    rustlibs: [
+-        "libandroid_logger",
+-        "libanyhow",
+-        "libkeystore2_selinux",
+-        "liblog_rust",
+-        "libnix",
+-        "libnum_cpus",
+-        "libthiserror",
+-    ],
+-}
+diff --git a/keystore2/src/crypto/Android.bp b/keystore2/src/crypto/Android.bp
+deleted file mode 100644
+index f8da06ff..00000000
+--- a/keystore2/src/crypto/Android.bp
++++ /dev/null
+@@ -1,156 +0,0 @@
+-// Copyright 2020, The Android Open Source Project
+-//
+-// Licensed under the Apache License, Version 2.0 (the "License");
+-// you may not use this file except in compliance with the License.
+-// You may obtain a copy of the License at
+-//
+-//     http://www.apache.org/licenses/LICENSE-2.0
+-//
+-// Unless required by applicable law or agreed to in writing, software
+-// distributed under the License is distributed on an "AS IS" BASIS,
+-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-// See the License for the specific language governing permissions and
+-// limitations under the License.
+-
+-package {
+-    // See: http://go/android-license-faq
+-    // A large-scale-change added 'default_applicable_licenses' to import
+-    // all of the 'license_kinds' from "system_security_license"
+-    // to get the below license kinds:
+-    //   SPDX-license-identifier-Apache-2.0
+-    default_applicable_licenses: ["system_security_license"],
+-}
+-
+-rust_library {
+-    name: "libkeystore2_crypto_rust",
+-    crate_name: "keystore2_crypto",
+-    srcs: ["lib.rs"],
+-    rustlibs: [
+-        "libkeystore2_crypto_bindgen",
+-        "liblog_rust",
+-        "libnix",
+-        "libthiserror",
+-    ],
+-    shared_libs: [
+-        "libcrypto",
+-        "libkeystore2_crypto",
+-    ],
+-    vendor_available: true,
+-    apex_available: [
+-        "//apex_available:platform",
+-        "com.android.virt",
+-    ],
+-}
+-
+-cc_library {
+-    name: "libkeystore2_crypto",
+-    srcs: [
+-        "certificate_utils.cpp",
+-        "crypto.cpp",
+-    ],
+-    export_include_dirs: ["include"],
+-    shared_libs: [
+-        "libcrypto",
+-        "liblog",
+-    ],
+-    vendor_available: true,
+-    apex_available: [
+-        "//apex_available:platform",
+-        "com.android.virt",
+-    ],
+-}
+-
+-rust_bindgen {
+-    name: "libkeystore2_crypto_bindgen",
+-    wrapper_src: "crypto.hpp",
+-    crate_name: "keystore2_crypto_bindgen",
+-    source_stem: "bindings",
+-    host_supported: true,
+-    vendor_available: true,
+-    shared_libs: ["libcrypto"],
+-    bindgen_flags: [
+-        "--allowlist-function=AES_gcm_decrypt",
+-        "--allowlist-function=AES_gcm_encrypt",
+-        "--allowlist-function=CreateKeyId",
+-        "--allowlist-function=ECDHComputeKey",
+-        "--allowlist-function=ECKEYGenerateKey",
+-        "--allowlist-function=ECKEYMarshalPrivateKey",
+-        "--allowlist-function=ECKEYParsePrivateKey",
+-        "--allowlist-function=ECPOINTOct2Point",
+-        "--allowlist-function=ECPOINTPoint2Oct",
+-        "--allowlist-function=EC_KEY_free",
+-        "--allowlist-function=EC_KEY_get0_public_key",
+-        "--allowlist-function=EC_POINT_free",
+-        "--allowlist-function=HKDFExpand",
+-        "--allowlist-function=HKDFExtract",
+-        "--allowlist-function=PBKDF2",
+-        "--allowlist-function=extractSubjectFromCertificate",
+-        "--allowlist-function=hmacSha256",
+-        "--allowlist-function=randomBytes",
+-        "--allowlist-type=EC_KEY",
+-        "--allowlist-type=EC_POINT",
+-        "--allowlist-var=EC_MAX_BYTES",
+-        "--allowlist-var=EVP_MAX_MD_SIZE",
+-    ],
+-    cflags: ["-DBORINGSSL_NO_CXX"],
+-    apex_available: [
+-        "//apex_available:platform",
+-        "com.android.virt",
+-    ],
+-}
+-
+-rust_test {
+-    name: "keystore2_crypto_test_rust",
+-    crate_name: "keystore2_crypto_test_rust",
+-    srcs: ["lib.rs"],
+-    test_suites: ["general-tests"],
+-    auto_gen_config: true,
+-    rustlibs: [
+-        "libkeystore2_crypto_bindgen",
+-        "liblog_rust",
+-        "libnix",
+-        "libthiserror",
+-    ],
+-    static_libs: [
+-        "libkeystore2_crypto",
+-    ],
+-    shared_libs: [
+-        "libc++",
+-        "libcrypto",
+-        "liblog",
+-    ],
+-}
+-
+-cc_test {
+-    name: "keystore2_crypto_test",
+-    cflags: [
+-        "-Wall",
+-        "-Werror",
+-        "-Wextra",
+-    ],
+-    srcs: [
+-        "tests/certificate_utils_test.cpp",
+-        "tests/gtest_main.cpp",
+-    ],
+-    test_suites: ["general-tests"],
+-    static_libs: [
+-        "libkeystore2_crypto",
+-    ],
+-    shared_libs: [
+-        "libcrypto",
+-    ],
+-}
+-
+-rust_test {
+-    name: "libkeystore2_crypto_bindgen_test",
+-    srcs: [":libkeystore2_crypto_bindgen"],
+-    crate_name: "keystore2_crypto_bindgen_test",
+-    test_suites: ["general-tests"],
+-    auto_gen_config: true,
+-    clippy_lints: "none",
+-    lints: "none",
+-    apex_available: [
+-        "//apex_available:platform",
+-        "com.android.virt",
+-    ],
+-}
+diff --git a/keystore2/src/fuzzers/Android.bp b/keystore2/src/fuzzers/Android.bp
+deleted file mode 100644
+index 7ddbfc09..00000000
+--- a/keystore2/src/fuzzers/Android.bp
++++ /dev/null
+@@ -1,65 +0,0 @@
+-// Copyright 2021, The Android Open Source Project
+-//
+-// Licensed under the Apache License, Version 2.0 (the "License");
+-// you may not use this file except in compliance with the License.
+-// You may obtain a copy of the License at
+-//
+-//     http://www.apache.org/licenses/LICENSE-2.0
+-//
+-// Unless required by applicable law or agreed to in writing, software
+-// distributed under the License is distributed on an "AS IS" BASIS,
+-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-// See the License for the specific language governing permissions and
+-// limitations under the License.
+-
+-package {
+-    default_applicable_licenses: ["Android-Apache-2.0"],
+-}
+-
+-rust_fuzz {
+-    name: "keystore2_unsafe_fuzzer",
+-    srcs: ["keystore2_unsafe_fuzzer.rs"],
+-    rustlibs: [
+-        "libarbitrary",
+-        "libkeystore2",
+-        "libkeystore2_aaid-rust",
+-        "libkeystore2_apc_compat-rust",
+-        "libkeystore2_crypto_rust",
+-        "libkeystore2_hal_names_rust",
+-        "libkeystore2_selinux",
+-    ],
+-    fuzz_config: {
+-        fuzz_on_haiku_device: true,
+-        fuzz_on_haiku_host: false,
+-        cc: [
+-            "android-media-fuzzing-reports@google.com",
+-        ],
+-        componentid: 155276,
+-    },
+-}
+-
+-rust_fuzz {
+-    name: "authorization_service_fuzzer",
+-    srcs: ["aidl-fuzzers/authorization_service_fuzzer.rs"],
+-    rustlibs: [
+-        "libbinder_random_parcel_rs",
+-        "libbinder_rs",
+-        "libkeystore2",
+-        "libkeystore2_aaid-rust",
+-        "libkeystore2_apc_compat-rust",
+-        "libkeystore2_crypto_rust",
+-        "libkeystore2_hal_names_rust",
+-        "libkeystore2_selinux",
+-    ],
+-    fuzz_config: {
+-        fuzz_on_haiku_device: true,
+-        fuzz_on_haiku_host: false,
+-        cc: [
+-            "android-media-fuzzing-reports@google.com",
+-            "smoreland@google.com",
+-            "waghpawan@google.com",
+-        ],
+-        // Adds bugs to hotlist "AIDL fuzzers bugs" on buganizer
+-        hotlists: ["4637097"],
+-    },
+-}
+diff --git a/keystore2/src/hal_instance_names/Android.bp b/keystore2/src/hal_instance_names/Android.bp
+deleted file mode 100644
+index 2f1d5c3d..00000000
+--- a/keystore2/src/hal_instance_names/Android.bp
++++ /dev/null
+@@ -1,73 +0,0 @@
+-// Copyright 2021, The Android Open Source Project
+-//
+-// Licensed under the Apache License, Version 2.0 (the "License");
+-// you may not use this file except in compliance with the License.
+-// You may obtain a copy of the License at
+-//
+-//     http://www.apache.org/licenses/LICENSE-2.0
+-//
+-// Unless required by applicable law or agreed to in writing, software
+-// distributed under the License is distributed on an "AS IS" BASIS,
+-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-// See the License for the specific language governing permissions and
+-// limitations under the License.
+-
+-package {
+-    // See: http://go/android-license-faq
+-    // A large-scale-change added 'default_applicable_licenses' to import
+-    // all of the 'license_kinds' from "system_security_license"
+-    // to get the below license kinds:
+-    //   SPDX-license-identifier-Apache-2.0
+-    default_applicable_licenses: ["system_security_license"],
+-}
+-
+-rust_library {
+-    name: "libkeystore2_hal_names_rust",
+-    crate_name: "keystore2_hal_names",
+-    srcs: ["lib.rs"],
+-    rustlibs: [
+-        "libcxx",
+-    ],
+-    shared_libs: [
+-        "libhidlbase",
+-    ],
+-    static_libs: [
+-        "libkeystore2_hal_names_cpp",
+-    ],
+-}
+-
+-cc_library_static {
+-    name: "libkeystore2_hal_names_cpp",
+-    srcs: ["hal_names.cpp"],
+-    generated_headers: ["cxx-bridge-header"],
+-    generated_sources: ["hal_names_bridge_code"],
+-    shared_libs: [
+-        "libhidlbase",
+-    ],
+-}
+-
+-genrule {
+-    name: "hal_names_bridge_code",
+-    tools: ["cxxbridge"],
+-    cmd: "$(location cxxbridge) $(in) >> $(out)",
+-    srcs: ["lib.rs"],
+-    out: ["hal_names_cxx_generated.cc"],
+-}
+-
+-rust_test {
+-    name: "keystore2_hal_names_test",
+-    crate_name: "keystore2_hal_names_test",
+-    srcs: ["lib.rs"],
+-    test_suites: ["general-tests"],
+-    auto_gen_config: true,
+-    rustlibs: [
+-        "libcxx",
+-    ],
+-    static_libs: [
+-        "libkeystore2_hal_names_cpp",
+-    ],
+-    shared_libs: [
+-        "libc++",
+-        "libhidlbase",
+-    ],
+-}
+diff --git a/keystore2/src/km_compat/Android.bp b/keystore2/src/km_compat/Android.bp
+deleted file mode 100644
+index 5fa190c9..00000000
+--- a/keystore2/src/km_compat/Android.bp
++++ /dev/null
+@@ -1,134 +0,0 @@
+-// Copyright 2020, The Android Open Source Project
+-//
+-// Licensed under the Apache License, Version 2.0 (the "License");
+-// you may not use this file except in compliance with the License.
+-// You may obtain a copy of the License at
+-//
+-//     http://www.apache.org/licenses/LICENSE-2.0
+-//
+-// Unless required by applicable law or agreed to in writing, software
+-// distributed under the License is distributed on an "AS IS" BASIS,
+-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-// See the License for the specific language governing permissions and
+-// limitations under the License.
+-
+-package {
+-    // See: http://go/android-license-faq
+-    // A large-scale-change added 'default_applicable_licenses' to import
+-    // all of the 'license_kinds' from "system_security_license"
+-    // to get the below license kinds:
+-    //   SPDX-license-identifier-Apache-2.0
+-    default_applicable_licenses: ["system_security_license"],
+-}
+-
+-rust_library {
+-    name: "libkeystore2_km_compat",
+-    crate_name: "keystore2_km_compat",
+-    srcs: ["lib.rs"],
+-    defaults: [
+-        "keymint_use_latest_hal_aidl_rust",
+-    ],
+-    rustlibs: [
+-        "android.security.compat-rust",
+-    ],
+-    shared_libs: [
+-        "libkm_compat_service",
+-    ],
+-}
+-
+-rust_test {
+-    name: "keystore2_km_compat_test",
+-    crate_name: "keystore2_km_compat_test",
+-    srcs: ["tests.rs"],
+-    test_suites: ["general-tests"],
+-    auto_gen_config: true,
+-    defaults: [
+-        "keymint_use_latest_hal_aidl_rust",
+-    ],
+-    rustlibs: [
+-        "android.security.compat-rust",
+-        "libkeystore2_km_compat",
+-    ],
+-    shared_libs: [
+-        "libkm_compat_service",
+-    ],
+-}
+-
+-cc_library {
+-    name: "libkm_compat",
+-    srcs: ["km_compat.cpp"],
+-    defaults: [
+-        "keymint_use_latest_hal_aidl_ndk_shared",
+-    ],
+-    shared_libs: [
+-        "android.hardware.keymaster@3.0",
+-        "android.hardware.keymaster@4.0",
+-        "android.hardware.keymaster@4.1",
+-        "android.hardware.security.secureclock-V1-ndk",
+-        "android.hardware.security.sharedsecret-V1-ndk",
+-        "android.security.compat-ndk",
+-        "libbase",
+-        "libbinder_ndk",
+-        "libcrypto",
+-        "libhidlbase",
+-        "libkeymaster4_1support",
+-        // The C++ KeyMint implementation actually only supports KeyMint v4, but pretend
+-        // it is the latest version to avoid mismatched AIDL versions.
+-        "libkeymint_fake_latest",
+-        "libkeymint_support",
+-        "libkeystore2_crypto",
+-        "libutils",
+-    ],
+-}
+-
+-cc_library {
+-    name: "libkm_compat_service",
+-    srcs: ["km_compat_service.cpp"],
+-    defaults: [
+-        "keymint_use_latest_hal_aidl_ndk_shared",
+-    ],
+-    shared_libs: [
+-        "android.security.compat-ndk",
+-        "libbinder_ndk",
+-        "libcrypto",
+-        "libkeymaster4_1support",
+-        "libkeystore2_crypto",
+-        "libkm_compat",
+-    ],
+-}
+-
+-cc_test {
+-    name: "keystore2_km_compat_test_cpp",
+-    cflags: [
+-        "-Wall",
+-        "-Werror",
+-        "-Wextra",
+-    ],
+-    srcs: [
+-        "certificate_test.cpp",
+-        "gtest_main.cpp",
+-        "parameter_conversion_test.cpp",
+-        "slot_test.cpp",
+-    ],
+-    defaults: [
+-        "keymint_use_latest_hal_aidl_ndk_shared",
+-    ],
+-    shared_libs: [
+-        "android.hardware.keymaster@3.0",
+-        "android.hardware.keymaster@4.0",
+-        "android.hardware.keymaster@4.1",
+-        "android.hardware.security.secureclock-V1-ndk",
+-        "android.hardware.security.sharedsecret-V1-ndk",
+-        "android.security.compat-ndk",
+-        "libbase",
+-        "libbinder_ndk",
+-        "libcrypto",
+-        "libhidlbase",
+-        "libkeymaster4_1support",
+-        "libkeymint_support",
+-        "libkeystore2_crypto",
+-        "libkm_compat",
+-        "libkm_compat_service",
+-        "libutils",
+-    ],
+-}
+diff --git a/keystore2/test_utils/Android.bp b/keystore2/test_utils/Android.bp
+deleted file mode 100644
+index 3f581eed..00000000
+--- a/keystore2/test_utils/Android.bp
++++ /dev/null
+@@ -1,109 +0,0 @@
+-// Copyright 2023, The Android Open Source Project
+-//
+-// Licensed under the Apache License, Version 2.0 (the "License");
+-// you may not use this file except in compliance with the License.
+-// You may obtain a copy of the License at
+-//
+-//     http://www.apache.org/licenses/LICENSE-2.0
+-//
+-// Unless required by applicable law or agreed to in writing, software
+-// distributed under the License is distributed on an "AS IS" BASIS,
+-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-// See the License for the specific language governing permissions and
+-// limitations under the License.
+-
+-package {
+-    // See: http://go/android-license-faq
+-    // A large-scale-change added 'default_applicable_licenses' to import
+-    // all of the 'license_kinds' from "system_security_license"
+-    // to get the below license kinds:
+-    //   SPDX-license-identifier-Apache-2.0
+-    default_applicable_licenses: ["system_security_license"],
+-}
+-
+-rust_defaults {
+-    name: "libkeystore2_test_utils_defaults",
+-    defaults: [
+-        "keymint_use_latest_hal_aidl_rust",
+-        "keystore2_use_latest_aidl_rust",
+-    ],
+-    rustlibs: [
+-        "android.security.authorization-rust",
+-        "libanyhow",
+-        "libbinder_rs",
+-        "libcxx",
+-        "libkeystore2_selinux",
+-        "liblog_rust",
+-        "libnix",
+-        "librand",
+-        "librustutils",
+-        "libserde",
+-        "libserde_cbor",
+-        "libthiserror",
+-    ],
+-    static_libs: [
+-        "libcppbor",
+-        "libkeymaster_portable",
+-        "libkeymint_support",
+-        "libkeystore2_ffi_test_utils",
+-    ],
+-    shared_libs: [
+-        "libbase",
+-        "libcrypto",
+-    ],
+-}
+-
+-rust_library {
+-    name: "libkeystore2_test_utils",
+-    crate_name: "keystore2_test_utils",
+-    srcs: ["lib.rs"],
+-    defaults: ["libkeystore2_test_utils_defaults"],
+-}
+-
+-rust_test {
+-    name: "keystore2_test_utils_test",
+-    srcs: ["lib.rs"],
+-    defaults: ["libkeystore2_test_utils_defaults"],
+-    test_suites: ["general-tests"],
+-    require_root: true,
+-    auto_gen_config: true,
+-    compile_multilib: "first",
+-}
+-
+-cc_library_static {
+-    name: "libkeystore2_ffi_test_utils",
+-    srcs: ["ffi_test_utils.cpp"],
+-    defaults: [
+-        "keymint_use_latest_hal_aidl_ndk_static",
+-        "keystore2_use_latest_aidl_ndk_static",
+-    ],
+-    generated_headers: [
+-        "cxx-bridge-header",
+-        "libkeystore2_ffi_test_utils_bridge_header",
+-    ],
+-    generated_sources: ["libkeystore2_ffi_test_utils_bridge_code"],
+-    static_libs: [
+-        "libkeymaster_portable",
+-        "libkeymint_support",
+-    ],
+-    shared_libs: [
+-        "libbase",
+-        "libcrypto",
+-    ],
+-}
+-
+-genrule {
+-    name: "libkeystore2_ffi_test_utils_bridge_code",
+-    tools: ["cxxbridge"],
+-    cmd: "$(location cxxbridge) $(in) >> $(out)",
+-    srcs: ["ffi_test_utils.rs"],
+-    out: ["libkeystore2_test_utils_cxx_generated.cc"],
+-}
+-
+-genrule {
+-    name: "libkeystore2_ffi_test_utils_bridge_header",
+-    tools: ["cxxbridge"],
+-    cmd: "$(location cxxbridge) $(in) --header >> $(out)",
+-    srcs: ["ffi_test_utils.rs"],
+-    out: ["ffi_test_utils.rs.h"],
+-}
+diff --git a/keystore2/test_utils/attestation/Android.bp b/keystore2/test_utils/attestation/Android.bp
+deleted file mode 100644
+index fb4dc7e7..00000000
+--- a/keystore2/test_utils/attestation/Android.bp
++++ /dev/null
+@@ -1,56 +0,0 @@
+-// Copyright 2024, The Android Open Source Project
+-//
+-// Licensed under the Apache License, Version 2.0 (the "License");
+-// you may not use this file except in compliance with the License.
+-// You may obtain a copy of the License at
+-//
+-//     http://www.apache.org/licenses/LICENSE-2.0
+-//
+-// Unless required by applicable law or agreed to in writing, software
+-// distributed under the License is distributed on an "AS IS" BASIS,
+-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-// See the License for the specific language governing permissions and
+-// limitations under the License.
+-
+-package {
+-    // See: http://go/android-license-faq
+-    // A large-scale-change added 'default_applicable_licenses' to import
+-    // all of the 'license_kinds' from "system_security_license"
+-    // to get the below license kinds:
+-    //   SPDX-license-identifier-Apache-2.0
+-    default_applicable_licenses: ["system_security_license"],
+-}
+-
+-rust_defaults {
+-    name: "libkeystore_attestation_defaults",
+-    crate_name: "keystore_attestation",
+-    srcs: ["lib.rs"],
+-    defaults: [
+-        "keymint_use_latest_hal_aidl_rust",
+-    ],
+-    rustlibs: [
+-        "libbinder_rs",
+-        "libder",
+-        "liblog_rust",
+-        "libspki",
+-        "libx509_cert",
+-    ],
+-}
+-
+-rust_library {
+-    name: "libkeystore_attestation",
+-    defaults: ["libkeystore_attestation_defaults"],
+-    vendor_available: true,
+-    min_sdk_version: "35",
+-}
+-
+-rust_test {
+-    name: "libkeystore_attestation_test",
+-    defaults: ["libkeystore_attestation_defaults"],
+-    rustlibs: [
+-        "libhex",
+-    ],
+-    test_suites: ["general-tests"],
+-    auto_gen_config: true,
+-    compile_multilib: "first",
+-}
+diff --git a/keystore2/tests/Android.bp b/keystore2/tests/Android.bp
+deleted file mode 100644
+index 87bf42b6..00000000
+--- a/keystore2/tests/Android.bp
++++ /dev/null
+@@ -1,63 +0,0 @@
+-// Copyright 2022, The Android Open Source Project
+-//
+-// Licensed under the Apache License, Version 2.0 (the "License");
+-// you may not use this file except in compliance with the License.
+-// You may obtain a copy of the License at
+-//
+-//     http://www.apache.org/licenses/LICENSE-2.0
+-//
+-// Unless required by applicable law or agreed to in writing, software
+-// distributed under the License is distributed on an "AS IS" BASIS,
+-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-// See the License for the specific language governing permissions and
+-// limitations under the License.
+-
+-package {
+-    default_team: "trendy_team_android_hardware_backed_security",
+-    // See: http://go/android-license-faq
+-    // A large-scale-change added 'default_applicable_licenses' to import
+-    // all of the 'license_kinds' from "system_security_license"
+-    // to get the below license kinds:
+-    //   SPDX-license-identifier-Apache-2.0
+-    default_applicable_licenses: ["system_security_license"],
+-}
+-
+-rust_test {
+-    name: "keystore2_client_tests",
+-    defaults: [
+-        "keymint_use_latest_hal_aidl_rust",
+-        "keystore2_use_latest_aidl_rust",
+-    ],
+-    srcs: ["keystore2_client_tests.rs"],
+-    test_suites: [
+-        "automotive-sdv-tests",
+-        "general-tests",
+-        "vts",
+-    ],
+-    test_config: "AndroidTest.xml",
+-
+-    rustlibs: [
+-        "android.hardware.gatekeeper-V1-rust",
+-        "android.hardware.security.secureclock-V1-rust",
+-        "android.security.authorization-rust",
+-        "android.security.maintenance-rust",
+-        "libaconfig_android_hardware_biometrics_rust",
+-        "libandroid_logger",
+-        "libandroid_security_flags_rust",
+-        "libanyhow",
+-        "libbinder_rs",
+-        "libbssl_crypto",
+-        "libkeystore_attestation",
+-        "libkeystore2_test_utils",
+-        "libhex",
+-        "liblog_rust",
+-        "libkeystore2_flags_rust",
+-        "libnix",
+-        "libopenssl",
+-        "librustutils",
+-        "libserde",
+-        "libx509_cert",
+-        "packagemanager_aidl-rust",
+-    ],
+-    require_root: true,
+-}
+diff --git a/keystore2/tests/keystore-engine/Android.bp b/keystore2/tests/keystore-engine/Android.bp
+deleted file mode 100644
+index 01d89679..00000000
+--- a/keystore2/tests/keystore-engine/Android.bp
++++ /dev/null
+@@ -1,62 +0,0 @@
+-// Copyright 2022, The Android Open Source Project
+-//
+-// Licensed under the Apache License, Version 2.0 (the "License");
+-// you may not use this file except in compliance with the License.
+-// You may obtain a copy of the License at
+-//
+-//     http://www.apache.org/licenses/LICENSE-2.0
+-//
+-// Unless required by applicable law or agreed to in writing, software
+-// distributed under the License is distributed on an "AS IS" BASIS,
+-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-// See the License for the specific language governing permissions and
+-// limitations under the License.
+-
+-rust_test {
+-    name: "keystore2_engine_tests",
+-    defaults: [
+-        "keymint_use_latest_hal_aidl_rust",
+-        "keystore2_use_latest_aidl_rust",
+-    ],
+-    srcs: ["engine_tests.rs"],
+-    test_suites: [
+-        "general-tests",
+-    ],
+-    test_config: "AndroidTestEngine.xml",
+-
+-    rustlibs: [
+-        "libbinder_rs",
+-        "libkeystore2_test_utils",
+-        "libopenssl",
+-        "librustutils",
+-    ],
+-    static_libs: [
+-        "libkeystore2_ffi_engine",
+-        "libkeystore-engine",
+-        "libkeymaster_portable",
+-        "libkeymint_support",
+-        // Also need the -ndk variants because libkeystore-engine depends on them.
+-        // TODO: figure out why using the ".._use_latest_aidl_ndk_static" defaults doesn't work.
+-        "android.system.keystore2-V5-ndk",
+-        "android.hardware.security.keymint-V4-ndk",
+-    ],
+-    require_root: true,
+-}
+-
+-cc_library_static {
+-    name: "libkeystore2_ffi_engine",
+-    srcs: ["ffi_engine.cpp"],
+-    defaults: [
+-        "keymint_use_latest_hal_aidl_ndk_static",
+-        "keystore2_use_latest_aidl_ndk_static",
+-    ],
+-    static_libs: [
+-        "libkeystore-engine",
+-        "libkeymaster_portable",
+-        "libkeymint_support",
+-    ],
+-    shared_libs: [
+-        "libbase",
+-        "libcrypto",
+-    ],
+-}
+diff --git a/keystore2/tests/legacy_blobs/Android.bp b/keystore2/tests/legacy_blobs/Android.bp
+deleted file mode 100644
+index 92d13072..00000000
+--- a/keystore2/tests/legacy_blobs/Android.bp
++++ /dev/null
+@@ -1,52 +0,0 @@
+-// Copyright 2022, The Android Open Source Project
+-//
+-// Licensed under the Apache License, Version 2.0 (the "License");
+-// you may not use this file except in compliance with the License.
+-// You may obtain a copy of the License at
+-//
+-//     http://www.apache.org/licenses/LICENSE-2.0
+-//
+-// Unless required by applicable law or agreed to in writing, software
+-// distributed under the License is distributed on an "AS IS" BASIS,
+-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-// See the License for the specific language governing permissions and
+-// limitations under the License.
+-
+-package {
+-    // See: http://go/android-license-faq
+-    // A large-scale-change added 'default_applicable_licenses' to import
+-    // all of the 'license_kinds' from "system_security_license"
+-    // to get the below license kinds:
+-    //   SPDX-license-identifier-Apache-2.0
+-    default_applicable_licenses: ["system_security_license"],
+-}
+-
+-rust_test {
+-    name: "keystore2_legacy_blobs_test",
+-    srcs: ["keystore2_legacy_blob_tests.rs"],
+-    test_suites: [
+-        "general-tests",
+-    ],
+-    // auto_gen_config: true,
+-    test_config: "AndroidTest.xml",
+-
+-    rustlibs: [
+-        "android.security.authorization-rust",
+-        "android.security.maintenance-rust",
+-        "libanyhow",
+-        "libbinder_rs",
+-        "libkeystore2_crypto_rust",
+-        "libkeystore2_test_utils",
+-        "libkeystore2_with_test_utils",
+-        "liblibc",
+-        "libnix",
+-        "librustutils",
+-        "libserde",
+-        "libthiserror",
+-    ],
+-    defaults: [
+-        "keymint_use_latest_hal_aidl_rust",
+-        "keystore2_use_latest_aidl_rust",
+-    ],
+-    require_root: true,
+-}
+diff --git a/keystore2/watchdog/Android.bp b/keystore2/watchdog/Android.bp
+deleted file mode 100644
+index 9a99f10b..00000000
+--- a/keystore2/watchdog/Android.bp
++++ /dev/null
+@@ -1,50 +0,0 @@
+-// Copyright 2023, The Android Open Source Project
+-//
+-// Licensed under the Apache License, Version 2.0 (the "License");
+-// you may not use this file except in compliance with the License.
+-// You may obtain a copy of the License at
+-//
+-//     http://www.apache.org/licenses/LICENSE-2.0
+-//
+-// Unless required by applicable law or agreed to in writing, software
+-// distributed under the License is distributed on an "AS IS" BASIS,
+-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-// See the License for the specific language governing permissions and
+-// limitations under the License.
+-
+-package {
+-    // See: http://go/android-license-faq
+-    // A large-scale-change added 'default_applicable_licenses' to import
+-    // all of the 'license_kinds' from "system_security_license"
+-    // to get the below license kinds:
+-    //   SPDX-license-identifier-Apache-2.0
+-    default_applicable_licenses: ["system_security_license"],
+-}
+-
+-rust_defaults {
+-    name: "libwatchdog_defaults",
+-    crate_name: "watchdog_rs",
+-    srcs: ["src/lib.rs"],
+-    rustlibs: [
+-        "libchrono",
+-        "liblog_rust",
+-    ],
+-}
+-
+-rust_library {
+-    name: "libwatchdog_rs",
+-    defaults: ["libwatchdog_defaults"],
+-    apex_available: [
+-        "//apex_available:platform",
+-        "com.android.virt",
+-    ],
+-}
+-
+-rust_test {
+-    name: "libwatchdog_rs.test",
+-    defaults: ["libwatchdog_defaults"],
+-    test_suites: ["general-tests"],
+-    rustlibs: [
+-        "libandroid_logger",
+-    ],
+-}
+diff --git a/mls/mls-rs-crypto-boringssl/Android.bp b/mls/mls-rs-crypto-boringssl/Android.bp
+deleted file mode 100644
+index b7843c8a..00000000
+--- a/mls/mls-rs-crypto-boringssl/Android.bp
++++ /dev/null
+@@ -1,49 +0,0 @@
+-// This file is generated by cargo_embargo.
+-// Do not modify this file after the first "rust_*" or "genrule" module
+-// because the changes will be overridden on upgrade.
+-// Content before the first "rust_*" or "genrule" module is preserved.
+-
+-package {
+-    default_applicable_licenses: ["platform_system_security_mls_rs_crypto_boringssl_license"],
+-}
+-
+-// See: http://go/android-license-faq
+-license {
+-    name: "platform_system_security_mls_rs_crypto_boringssl_license",
+-    visibility: [":__subpackages__"],
+-    license_kinds: [
+-        "SPDX-license-identifier-Apache-2.0",
+-    ],
+-    license_text: [
+-        "LICENSE-apache",
+-    ],
+-}
+-
+-rust_library {
+-    name: "libmls_rs_crypto_boringssl",
+-    host_supported: true,
+-    crate_name: "mls_rs_crypto_boringssl",
+-    cargo_env_compat: true,
+-    cargo_pkg_version: "0.1.0",
+-    crate_root: "src/lib.rs",
+-    edition: "2021",
+-    cfgs: ["mls_build_async"],
+-    rustlibs: [
+-        "libbssl_crypto",
+-        "libmls_rs_codec",
+-        "libmls_rs_core",
+-        "libmls_rs_crypto_traits",
+-        "libthiserror",
+-        "libzeroize",
+-    ],
+-    proc_macros: [
+-        "libasync_trait",
+-        "libmaybe_async",
+-    ],
+-    apex_available: [
+-        "//apex_available:platform",
+-        "//apex_available:anyapex",
+-    ],
+-    product_available: true,
+-    vendor_available: true,
+-}
+diff --git a/ondevice-signing/Android.bp b/ondevice-signing/Android.bp
+deleted file mode 100644
+index 130babcd..00000000
+--- a/ondevice-signing/Android.bp
++++ /dev/null
+@@ -1,144 +0,0 @@
+-// Copyright (C) 2020 The Android Open Source Project
+-//
+-// Licensed under the Apache License, Version 2.0 (the "License");
+-// you may not use this file except in compliance with the License.
+-// You may obtain a copy of the License at
+-//
+-//      http://www.apache.org/licenses/LICENSE-2.0
+-//
+-// Unless required by applicable law or agreed to in writing, software
+-// distributed under the License is distributed on an "AS IS" BASIS,
+-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-// See the License for the specific language governing permissions and
+-// limitations under the License.
+-
+-package {
+-    // See: http://go/android-license-faq
+-    // A large-scale-change added 'default_applicable_licenses' to import
+-    // all of the 'license_kinds' from "system_security_license"
+-    // to get the below license kinds:
+-    //   SPDX-license-identifier-Apache-2.0
+-    default_applicable_licenses: ["system_security_license"],
+-}
+-
+-// List of clang-tidy checks that are reported as errors.
+-// Please keep this list ordered lexicographically.
+-tidy_errors = [
+-  "cert-err34-c",
+-  "google-default-arguments",
+-  "google-runtime-int",
+-  "google-runtime-member-string-references",
+-  "misc-move-const-arg",
+-  "misc-move-forwarding-reference",
+-  "misc-unused-parameters",
+-  "misc-unused-using-decls",
+-  "misc-use-after-move",
+-  "modernize-pass-by-value",
+-  "performance-faster-string-find",
+-  "performance-for-range-copy",
+-  "performance-implicit-conversion-in-loop",
+-  "performance-inefficient-vector-operation",
+-  "performance-move-const-arg",
+-  "performance-move-constructor-init",
+-  "performance-noexcept-move-constructor",
+-  "performance-unnecessary-value-param",
+-]
+-
+-cc_defaults {
+-  cpp_std: "experimental",
+-  name: "odsign_flags_defaults",
+-  cflags: [
+-    "-Wall",
+-    "-Wextra",
+-    "-Werror",
+-    "-Wno-unused-parameter",
+-
+-    // Some extra flags.
+-    "-fstrict-aliasing",
+-    "-Wredundant-decls",
+-    "-Wshadow",
+-    "-Wstrict-aliasing",
+-    "-Wthread-safety",
+-    "-Wthread-safety-negative",
+-    "-Wunreachable-code",
+-    "-Wunreachable-code-break",
+-    "-Wunreachable-code-return",
+-    "-Wunused",
+-    "-Wused-but-marked-unused",
+-  ],
+-  tidy: true,
+-  tidy_checks: tidy_errors,
+-  tidy_checks_as_errors: tidy_errors,
+-  tidy_flags: [
+-    "-format-style=file",
+-  ],
+-}
+-
+-cc_library {
+-  name: "libsigningutils",
+-  defaults: [
+-    "odsign_flags_defaults",
+-  ],
+-  cpp_std: "experimental",
+-  srcs: [
+-    "CertUtils.cpp",
+-    "VerityUtils.cpp",
+-  ],
+-
+-  shared_libs: [
+-    "libbase",
+-    "libcrypto",
+-    "libcrypto_utils",
+-    "libfsverity",
+-    "libprotobuf-cpp-lite",
+-    "libutils",
+-  ],
+-  export_include_dirs: ["include"],
+-  recovery_available: true,
+-}
+-
+-genrule {
+-  name: "statslog_odsign.h",
+-  tools: ["stats-log-api-gen"],
+-  cmd: "$(location stats-log-api-gen) --header $(genDir)/statslog_odsign.h --module art --namespace art,metrics,statsd",
+-  out: [
+-    "statslog_odsign.h",
+-  ],
+-}
+-
+-cc_binary {
+-  name: "odsign",
+-  defaults: [
+-    "odsign_flags_defaults",
+-  ],
+-  cpp_std: "experimental",
+-  init_rc: ["odsign.rc"],
+-  srcs: [
+-    "KeystoreKey.cpp",
+-    "KeystoreHmacKey.cpp",
+-    "odsign_main.cpp",
+-    "StatsReporter.cpp",
+-  ],
+-  generated_headers: ["statslog_odsign.h"],
+-
+-  header_libs: ["odrefresh_headers"],
+-
+-  static_libs: [
+-    "libsigningutils",
+-    "lib_odsign_proto",
+-  ],
+-  shared_libs: [
+-    "android.system.keystore2-V1-cpp",
+-    "android.hardware.security.keymint-V1-cpp",
+-    "libbase",
+-    "libbinder",
+-    "libcrypto",
+-    "libcrypto_utils",
+-    "libfsverity",
+-    "liblogwrap",
+-    "libprotobuf-cpp-lite",
+-    "libstatspull",
+-    "libstatssocket",
+-    "libutils",
+-  ],
+-}
+diff --git a/ondevice-signing/proto/Android.bp b/ondevice-signing/proto/Android.bp
+deleted file mode 100644
+index 356e6619..00000000
+--- a/ondevice-signing/proto/Android.bp
++++ /dev/null
+@@ -1,44 +0,0 @@
+-/*
+- * Copyright (C) 2021 The Android Open Source Project
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *      http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-
+-package {
+-    default_applicable_licenses: ["Android-Apache-2.0"],
+-}
+-
+-cc_library_static {
+-    name: "lib_odsign_proto",
+-    host_supported: true,
+-    proto: {
+-        export_proto_headers: true,
+-        type: "lite",
+-    },
+-    srcs: ["odsign_info.proto"],
+-    apex_available: [
+-        "//apex_available:platform",
+-        "com.android.compos",
+-    ],
+-}
+-
+-rust_protobuf {
+-    name: "libodsign_proto_rust",
+-    crate_name: "odsign_proto",
+-    protos: ["odsign_info.proto"],
+-    source_stem: "odsign_proto",
+-    host_supported: true,
+-    apex_available: [
+-        "com.android.compos",
+-    ],
+-}
+diff --git a/ondevice-signing/tests/Android.bp b/ondevice-signing/tests/Android.bp
+deleted file mode 100644
+index bcfe8e40..00000000
+--- a/ondevice-signing/tests/Android.bp
++++ /dev/null
+@@ -1,45 +0,0 @@
+-// Copyright (C) 2021 The Android Open Source Project
+-//
+-// Licensed under the Apache License, Version 2.0 (the "License");
+-// you may not use this file except in compliance with the License.
+-// You may obtain a copy of the License at
+-//
+-//      http://www.apache.org/licenses/LICENSE-2.0
+-//
+-// Unless required by applicable law or agreed to in writing, software
+-// distributed under the License is distributed on an "AS IS" BASIS,
+-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-// See the License for the specific language governing permissions and
+-// limitations under the License.
+-
+-package {
+-    default_team: "trendy_team_art_mainline",
+-    // See: http://go/android-license-faq
+-    // A large-scale-change added 'default_applicable_licenses' to import
+-    // all of the 'license_kinds' from "system_security_license"
+-    // to get the below license kinds:
+-    //   SPDX-license-identifier-Apache-2.0
+-    default_applicable_licenses: ["system_security_license"],
+-}
+-
+-cc_test {
+-    name: "libsigningutils_test",
+-    srcs: ["SigningUtilsTest.cpp"],
+-    test_suites: ["device-tests"],
+-    compile_multilib: "both",
+-    defaults: [
+-        "odsign_flags_defaults",
+-    ],
+-    static_libs: [
+-        "libsigningutils",
+-    ],
+-    shared_libs: [
+-        "libbase",
+-        "libcrypto",
+-    ],
+-    data: [
+-        "test_file",
+-        "test_file.sig",
+-        "SigningUtils.cert.der",
+-    ],
+-}
+diff --git a/prng_seeder/Android.bp b/prng_seeder/Android.bp
+deleted file mode 100644
+index b56a405c..00000000
+--- a/prng_seeder/Android.bp
++++ /dev/null
+@@ -1,70 +0,0 @@
+-// Copyright (C) 2022 The Android Open Source Project
+-//
+-// Licensed under the Apache License, Version 2.0 (the "License");
+-// you may not use this file except in compliance with the License.
+-// You may obtain a copy of the License at
+-//
+-//      http://www.apache.org/licenses/LICENSE-2.0
+-//
+-// Unless required by applicable law or agreed to in writing, software
+-// distributed under the License is distributed on an "AS IS" BASIS,
+-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-// See the License for the specific language governing permissions and
+-// limitations under the License.
+-
+-package {
+-    default_team: "trendy_team_java_core_libraries",
+-    // See: http://go/android-license-faq
+-    //   SPDX-license-identifier-Apache-2.0
+-    default_applicable_licenses: ["system_security_license"],
+-}
+-
+-rust_defaults {
+-    name: "prng_seeder_defaults",
+-    edition: "2021",
+-    rustlibs: [
+-        "libanyhow",
+-        "libbssl_sys",
+-        "libclap",
+-        "liblogger",
+-        "liblog_rust",
+-        "libnix",
+-        "librustutils",
+-        "libtokio",
+-    ],
+-
+-    init_rc: ["prng_seeder.rc"],
+-}
+-
+-rust_binary {
+-    name: "prng_seeder",
+-    defaults: ["prng_seeder_defaults"],
+-    srcs: ["src/main.rs"],
+-}
+-
+-rust_binary {
+-    name: "prng_seeder_microdroid",
+-    defaults: ["prng_seeder_defaults"],
+-    srcs: ["src/main.rs"],
+-    stem: "prng_seeder",
+-    bootstrap: true,
+-    installable: false,
+-    prefer_rlib: true,
+-}
+-
+-rust_test {
+-    name: "prng_seeder.test",
+-    edition: "2021",
+-    srcs: ["src/main.rs"],
+-    rustlibs: [
+-        "libanyhow",
+-        "libbssl_sys",
+-        "libclap",
+-        "liblogger",
+-        "liblog_rust",
+-        "libnix",
+-        "librustutils",
+-        "libtokio",
+-    ],
+-    test_suites: ["general-tests"],
+-}
+diff --git a/provisioner/Android.bp b/provisioner/Android.bp
+deleted file mode 100644
+index 6a4dc243..00000000
+--- a/provisioner/Android.bp
++++ /dev/null
+@@ -1,119 +0,0 @@
+-//
+-// Copyright (C) 2020 The Android Open Source Project
+-//
+-// Licensed under the Apache License, Version 2.0 (the "License");
+-// you may not use this file except in compliance with the License.
+-// You may obtain a copy of the License at
+-//
+-//      http://www.apache.org/licenses/LICENSE-2.0
+-//
+-// Unless required by applicable law or agreed to in writing, software
+-// distributed under the License is distributed on an "AS IS" BASIS,
+-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-// See the License for the specific language governing permissions and
+-// limitations under the License.
+-//
+-
+-package {
+-    default_team: "trendy_team_foundation_security_rust_pkvm_",
+-    // See: http://go/android-license-faq
+-    // A large-scale-change added 'default_applicable_licenses' to import
+-    // all of the 'license_kinds' from "system_security_license"
+-    // to get the below license kinds:
+-    //   SPDX-license-identifier-Apache-2.0
+-    default_applicable_licenses: ["system_security_license"],
+-}
+-
+-cc_defaults {
+-    name: "rkp_factory_extraction_defaults",
+-    defaults: [
+-        "keymint_use_latest_hal_aidl_ndk_static",
+-    ],
+-    shared_libs: [
+-        "libbinder_ndk",
+-        "libcrypto",
+-        "liblog",
+-    ],
+-    static_libs: [
+-        "android.hardware.common-V2-ndk",
+-        "android.hardware.drm.common-V1-ndk",
+-        "android.hardware.drm-V1-ndk",
+-        "android.hardware.security.rkp-V3-ndk",
+-        "libbase",
+-        "libcppbor",
+-        "libcppcose_rkp",
+-        "libjsoncpp",
+-        "libkeymint_remote_prov_support",
+-        "libmediadrmrkp",
+-    ],
+-}
+-
+-cc_library_static {
+-    name: "librkp_factory_extraction",
+-    defaults: [
+-        "rkp_factory_extraction_defaults",
+-    ],
+-    srcs: ["rkp_factory_extraction_lib.cpp"],
+-    vendor_available: true,
+-}
+-
+-cc_test {
+-    name: "librkp_factory_extraction_test",
+-    defaults: [
+-        "rkp_factory_extraction_defaults",
+-    ],
+-    srcs: ["rkp_factory_extraction_lib_test.cpp"],
+-    test_suites: ["device-tests"],
+-    static_libs: [
+-        "libgmock",
+-        "librkp_factory_extraction",
+-    ],
+-}
+-
+-cc_binary {
+-    name: "rkp_factory_extraction_tool",
+-    vendor: true,
+-    srcs: ["rkp_factory_extraction_tool.cpp"],
+-    defaults: [
+-        "rkp_factory_extraction_defaults",
+-    ],
+-    static_libs: [
+-        "libgflags",
+-        "librkp_factory_extraction",
+-    ],
+-    dist: {
+-        targets: [
+-            "dist_files",
+-            "rkp_factory_extraction_tool",
+-        ],
+-        dest: "rkp_factory_extraction_tool",
+-    },
+-    compile_multilib: "both",
+-    multilib: {
+-        lib64: {
+-            suffix: "64",
+-        },
+-    },
+-    target: {
+-        android_arm: {
+-            dist: {
+-                dir: "rkp/arm",
+-            },
+-        },
+-        android_arm64: {
+-            dist: {
+-                dir: "rkp/arm64",
+-            },
+-        },
+-        android_x86: {
+-            dist: {
+-                dir: "rkp/x86",
+-            },
+-        },
+-        android_x86_64: {
+-            dist: {
+-                dir: "rkp/x86_64",
+-            },
+-        },
+-    },
+-}
+diff --git a/provisioner/support/Android.bp b/provisioner/support/Android.bp
+deleted file mode 100644
+index 24cfd03c..00000000
+--- a/provisioner/support/Android.bp
++++ /dev/null
+@@ -1,64 +0,0 @@
+-// Copyright (C) 2023 The Android Open Source Project
+-//
+-// Licensed under the Apache License, Version 2.0 (the "License");
+-// you may not use this file except in compliance with the License.
+-// You may obtain a copy of the License at
+-//
+-//      http://www.apache.org/licenses/LICENSE-2.0
+-//
+-// Unless required by applicable law or agreed to in writing, software
+-// distributed under the License is distributed on an "AS IS" BASIS,
+-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-// See the License for the specific language governing permissions and
+-// limitations under the License.
+-
+-package {
+-    default_team: "trendy_team_android_hardware_backed_security",
+-    // See: http://go/android-license-faq
+-    // A large-scale-change added 'default_applicable_licenses' to import
+-    // all of the 'license_kinds' from "hardware_interfaces_license"
+-    // to get the below license kinds:
+-    //   SPDX-license-identifier-Apache-2.0
+-    default_applicable_licenses: ["system_security_license"],
+-}
+-
+-cc_defaults {
+-    name: "librkp_support_defaults",
+-    static_libs: [
+-        "android.hardware.security.rkp-V3-cpp",
+-        "android.security.rkp_aidl-cpp",
+-    ],
+-    shared_libs: [
+-        "libbase",
+-        "libbinder",
+-        "libutils",
+-    ],
+-    cflags: [
+-        "-Wall",
+-        "-Wextra",
+-        "-Werror",
+-    ],
+-}
+-
+-cc_library {
+-    name: "librkp_support",
+-    defaults: ["librkp_support_defaults"],
+-    srcs: [
+-        "rkpd_client.cpp",
+-    ],
+-    export_include_dirs: ["include"],
+-}
+-
+-cc_test {
+-    name: "librkp_support_test",
+-    defaults: [
+-        "librkp_support_defaults",
+-        "use_libaidlvintf_gtest_helper_static",
+-    ],
+-    srcs: ["test.cpp"],
+-    static_libs: [
+-        "librkp_support",
+-    ],
+-    test_suites: ["general-tests"],
+-    require_root: true,
+-}
+-- 
+2.53.0
+

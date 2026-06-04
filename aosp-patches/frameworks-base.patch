@@ -1,0 +1,3355 @@
+From 6cdf3cae348f6c2a867d77f81ac1667ee75a57f3 Mon Sep 17 00:00:00 2001
+From: Ahmed Morsi <eng.eramax@gmail.com>
+Date: Thu, 4 Jun 2026 10:31:20 +0200
+Subject: [PATCH] Nova: local changes for AIDL/build support
+
+Removed HIDL/AIDL Android.bp files not needed for host build.
+Added parcelable stubs for missing types and patched AIDL imports.
+
+Patch series for the Nova Android-on-Linux runtime.
+
+Change-Id: I518050efddf573ea1305d852bee4cf6d5cc6edd6
+---
+ .../java/android/app/job/JobInfo.aidl         |  10 +
+ core/java/Android.bp                          | 806 ++++++++++++++++++
+ core/java/android/app/Notification.aidl       |  12 +-
+ .../android/app/admin/SystemUpdatePolicy.aidl |  10 +
+ .../BluetoothActivityEnergyInfo.aidl          |   6 +
+ core/java/android/content/Intent.aidl         |  10 +
+ .../android/content/pm/ParceledListSlice.aidl |  15 +-
+ .../android/hardware/input/IInputManager.aidl |   2 +-
+ .../hardware/radio/ProgramSelector.aidl       |  10 +
+ .../android/hardware/radio/RadioAlert.aidl    |  32 +-
+ .../android/hardware/radio/RadioMetadata.aidl |  10 +
+ core/java/android/os/CombinedVibration.aidl   |  20 +
+ core/java/android/os/IncidentManager.aidl     |   6 +
+ core/java/android/os/PointerCaptureMode.aidl  |   6 +
+ core/java/android/os/VibrationEffect.aidl     |  15 +
+ core/java/android/os/WorkSource.aidl          |  10 +
+ .../android/service/autofill/Dataset.aidl     |  10 +
+ core/java/android/text/FontConfig.aidl        |  25 +
+ .../accessibility/AccessibilityNodeInfo.aidl  |  20 +
+ .../AccessibilityWindowInfo.aidl              |  20 -
+ .../textclassifier/ConversationActions.aidl   |  12 +-
+ .../textclassifier/TextClassifierEvent.aidl   |  25 +
+ .../view/textclassifier/TextLinks.aidl        |  12 +-
+ .../android/window/ScreenCaptureInternal.aidl |  26 -
+ core/res/AndroidManifest.xml                  | 346 +++-----
+ core/res/res/values/dimens.xml                |   6 +-
+ core/res/res/values/styles.xml                |  20 +-
+ .../res/res/values/styles_device_defaults.xml |  24 +-
+ core/res/res/values/styles_material.xml       |   4 +-
+ graphics/java/Android.bp                      |  48 ++
+ graphics/java/android/view/Surface.aidl       |   6 +
+ .../android/location/GnssAntennaInfo.aidl     |  17 +-
+ .../java/android/location/GnssAssistance.aidl |  12 +-
+ .../android/media/soundtrigger/Phrase.aidl    |  36 +
+ .../soundtrigger/PhraseRecognitionExtra.aidl  |  35 +
+ .../media/soundtrigger/RecognitionConfig.aidl |  41 +
+ .../media/soundtrigger/SoundModel.aidl        |  41 +
+ .../media/soundtrigger/SoundModelType.aidl    |  28 +
+ media/java/android/media/AudioFormat.aidl     |  15 +-
+ .../media/AudioPlaybackConfiguration.aidl     |  18 +-
+ .../media/AudioRecordingConfiguration.aidl    |  18 +-
+ .../android/media/RouteListingPreference.aidl |  10 +
+ media/java/android/media/VolumeShaper.aidl    |  10 +
+ .../android/media/session/PlaybackState.aidl  |  10 +
+ .../android/telecom/TelecomAnalytics.aidl     |  10 +
+ .../java/android/telephony/BarringInfo.aidl   |  10 +
+ .../android/telephony/ModemActivityInfo.aidl  |  18 +-
+ .../android/telephony/SignalStrength.aidl     |  20 +-
+ .../ims/RcsContactPresenceTuple.aidl          |  10 +
+ 49 files changed, 1529 insertions(+), 414 deletions(-)
+ create mode 100644 core/java/android/bluetooth/BluetoothActivityEnergyInfo.aidl
+ create mode 100644 core/java/android/os/IncidentManager.aidl
+ create mode 100644 core/java/android/os/PointerCaptureMode.aidl
+ delete mode 100644 core/java/android/view/accessibility/AccessibilityWindowInfo.aidl
+ delete mode 100644 core/java/android/window/ScreenCaptureInternal.aidl
+ create mode 100644 graphics/java/android/view/Surface.aidl
+ create mode 100644 media/aidl/android/media/soundtrigger/Phrase.aidl
+ create mode 100644 media/aidl/android/media/soundtrigger/PhraseRecognitionExtra.aidl
+ create mode 100644 media/aidl/android/media/soundtrigger/RecognitionConfig.aidl
+ create mode 100644 media/aidl/android/media/soundtrigger/SoundModel.aidl
+ create mode 100644 media/aidl/android/media/soundtrigger/SoundModelType.aidl
+
+diff --git a/apex/jobscheduler/framework/java/android/app/job/JobInfo.aidl b/apex/jobscheduler/framework/java/android/app/job/JobInfo.aidl
+index 7b198a8ab14d..678b175eb385 100644
+--- a/apex/jobscheduler/framework/java/android/app/job/JobInfo.aidl
++++ b/apex/jobscheduler/framework/java/android/app/job/JobInfo.aidl
+@@ -17,3 +17,13 @@
+ package android.app.job;
+ 
+ parcelable JobInfo;
++
++@JavaOnlyStableParcelable parcelable android.app.job.JobInfo.TriggerContentUri;
++
++@JavaOnlyStableParcelable parcelable android.app.job.JobInfo.TriggerContentUri;
++
++@JavaOnlyStableParcelable parcelable android.app.job.JobInfo.TriggerContentUri;
++
++@JavaOnlyStableParcelable parcelable android.app.job.JobInfo.TriggerContentUri;
++
++parcelable TriggerContentUri;
+diff --git a/core/java/Android.bp b/core/java/Android.bp
+index e9a605ad5caf..34402d748ddf 100644
+--- a/core/java/Android.bp
++++ b/core/java/Android.bp
+@@ -872,3 +872,809 @@ aidl_interface {
+         },
+     },
+ }
++
++// NOVA_HYBRID_FILEGROUP_BEGIN
++// GENERATED by vendor/nova/nova-framework/tools/sync-hybrid-framework.py
++// Filegroups must live under frameworks/base so Soong globs resolve to real .java files.
++
++filegroup {
++    name: "nova-hybrid-animation-sources",
++    visibility: ["//vendor:__subpackages__"],
++    srcs: [
++        "android/animation/**/*.java",
++    ],
++    exclude_srcs: [
++        "android/animation/AnimationHandler.java",
++        "android/animation/Animator.java",
++        "android/animation/AnimatorInflater.java",
++        "android/animation/AnimatorSet.java",
++        "android/animation/LayoutTransition.java",
++        "android/animation/ObjectAnimator.java",
++        "android/animation/PropertyValuesHolder.java",
++        "android/animation/RevealAnimator.java",
++        "android/animation/StateListAnimator.java",
++        "android/animation/TimeAnimator.java",
++        "android/animation/ValueAnimator.java",
++    ],
++}
++
++// GENERATED by vendor/nova/nova-framework/tools/sync-hybrid-framework.py
++// Filegroups must live under frameworks/base so Soong globs resolve to real .java files.
++
++filegroup {
++    name: "nova-hybrid-internal-util-sources",
++    visibility: ["//vendor:__subpackages__"],
++    srcs: [
++        "com/android/internal/util/**/*.java",
++    ],
++    exclude_srcs: [
++        "com/android/internal/util/AnnotationValidations.java",
++        "com/android/internal/util/ArrayUtils.java",
++        "com/android/internal/util/ArtBinaryXmlPullParser.java",
++        "com/android/internal/util/ArtBinaryXmlSerializer.java",
++        "com/android/internal/util/ArtFastDataInput.java",
++        "com/android/internal/util/ArtFastDataOutput.java",
++        "com/android/internal/util/AsyncChannel.java",
++        "com/android/internal/util/BitUtils.java",
++        "com/android/internal/util/CollectionUtils.java",
++        "com/android/internal/util/ConcurrentUtils.java",
++        "com/android/internal/util/ContrastColorUtil.java",
++        "com/android/internal/util/DataClass.java",
++        "com/android/internal/util/DumpUtils.java",
++        "com/android/internal/util/EmergencyAffordanceManager.java",
++        "com/android/internal/util/ExponentiallyBucketedHistogram.java",
++        "com/android/internal/util/FunctionalUtils.java",
++        "com/android/internal/util/GrowingArrayUtils.java",
++        "com/android/internal/util/ImageUtils.java",
++        "com/android/internal/util/LatencyTracker.java",
++        "com/android/internal/util/LocalLog.java",
++        "com/android/internal/util/MemInfoReader.java",
++        "com/android/internal/util/MimeIconUtils.java",
++        "com/android/internal/util/NamedLock.java",
++        "com/android/internal/util/NotificationMessagingUtil.java",
++        "com/android/internal/util/ObservableServiceConnection.java",
++        "com/android/internal/util/Parcelling.java",
++        "com/android/internal/util/PerfettoTrigger.java",
++        "com/android/internal/util/PersistentServiceConnection.java",
++        "com/android/internal/util/ProgressReporter.java",
++        "com/android/internal/util/RingBuffer.java",
++        "com/android/internal/util/ScreenshotHelper.java",
++        "com/android/internal/util/ScreenshotRequest.java",
++        "com/android/internal/util/SettingsWrapper.java",
++        "com/android/internal/util/StatLogger.java",
++        "com/android/internal/util/StringCache.java",
++        "com/android/internal/util/SyncResultReceiver.java",
++        "com/android/internal/util/TokenBucket.java",
++        "com/android/internal/util/UserIcons.java",
++        "com/android/internal/util/VibrationStatsWriter.java",
++        "com/android/internal/util/XmlUtils.java",
++        "com/android/internal/util/dump/DumpUtils.java",
++        "com/android/internal/util/function/pooled/OmniFunction.java",
++        "com/android/internal/util/function/pooled/PooledLambda.java",
++        "com/android/internal/util/function/pooled/PooledLambdaImpl.java",
++        "com/android/internal/util/function/pooled/PooledPredicate.java",
++        "com/android/internal/util/function/pooled/PooledRunnable.java",
++        "com/android/internal/util/function/pooled/PooledSupplier.java",
++    ],
++}
++
++// GENERATED by vendor/nova/nova-framework/tools/sync-hybrid-framework.py
++// Filegroups must live under frameworks/base so Soong globs resolve to real .java files.
++
++filegroup {
++    name: "nova-hybrid-internal-menu-sources",
++    visibility: ["//vendor:__subpackages__"],
++    srcs: [
++        "com/android/internal/view/menu/**/*.java",
++    ],
++    exclude_srcs: [
++        "com/android/internal/view/menu/ActionMenu.java",
++        "com/android/internal/view/menu/ActionMenuItemView.java",
++        "com/android/internal/view/menu/BaseMenuPresenter.java",
++        "com/android/internal/view/menu/CascadingMenuPopup.java",
++        "com/android/internal/view/menu/ContextMenuBuilder.java",
++        "com/android/internal/view/menu/ExpandedMenuView.java",
++        "com/android/internal/view/menu/IconMenuItemView.java",
++        "com/android/internal/view/menu/IconMenuPresenter.java",
++        "com/android/internal/view/menu/IconMenuView.java",
++        "com/android/internal/view/menu/ListMenuItemView.java",
++        "com/android/internal/view/menu/ListMenuPresenter.java",
++        "com/android/internal/view/menu/MenuAdapter.java",
++        "com/android/internal/view/menu/MenuBuilder.java",
++        "com/android/internal/view/menu/MenuDialogHelper.java",
++        "com/android/internal/view/menu/MenuHelper.java",
++        "com/android/internal/view/menu/MenuItemImpl.java",
++        "com/android/internal/view/menu/MenuPopup.java",
++        "com/android/internal/view/menu/MenuPopupHelper.java",
++        "com/android/internal/view/menu/MenuPresenter.java",
++        "com/android/internal/view/menu/MenuView.java",
++        "com/android/internal/view/menu/StandardMenuPopup.java",
++        "com/android/internal/view/menu/SubMenuBuilder.java",
++    ],
++}
++
++// GENERATED by vendor/nova/nova-framework/tools/sync-hybrid-framework.py
++// Filegroups must live under frameworks/base so Soong globs resolve to real .java files.
++
++filegroup {
++    name: "nova-hybrid-text-sources",
++    visibility: ["//vendor:__subpackages__"],
++    srcs: [
++        "android/text/**/*.java",
++    ],
++    exclude_srcs: [
++        "android/text/AndroidBidi.java",
++        "android/text/Annotation.java",
++        "android/text/AutoGrowArray.java",
++        "android/text/AutoText.java",
++        "android/text/BoringLayout.java",
++        "android/text/DynamicLayout.java",
++        "android/text/FontConfig.java",
++        "android/text/GraphemeClusterSegmentFinder.java",
++        "android/text/Html.java",
++        "android/text/InputFilter.java",
++        "android/text/Layout.java",
++        "android/text/MeasuredParagraph.java",
++        "android/text/PrecomputedText.java",
++        "android/text/SpannableString.java",
++        "android/text/SpannableStringBuilder.java",
++        "android/text/SpannableStringInternal.java",
++        "android/text/SpannedString.java",
++        "android/text/StaticLayout.java",
++        "android/text/TextLine.java",
++        "android/text/TextPaint.java",
++        "android/text/TextShaper.java",
++        "android/text/TextUtils.java",
++        "android/text/WordSegmentFinder.java",
++        "android/text/format/DateFormat.java",
++        "android/text/format/DateIntervalFormat.java",
++        "android/text/format/DateUtils.java",
++        "android/text/format/Formatter.java",
++        "android/text/format/Time.java",
++        "android/text/format/TimeFormatter.java",
++        "android/text/format/TimeMigrationUtils.java",
++        "android/text/method/AllCapsTransformationMethod.java",
++        "android/text/method/ArrowKeyMovementMethod.java",
++        "android/text/method/BaseKeyListener.java",
++        "android/text/method/BaseMovementMethod.java",
++        "android/text/method/CharacterPickerDialog.java",
++        "android/text/method/DateKeyListener.java",
++        "android/text/method/DateTimeKeyListener.java",
++        "android/text/method/DialerKeyListener.java",
++        "android/text/method/DigitsKeyListener.java",
++        "android/text/method/InsertModeTransformationMethod.java",
++        "android/text/method/LinkMovementMethod.java",
++        "android/text/method/MetaKeyKeyListener.java",
++        "android/text/method/MultiTapKeyListener.java",
++        "android/text/method/NumberKeyListener.java",
++        "android/text/method/PasswordTransformationMethod.java",
++        "android/text/method/QwertyKeyListener.java",
++        "android/text/method/ScrollingMovementMethod.java",
++        "android/text/method/TextKeyListener.java",
++        "android/text/method/TimeKeyListener.java",
++        "android/text/method/Touch.java",
++        "android/text/method/WordIterator.java",
++        "android/text/style/AbsoluteSizeSpan.java",
++        "android/text/style/AccessibilityClickableSpan.java",
++        "android/text/style/AccessibilityReplacementSpan.java",
++        "android/text/style/AccessibilityURLSpan.java",
++        "android/text/style/AlignmentSpan.java",
++        "android/text/style/BackgroundColorSpan.java",
++        "android/text/style/BulletSpan.java",
++        "android/text/style/ClickableSpan.java",
++        "android/text/style/DynamicDrawableSpan.java",
++        "android/text/style/EasyEditSpan.java",
++        "android/text/style/ForegroundColorSpan.java",
++        "android/text/style/ImageSpan.java",
++        "android/text/style/LeadingMarginSpan.java",
++        "android/text/style/LineBackgroundSpan.java",
++        "android/text/style/LineBreakConfigSpan.java",
++        "android/text/style/LineHeightSpan.java",
++        "android/text/style/LocaleSpan.java",
++        "android/text/style/MaskFilterSpan.java",
++        "android/text/style/NoWritingToolsSpan.java",
++        "android/text/style/QuoteSpan.java",
++        "android/text/style/RasterizerSpan.java",
++        "android/text/style/RelativeSizeSpan.java",
++        "android/text/style/ScaleXSpan.java",
++        "android/text/style/SpanUtils.java",
++        "android/text/style/SpellCheckSpan.java",
++        "android/text/style/StrikethroughSpan.java",
++        "android/text/style/StyleSpan.java",
++        "android/text/style/SubscriptSpan.java",
++        "android/text/style/SuggestionRangeSpan.java",
++        "android/text/style/SuggestionSpan.java",
++        "android/text/style/SuperscriptSpan.java",
++        "android/text/style/TextAppearanceSpan.java",
++        "android/text/style/TtsSpan.java",
++        "android/text/style/TypefaceSpan.java",
++        "android/text/style/URLSpan.java",
++        "android/text/style/UnderlineSpan.java",
++        "android/text/util/Linkify.java",
++    ],
++}
++
++// GENERATED by vendor/nova/nova-framework/tools/sync-hybrid-framework.py
++// Filegroups must live under frameworks/base so Soong globs resolve to real .java files.
++
++filegroup {
++    name: "nova-hybrid-widget-sources",
++    visibility: ["//vendor:__subpackages__"],
++    srcs: [
++        "android/widget/**/*.java",
++    ],
++    exclude_srcs: [
++        "android/widget/AbsListView.java",
++        "android/widget/AbsSeekBar.java",
++        "android/widget/AbsSpinner.java",
++        "android/widget/AbsoluteLayout.java",
++        "android/widget/AccessibilityIterators.java",
++        "android/widget/ActionMenuPresenter.java",
++        "android/widget/ActionMenuView.java",
++        "android/widget/ActivityChooserModel.java",
++        "android/widget/ActivityChooserView.java",
++        "android/widget/AdapterView.java",
++        "android/widget/AdapterViewAnimator.java",
++        "android/widget/AdapterViewFlipper.java",
++        "android/widget/AnalogClock.java",
++        "android/widget/AppSecurityPermissions.java",
++        "android/widget/ArrayAdapter.java",
++        "android/widget/AutoCompleteTextView.java",
++        "android/widget/Button.java",
++        "android/widget/CalendarView.java",
++        "android/widget/CalendarViewLegacyDelegate.java",
++        "android/widget/CalendarViewMaterialDelegate.java",
++        "android/widget/CheckedTextView.java",
++        "android/widget/Chronometer.java",
++        "android/widget/CompoundButton.java",
++        "android/widget/DatePicker.java",
++        "android/widget/DatePickerCalendarDelegate.java",
++        "android/widget/DatePickerSpinnerDelegate.java",
++        "android/widget/DateTimeView.java",
++        "android/widget/DayPickerPagerAdapter.java",
++        "android/widget/DayPickerView.java",
++        "android/widget/DayPickerViewPager.java",
++        "android/widget/DialerFilter.java",
++        "android/widget/DifferentialMotionFlingHelper.java",
++        "android/widget/DigitalClock.java",
++        "android/widget/DropDownListView.java",
++        "android/widget/EdgeEffect.java",
++        "android/widget/EditText.java",
++        "android/widget/Editor.java",
++        "android/widget/EditorTouchState.java",
++        "android/widget/ExpandableListConnector.java",
++        "android/widget/ExpandableListView.java",
++        "android/widget/FastScroller.java",
++        "android/widget/ForwardingListener.java",
++        "android/widget/FrameLayout.java",
++        "android/widget/Gallery.java",
++        "android/widget/GridLayout.java",
++        "android/widget/GridView.java",
++        "android/widget/HorizontalScrollView.java",
++        "android/widget/ImageButton.java",
++        "android/widget/ImageView.java",
++        "android/widget/ImeAwareEditText.java",
++        "android/widget/LinearLayout.java",
++        "android/widget/ListPopupWindow.java",
++        "android/widget/ListView.java",
++        "android/widget/Magnifier.java",
++        "android/widget/MediaController.java",
++        "android/widget/MenuPopupWindow.java",
++        "android/widget/MultiAutoCompleteTextView.java",
++        "android/widget/NumberPicker.java",
++        "android/widget/OverScroller.java",
++        "android/widget/PopupMenu.java",
++        "android/widget/PopupWindow.java",
++        "android/widget/ProgressBar.java",
++        "android/widget/QuickContactBadge.java",
++        "android/widget/RadialTimePickerView.java",
++        "android/widget/RadioButton.java",
++        "android/widget/RadioGroup.java",
++        "android/widget/RatingBar.java",
++        "android/widget/RelativeLayout.java",
++        "android/widget/RemoteCollectionItemsAdapter.java",
++        "android/widget/RemoteViews.java",
++        "android/widget/RemoteViewsAdapter.java",
++        "android/widget/RemoteViewsSerializers.java",
++        "android/widget/RemoteViewsService.java",
++        "android/widget/ScrollBarDrawable.java",
++        "android/widget/ScrollView.java",
++        "android/widget/Scroller.java",
++        "android/widget/SearchView.java",
++        "android/widget/SeekBar.java",
++        "android/widget/SelectionActionModeHelper.java",
++        "android/widget/ShareActionProvider.java",
++        "android/widget/SimpleMonthView.java",
++        "android/widget/SlidingDrawer.java",
++        "android/widget/SmartSelectSprite.java",
++        "android/widget/SpellChecker.java",
++        "android/widget/Spinner.java",
++        "android/widget/StackView.java",
++        "android/widget/SuggestionsAdapter.java",
++        "android/widget/Switch.java",
++        "android/widget/TabHost.java",
++        "android/widget/TabWidget.java",
++        "android/widget/TableLayout.java",
++        "android/widget/TableRow.java",
++        "android/widget/TextClock.java",
++        "android/widget/TextInputTimePickerView.java",
++        "android/widget/TextView.java",
++        "android/widget/TextViewOnReceiveContentListener.java",
++        "android/widget/TextViewTranslationCallback.java",
++        "android/widget/TimePicker.java",
++        "android/widget/TimePickerClockDelegate.java",
++        "android/widget/TimePickerSpinnerDelegate.java",
++        "android/widget/Toast.java",
++        "android/widget/ToastPresenter.java",
++        "android/widget/ToggleButton.java",
++        "android/widget/Toolbar.java",
++        "android/widget/TwoLineListItem.java",
++        "android/widget/VideoView.java",
++        "android/widget/ViewAnimator.java",
++        "android/widget/ViewFlipper.java",
++        "android/widget/ViewSwitcher.java",
++        "android/widget/YearPickerView.java",
++        "android/widget/ZoomButton.java",
++        "android/widget/ZoomButtonsController.java",
++        "android/widget/ZoomControls.java",
++        "android/widget/inline/InlineContentView.java",
++        "android/widget/inline/InlinePresentationSpec.java",
++    ],
++}
++
++// GENERATED by vendor/nova/nova-framework/tools/sync-hybrid-framework.py
++// Filegroups must live under frameworks/base so Soong globs resolve to real .java files.
++
++filegroup {
++    name: "nova-hybrid-view-sources",
++    visibility: ["//vendor:__subpackages__"],
++    srcs: [
++        "android/view/**/*.java",
++    ],
++    exclude_srcs: [
++        "android/view/AccessibilityEmbeddedConnection.java",
++        "android/view/AccessibilityInteractionController.java",
++        "android/view/AccessibilityIterators.java",
++        "android/view/AppTransitionAnimationSpec.java",
++        "android/view/AttachedSurfaceControl.java",
++        "android/view/BatchedInputEventReceiver.java",
++        "android/view/Choreographer.java",
++        "android/view/CompositionSamplingListener.java",
++        "android/view/ContentInfo.java",
++        "android/view/ContentRecordingSession.java",
++        "android/view/ContextThemeWrapper.java",
++        "android/view/CrossWindowBlurListeners.java",
++        "android/view/CutoutSpecification.java",
++        "android/view/Display.java",
++        "android/view/DisplayAddress.java",
++        "android/view/DisplayAdjustments.java",
++        "android/view/DisplayCutout.java",
++        "android/view/DisplayEventReceiver.java",
++        "android/view/DisplayInfo.java",
++        "android/view/DisplayShape.java",
++        "android/view/DragAndDropPermissions.java",
++        "android/view/DragEvent.java",
++        "android/view/FocusFinder.java",
++        "android/view/FocusFinderHelper.java",
++        "android/view/FrameMetrics.java",
++        "android/view/FrameMetricsObserver.java",
++        "android/view/GestureDetector.java",
++        "android/view/GhostView.java",
++        "android/view/HandlerActionQueue.java",
++        "android/view/HandwritingInitiator.java",
++        "android/view/HapticFeedbackConstants.java",
++        "android/view/HapticScrollFeedbackProvider.java",
++        "android/view/HardwareRenderer.java",
++        "android/view/HdrRenderState.java",
++        "android/view/ImeBackAnimationController.java",
++        "android/view/ImeFocusController.java",
++        "android/view/InputChannel.java",
++        "android/view/InputDevice.java",
++        "android/view/InputEvent.java",
++        "android/view/InputEventAssigner.java",
++        "android/view/InputEventConsistencyVerifier.java",
++        "android/view/InputEventReceiver.java",
++        "android/view/InputEventSender.java",
++        "android/view/InputFilter.java",
++        "android/view/InputMonitor.java",
++        "android/view/InputQueue.java",
++        "android/view/InputWindowHandle.java",
++        "android/view/InsetsAnimationControlCallbacks.java",
++        "android/view/InsetsAnimationControlImpl.java",
++        "android/view/InsetsAnimationControlRunner.java",
++        "android/view/InsetsAnimationSpec.java",
++        "android/view/InsetsAnimationThread.java",
++        "android/view/InsetsAnimationThreadControlRunner.java",
++        "android/view/InsetsController.java",
++        "android/view/InsetsFlags.java",
++        "android/view/InsetsFrameProvider.java",
++        "android/view/InsetsResizeAnimationRunner.java",
++        "android/view/InsetsSource.java",
++        "android/view/InsetsSourceConsumer.java",
++        "android/view/InsetsSourceControl.java",
++        "android/view/InsetsState.java",
++        "android/view/InternalInsetsAnimationController.java",
++        "android/view/KeyCharacterMap.java",
++        "android/view/KeyEvent.java",
++        "android/view/KeyboardShortcutInfo.java",
++        "android/view/LayoutInflater.java",
++        "android/view/Menu.java",
++        "android/view/MenuInflater.java",
++        "android/view/MenuItem.java",
++        "android/view/MotionEvent.java",
++        "android/view/NativeVectorDrawableAnimator.java",
++        "android/view/NotificationHeaderView.java",
++        "android/view/NotificationTopLineView.java",
++        "android/view/OrientationEventListener.java",
++        "android/view/OrientationListener.java",
++        "android/view/PendingInsetsController.java",
++        "android/view/PixelCopy.java",
++        "android/view/PointerIcon.java",
++        "android/view/PrivacyIndicatorBounds.java",
++        "android/view/RemotableViewMethod.java",
++        "android/view/RemoteAccessibilityController.java",
++        "android/view/RemoteAnimationAdapter.java",
++        "android/view/RemoteAnimationDefinition.java",
++        "android/view/RemoteAnimationTarget.java",
++        "android/view/RenderNodeAnimator.java",
++        "android/view/RoundScrollbarRenderer.java",
++        "android/view/RoundedCorners.java",
++        "android/view/ScaleGestureDetector.java",
++        "android/view/ScreenRecordingCallbacks.java",
++        "android/view/ScrollCaptureCallback.java",
++        "android/view/ScrollCaptureConnection.java",
++        "android/view/ScrollCaptureResponse.java",
++        "android/view/ScrollCaptureSearchResults.java",
++        "android/view/ScrollCaptureSession.java",
++        "android/view/ScrollCaptureTarget.java",
++        "android/view/ScrollFeedbackProvider.java",
++        "android/view/SoundEffectConstants.java",
++        "android/view/Surface.java",
++        "android/view/SurfaceControl.java",
++        "android/view/SurfaceControlActivePicture.java",
++        "android/view/SurfaceControlActivePictureListener.java",
++        "android/view/SurfaceControlHdrLayerInfoListener.java",
++        "android/view/SurfaceControlRegistry.java",
++        "android/view/SurfaceControlViewHost.java",
++        "android/view/SurfaceHolder.java",
++        "android/view/SurfaceSession.java",
++        "android/view/SurfaceView.java",
++        "android/view/SyncRtSurfaceTransactionApplier.java",
++        "android/view/TextureView.java",
++        "android/view/ThreadedRenderer.java",
++        "android/view/TouchDelegate.java",
++        "android/view/VelocityTracker.java",
++        "android/view/VerifiedKeyEvent.java",
++        "android/view/VerifiedMotionEvent.java",
++        "android/view/View.java",
++        "android/view/ViewAnimationHostBridge.java",
++        "android/view/ViewAnimationUtils.java",
++        "android/view/ViewConfiguration.java",
++        "android/view/ViewCredentialHandler.java",
++        "android/view/ViewDebug.java",
++        "android/view/ViewFrameInfo.java",
++        "android/view/ViewGroup.java",
++        "android/view/ViewGroupOverlay.java",
++        "android/view/ViewHierarchyEncoder.java",
++        "android/view/ViewOverlay.java",
++        "android/view/ViewPropertyAnimator.java",
++        "android/view/ViewProtoLogGroups.java",
++        "android/view/ViewRootImpl.java",
++        "android/view/ViewRootInsetsControllerHost.java",
++        "android/view/ViewRootRectTracker.java",
++        "android/view/ViewStructure.java",
++        "android/view/ViewStub.java",
++        "android/view/ViewTraversalTracingStrings.java",
++        "android/view/ViewTreeObserver.java",
++        "android/view/Window.java",
++        "android/view/WindowId.java",
++        "android/view/WindowInfo.java",
++        "android/view/WindowInsets.java",
++        "android/view/WindowInsetsAnimation.java",
++        "android/view/WindowInsetsAnimationControlListener.java",
++        "android/view/WindowInsetsAnimationController.java",
++        "android/view/WindowInsetsController.java",
++        "android/view/WindowLayout.java",
++        "android/view/WindowManager.java",
++        "android/view/WindowManagerGlobal.java",
++        "android/view/WindowManagerImpl.java",
++        "android/view/WindowManagerPolicyConstants.java",
++        "android/view/WindowManagerWrapper.java",
++        "android/view/WindowMetrics.java",
++        "android/view/WindowMetricsController.java",
++        "android/view/WindowRelayoutResult.java",
++        "android/view/WindowlessWindowLayout.java",
++        "android/view/WindowlessWindowManager.java",
++        "android/view/XrWindowProperties.java",
++        "android/view/accessibility/**/*.java",
++        "android/view/accessibility/AccessibilityEvent.java",
++        "android/view/accessibility/AccessibilityManager.java",
++        "android/view/accessibility/AccessibilityNodeInfo.java",
++        "android/view/animation/AccelerateInterpolator.java",
++        "android/view/animation/AlphaAnimation.java",
++        "android/view/animation/Animation.java",
++        "android/view/animation/AnimationSet.java",
++        "android/view/animation/AnimationUtils.java",
++        "android/view/animation/AnticipateInterpolator.java",
++        "android/view/animation/ClipRectAnimation.java",
++        "android/view/animation/CycleInterpolator.java",
++        "android/view/animation/DecelerateInterpolator.java",
++        "android/view/animation/ExtendAnimation.java",
++        "android/view/animation/GridLayoutAnimationController.java",
++        "android/view/animation/LayoutAnimationController.java",
++        "android/view/animation/OvershootInterpolator.java",
++        "android/view/animation/PathInterpolator.java",
++        "android/view/animation/RotateAnimation.java",
++        "android/view/animation/ScaleAnimation.java",
++        "android/view/animation/TranslateAnimation.java",
++        "android/view/animation/TranslateXAnimation.java",
++        "android/view/animation/TranslateYAnimation.java",
++        "android/view/autofill/**/*.java",
++        "android/view/contentcapture/**/*.java",
++        "android/view/contentprotection/**/*.java",
++        "android/view/displayhash/**/*.java",
++        "android/view/input/InputEventCompatHandler.java",
++        "android/view/input/LetterboxScrollProcessor.java",
++        "android/view/input/MouseToTouchProcessor.java",
++        "android/view/input/StylusButtonCompatibility.java",
++        "android/view/inputmethod/**/*.java",
++        "android/view/inputmethod/EditorInfo.java",
++        "android/view/inputmethod/InputMethodManager.java",
++        "android/view/inspector/**/*.java",
++        "android/view/inspector/InspectableProperty.java",
++        "android/view/selectiontoolbar/**/*.java",
++        "android/view/textclassifier/**/*.java",
++        "android/view/textservice/**/*.java",
++        "android/view/translation/**/*.java",
++        "android/view/translation/TranslationSpec.java",
++    ],
++}
++
++// GENERATED by vendor/nova/nova-framework/tools/sync-hybrid-framework.py
++// Filegroups must live under frameworks/base so Soong globs resolve to real .java files.
++
++filegroup {
++    name: "nova-hybrid-window-sources",
++    visibility: ["//vendor:__subpackages__"],
++    srcs: [
++        "android/window/**/*.java",
++    ],
++    exclude_srcs: [
++        "android/window/ActivityTransitionInfo.java",
++        "android/window/ActivityWindowInfo.java",
++        "android/window/AppCompatTransitionInfo.java",
++        "android/window/BackAnimationAdapter.java",
++        "android/window/BackEvent.java",
++        "android/window/BackMotionEvent.java",
++        "android/window/BackNavigationInfo.java",
++        "android/window/BackProgressAnimator.java",
++        "android/window/BackTouchTracker.java",
++        "android/window/ClientWindowFrames.java",
++        "android/window/ConfigurationChangeSetting.java",
++        "android/window/ConfigurationHelper.java",
++        "android/window/DesktopExperienceFlags.java",
++        "android/window/DesktopModeFlags.java",
++        "android/window/DisplayAreaAppearedInfo.java",
++        "android/window/DisplayAreaInfo.java",
++        "android/window/DisplayAreaOrganizer.java",
++        "android/window/DisplayWindowPolicyController.java",
++        "android/window/ImeBackCallbackProxy.java",
++        "android/window/ImeBackCallbackSender.java",
++        "android/window/OnBackInvokedCallback.java",
++        "android/window/OnBackInvokedCallbackInfo.java",
++        "android/window/OnBackInvokedDispatcher.java",
++        "android/window/PictureInPictureSurfaceTransaction.java",
++        "android/window/ProxyOnBackInvokedDispatcher.java",
++        "android/window/RemoteTransition.java",
++        "android/window/RemoteTransitionStub.java",
++        "android/window/ScreenCapture.java",
++        "android/window/ScreenCaptureInternal.java",
++        "android/window/SizeConfigurationBuckets.java",
++        "android/window/SnapshotDrawerUtils.java",
++        "android/window/SplashScreen.java",
++        "android/window/SplashScreenView.java",
++        "android/window/StartingWindowInfo.java",
++        "android/window/StartingWindowRemovalInfo.java",
++        "android/window/SurfaceSyncGroup.java",
++        "android/window/SystemOnBackInvokedCallbacks.java",
++        "android/window/SystemPerformanceHinter.java",
++        "android/window/SystemUiContext.java",
++        "android/window/TaskAppearedInfo.java",
++        "android/window/TaskFpsCallback.java",
++        "android/window/TaskFragmentAnimationParams.java",
++        "android/window/TaskFragmentCreationParams.java",
++        "android/window/TaskFragmentInfo.java",
++        "android/window/TaskFragmentOperation.java",
++        "android/window/TaskFragmentOrganizer.java",
++        "android/window/TaskFragmentOrganizerToken.java",
++        "android/window/TaskFragmentParentInfo.java",
++        "android/window/TaskFragmentTransaction.java",
++        "android/window/TaskOrganizer.java",
++        "android/window/TaskSnapshot.java",
++        "android/window/TaskSnapshotListener.java",
++        "android/window/TaskSnapshotListenerTracker.java",
++        "android/window/TaskSnapshotManager.java",
++        "android/window/TransitionFilter.java",
++        "android/window/TransitionInfo.java",
++        "android/window/TransitionMetrics.java",
++        "android/window/TransitionRequestInfo.java",
++        "android/window/WindowBase.java",
++        "android/window/WindowContainerToken.java",
++        "android/window/WindowContainerTransaction.java",
++        "android/window/WindowContainerTransactionCallback.java",
++        "android/window/WindowContext.java",
++        "android/window/WindowContextController.java",
++        "android/window/WindowContextInfo.java",
++        "android/window/WindowInfosListener.java",
++        "android/window/WindowInfosListenerForTest.java",
++        "android/window/WindowMetricsController.java",
++        "android/window/WindowOnBackInvokedDispatcher.java",
++        "android/window/WindowOrganizer.java",
++        "android/window/WindowProvider.java",
++        "android/window/WindowProviderService.java",
++        "android/window/WindowTokenClient.java",
++        "android/window/WindowTokenClientController.java",
++    ],
++}
++
++// GENERATED by vendor/nova/nova-framework/tools/sync-hybrid-framework.py
++// Filegroups must live under frameworks/base so Soong globs resolve to real .java files.
++
++filegroup {
++    name: "nova-hybrid-database-sources",
++    visibility: ["//vendor:__subpackages__"],
++    srcs: [
++        "android/database/**/*.java",
++    ],
++    exclude_srcs: [
++    ],
++}
++
++// GENERATED by vendor/nova/nova-framework/tools/sync-hybrid-framework.py
++// Filegroups must live under frameworks/base so Soong globs resolve to real .java files.
++
++filegroup {
++    name: "nova-hybrid-net-sources",
++    visibility: ["//vendor:__subpackages__"],
++    srcs: [
++        "android/net/**/*.java",
++    ],
++    exclude_srcs: [
++    ],
++}
++
++// GENERATED by vendor/nova/nova-framework/tools/sync-hybrid-framework.py
++// Filegroups must live under frameworks/base so Soong globs resolve to real .java files.
++
++filegroup {
++    name: "nova-hybrid-provider-sources",
++    visibility: ["//vendor:__subpackages__"],
++    srcs: [
++        "android/provider/**/*.java",
++    ],
++    exclude_srcs: [
++    ],
++}
++
++// GENERATED by vendor/nova/nova-framework/tools/sync-hybrid-framework.py
++// Filegroups must live under frameworks/base so Soong globs resolve to real .java files.
++
++filegroup {
++    name: "nova-hybrid-preference-sources",
++    visibility: ["//vendor:__subpackages__"],
++    srcs: [
++        "android/preference/**/*.java",
++    ],
++    exclude_srcs: [
++    ],
++}
++
++// GENERATED by vendor/nova/nova-framework/tools/sync-hybrid-framework.py
++// Filegroups must live under frameworks/base so Soong globs resolve to real .java files.
++
++filegroup {
++    name: "nova-hybrid-util-sources",
++    visibility: ["//vendor:__subpackages__"],
++    srcs: [
++        "android/util/**/*.java",
++    ],
++    exclude_srcs: [
++        "android/util/ArrayMap.java",
++        "android/util/AtomicFile.java",
++        "android/util/CharsetUtils.java",
++        "android/util/CloseGuard.java",
++        "android/util/DisplayMetrics.java",
++        "android/util/DisplayUtils.java",
++        "android/util/EventLog.java",
++        "android/util/EventLog_ravenwood.java",
++        "android/util/ExceptionUtils.java",
++        "android/util/FastMath.java",
++        "android/util/HashedStringCache.java",
++        "android/util/IconDrawableFactory.java",
++        "android/util/IntArray.java",
++        "android/util/JsonReader.java",
++        "android/util/LauncherIcons.java",
++        "android/util/Log.java",
++        "android/util/Log_ravenwood.java",
++        "android/util/LongArray.java",
++        "android/util/LongSparseArray.java",
++        "android/util/LongSparseLongArray.java",
++        "android/util/LruCache.java",
++        "android/util/MemoryIntArray.java",
++        "android/util/MergedConfiguration.java",
++        "android/util/NtpTrustedTime.java",
++        "android/util/PackageUtils.java",
++        "android/util/PathParser.java",
++        "android/util/Pools.java",
++        "android/util/Property.java",
++        "android/util/RotationUtils.java",
++        "android/util/SafetyProtectionUtils.java",
++        "android/util/Size.java",
++        "android/util/SizeF.java",
++        "android/util/Slog.java",
++        "android/util/SparseBooleanArray.java",
++        "android/util/StateSet.java",
++        "android/util/SystemConfigFileCommitEventLogger.java",
++        "android/util/TimeUtils.java",
++        "android/util/TimingsTraceLog.java",
++        "android/util/TypedValue.java",
++        "android/util/Xml.java",
++        "android/util/apk/**/*.java",
++        "android/util/jar/StrictJarFile.java",
++        "android/util/jar/StrictJarVerifier.java",
++        "android/util/proto/ProtoInputStream.java",
++        "android/util/proto/ProtoUtils.java",
++    ],
++}
++
++
++filegroup {
++    name: "nova-hybrid-content-pm-sources",
++    visibility: ["//vendor:__subpackages__"],
++    srcs: [
++        "android/content/pm/**/*.java",
++    ],
++    exclude_srcs: [
++        "android/content/pm/ActivityInfo.java",
++        "android/content/pm/ApplicationInfo.java",
++        "android/content/pm/ComponentInfo.java",
++        "android/content/pm/ConfigurationInfo.java",
++        "android/content/pm/FeatureInfo.java",
++        "android/content/pm/InstrumentationInfo.java",
++        "android/content/pm/PackageInfo.java",
++        "android/content/pm/PackageItemInfo.java",
++        "android/content/pm/ProviderInfo.java",
++        "android/content/pm/ResolveInfo.java",
++        "android/content/pm/ServiceInfo.java",
++        "android/content/pm/PackageManager.java",
++        "android/content/pm/ArchivedActivityInfo.java",
++        "android/content/pm/LauncherApps.java",
++        "android/content/pm/PackageInstaller.java",
++        "android/content/pm/PackageManager.java",
++        "android/content/pm/PackageInfo.java",
++        "android/content/pm/PackageItemInfo.java",
++        "android/content/pm/ArchivedPackageInfo.java",
++        "android/content/pm/SigningInfo.java",
++    ],
++}
++
++filegroup {
++    name: "nova-hybrid-os-permission-sources",
++    visibility: ["//vendor:__subpackages__"],
++    srcs: [
++        "android/os/PermissionEnforcer.java",
++        "android/os/PersistableBundle.java",
++    ],
++}
++
++filegroup {
++    name: "nova-hybrid-accessibility-sources",
++    visibility: ["//vendor:__subpackages__"],
++    srcs: [
++        "android/view/accessibility/AccessibilityWindowInfo.java",
++    ],
++}
++
++
++
++// NOVA_HYBRID_FILEGROUP_END
+diff --git a/core/java/android/app/Notification.aidl b/core/java/android/app/Notification.aidl
+index 8a7156e971b4..7f3a2ee8ebba 100644
+--- a/core/java/android/app/Notification.aidl
++++ b/core/java/android/app/Notification.aidl
+@@ -17,4 +17,14 @@
+ package android.app;
+ 
+ parcelable Notification;
+-parcelable Notification.Action;
+\ No newline at end of file
++parcelable Notification.Action;
++
++@JavaOnlyStableParcelable parcelable android.app.Notification.BubbleMetadata;
++
++@JavaOnlyStableParcelable parcelable android.app.Notification.BubbleMetadata;
++
++@JavaOnlyStableParcelable parcelable android.app.Notification.BubbleMetadata;
++
++@JavaOnlyStableParcelable parcelable android.app.Notification.BubbleMetadata;
++
++parcelable BubbleMetadata;
+diff --git a/core/java/android/app/admin/SystemUpdatePolicy.aidl b/core/java/android/app/admin/SystemUpdatePolicy.aidl
+index 58e8d158ad45..0cbdf5ea77f0 100644
+--- a/core/java/android/app/admin/SystemUpdatePolicy.aidl
++++ b/core/java/android/app/admin/SystemUpdatePolicy.aidl
+@@ -18,3 +18,13 @@
+ package android.app.admin;
+ 
+ parcelable SystemUpdatePolicy;
++
++@JavaOnlyStableParcelable parcelable android.app.admin.SystemUpdatePolicy.ValidationFailedException;
++
++@JavaOnlyStableParcelable parcelable android.app.admin.SystemUpdatePolicy.ValidationFailedException;
++
++@JavaOnlyStableParcelable parcelable android.app.admin.SystemUpdatePolicy.ValidationFailedException;
++
++@JavaOnlyStableParcelable parcelable android.app.admin.SystemUpdatePolicy.ValidationFailedException;
++
++parcelable ValidationFailedException;
+diff --git a/core/java/android/bluetooth/BluetoothActivityEnergyInfo.aidl b/core/java/android/bluetooth/BluetoothActivityEnergyInfo.aidl
+new file mode 100644
+index 000000000000..6070e2c7cfa4
+--- /dev/null
++++ b/core/java/android/bluetooth/BluetoothActivityEnergyInfo.aidl
+@@ -0,0 +1,6 @@
++/*
++ * Copyright (C) 2024 The Android Open Source Project
++ */
++package android.bluetooth;
++
++parcelable BluetoothActivityEnergyInfo;
+diff --git a/core/java/android/content/Intent.aidl b/core/java/android/content/Intent.aidl
+index 568986be0cd3..ae424dc4d6f3 100644
+--- a/core/java/android/content/Intent.aidl
++++ b/core/java/android/content/Intent.aidl
+@@ -18,3 +18,13 @@
+ package android.content;
+ 
+ parcelable Intent;
++
++@JavaOnlyStableParcelable parcelable android.content.Intent.ShortcutIconResource;
++
++@JavaOnlyStableParcelable parcelable android.content.Intent.ShortcutIconResource;
++
++@JavaOnlyStableParcelable parcelable android.content.Intent.ShortcutIconResource;
++
++@JavaOnlyStableParcelable parcelable android.content.Intent.ShortcutIconResource;
++
++parcelable ShortcutIconResource;
+diff --git a/core/java/android/content/pm/ParceledListSlice.aidl b/core/java/android/content/pm/ParceledListSlice.aidl
+index 5031fbaca9e6..5d0e435ebf01 100644
+--- a/core/java/android/content/pm/ParceledListSlice.aidl
++++ b/core/java/android/content/pm/ParceledListSlice.aidl
+@@ -1,19 +1,6 @@
+ /*
+- * Copyright 2011, The Android Open Source Project
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *     http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
++ * Copyright (C) 2024 The Android Open Source Project
+  */
+-
+ package android.content.pm;
+ 
+ parcelable ParceledListSlice<T>;
+diff --git a/core/java/android/hardware/input/IInputManager.aidl b/core/java/android/hardware/input/IInputManager.aidl
+index c6380040e7e1..02229cb43c0b 100644
+--- a/core/java/android/hardware/input/IInputManager.aidl
++++ b/core/java/android/hardware/input/IInputManager.aidl
+@@ -169,7 +169,7 @@ interface IInputManager {
+     boolean setPointerIcon(in PointerIcon icon, int displayId, int deviceId, int pointerId,
+             in IBinder inputToken);
+ 
+-    oneway void requestPointerCapture(IBinder inputChannelToken, PointerCaptureMode mode);
++    oneway void requestPointerCapture(IBinder inputChannelToken, in PointerCaptureMode mode);
+ 
+     /** Create an input monitor for gestures. */
+     InputMonitor monitorGestureInput(IBinder token, String name, int displayId);
+diff --git a/core/java/android/hardware/radio/ProgramSelector.aidl b/core/java/android/hardware/radio/ProgramSelector.aidl
+index 545269a20aa8..2cc4ca6ab62d 100644
+--- a/core/java/android/hardware/radio/ProgramSelector.aidl
++++ b/core/java/android/hardware/radio/ProgramSelector.aidl
+@@ -18,3 +18,13 @@ package android.hardware.radio;
+ 
+ /** @hide */
+ parcelable ProgramSelector;
++
++@JavaOnlyStableParcelable parcelable android.hardware.radio.ProgramSelector.Identifier;
++
++@JavaOnlyStableParcelable parcelable android.hardware.radio.ProgramSelector.Identifier;
++
++@JavaOnlyStableParcelable parcelable android.hardware.radio.ProgramSelector.Identifier;
++
++@JavaOnlyStableParcelable parcelable android.hardware.radio.ProgramSelector.Identifier;
++
++parcelable Identifier;
+diff --git a/core/java/android/hardware/radio/RadioAlert.aidl b/core/java/android/hardware/radio/RadioAlert.aidl
+index 17f4fc7e9a13..b1256aa56e51 100644
+--- a/core/java/android/hardware/radio/RadioAlert.aidl
++++ b/core/java/android/hardware/radio/RadioAlert.aidl
+@@ -17,4 +17,34 @@
+ package android.hardware.radio;
+ 
+ /** @hide */
+-parcelable RadioAlert;
+\ No newline at end of file
++parcelable RadioAlert;
++
++@JavaOnlyStableParcelable parcelable android.hardware.radio.RadioAlert.AlertArea;
++@JavaOnlyStableParcelable parcelable android.hardware.radio.RadioAlert.AlertInfo;
++@JavaOnlyStableParcelable parcelable android.hardware.radio.RadioAlert.Coordinate;
++@JavaOnlyStableParcelable parcelable android.hardware.radio.RadioAlert.Geocode;
++@JavaOnlyStableParcelable parcelable android.hardware.radio.RadioAlert.Polygon;
++
++@JavaOnlyStableParcelable parcelable android.hardware.radio.RadioAlert.AlertArea;
++@JavaOnlyStableParcelable parcelable android.hardware.radio.RadioAlert.AlertInfo;
++@JavaOnlyStableParcelable parcelable android.hardware.radio.RadioAlert.Coordinate;
++@JavaOnlyStableParcelable parcelable android.hardware.radio.RadioAlert.Geocode;
++@JavaOnlyStableParcelable parcelable android.hardware.radio.RadioAlert.Polygon;
++
++@JavaOnlyStableParcelable parcelable android.hardware.radio.RadioAlert.AlertArea;
++@JavaOnlyStableParcelable parcelable android.hardware.radio.RadioAlert.AlertInfo;
++@JavaOnlyStableParcelable parcelable android.hardware.radio.RadioAlert.Coordinate;
++@JavaOnlyStableParcelable parcelable android.hardware.radio.RadioAlert.Geocode;
++@JavaOnlyStableParcelable parcelable android.hardware.radio.RadioAlert.Polygon;
++
++@JavaOnlyStableParcelable parcelable android.hardware.radio.RadioAlert.AlertArea;
++@JavaOnlyStableParcelable parcelable android.hardware.radio.RadioAlert.AlertInfo;
++@JavaOnlyStableParcelable parcelable android.hardware.radio.RadioAlert.Coordinate;
++@JavaOnlyStableParcelable parcelable android.hardware.radio.RadioAlert.Geocode;
++@JavaOnlyStableParcelable parcelable android.hardware.radio.RadioAlert.Polygon;
++
++parcelable AlertArea;
++parcelable AlertInfo;
++parcelable Coordinate;
++parcelable Geocode;
++parcelable Polygon;
+diff --git a/core/java/android/hardware/radio/RadioMetadata.aidl b/core/java/android/hardware/radio/RadioMetadata.aidl
+index cbf47134d539..2aee8132c8de 100644
+--- a/core/java/android/hardware/radio/RadioMetadata.aidl
++++ b/core/java/android/hardware/radio/RadioMetadata.aidl
+@@ -18,3 +18,13 @@ package android.hardware.radio;
+ 
+ /** @hide */
+ parcelable RadioMetadata;
++
++@JavaOnlyStableParcelable parcelable android.hardware.radio.RadioMetadata.Clock;
++
++@JavaOnlyStableParcelable parcelable android.hardware.radio.RadioMetadata.Clock;
++
++@JavaOnlyStableParcelable parcelable android.hardware.radio.RadioMetadata.Clock;
++
++@JavaOnlyStableParcelable parcelable android.hardware.radio.RadioMetadata.Clock;
++
++parcelable Clock;
+diff --git a/core/java/android/os/CombinedVibration.aidl b/core/java/android/os/CombinedVibration.aidl
+index 91317bde64a3..fb3555509239 100644
+--- a/core/java/android/os/CombinedVibration.aidl
++++ b/core/java/android/os/CombinedVibration.aidl
+@@ -17,3 +17,23 @@
+ package android.os;
+ 
+ parcelable CombinedVibration;
++
++@JavaOnlyStableParcelable parcelable android.os.CombinedVibration.Mono;
++@JavaOnlyStableParcelable parcelable android.os.CombinedVibration.Sequential;
++@JavaOnlyStableParcelable parcelable android.os.CombinedVibration.Stereo;
++
++@JavaOnlyStableParcelable parcelable android.os.CombinedVibration.Mono;
++@JavaOnlyStableParcelable parcelable android.os.CombinedVibration.Sequential;
++@JavaOnlyStableParcelable parcelable android.os.CombinedVibration.Stereo;
++
++@JavaOnlyStableParcelable parcelable android.os.CombinedVibration.Mono;
++@JavaOnlyStableParcelable parcelable android.os.CombinedVibration.Sequential;
++@JavaOnlyStableParcelable parcelable android.os.CombinedVibration.Stereo;
++
++@JavaOnlyStableParcelable parcelable android.os.CombinedVibration.Mono;
++@JavaOnlyStableParcelable parcelable android.os.CombinedVibration.Sequential;
++@JavaOnlyStableParcelable parcelable android.os.CombinedVibration.Stereo;
++
++parcelable Mono;
++parcelable Sequential;
++parcelable Stereo;
+diff --git a/core/java/android/os/IncidentManager.aidl b/core/java/android/os/IncidentManager.aidl
+new file mode 100644
+index 000000000000..2dc735b2b6db
+--- /dev/null
++++ b/core/java/android/os/IncidentManager.aidl
+@@ -0,0 +1,6 @@
++/*
++ * Copyright (C) 2024 The Android Open Source Project
++ */
++package android.os;
++
++parcelable IncidentManager;
+diff --git a/core/java/android/os/PointerCaptureMode.aidl b/core/java/android/os/PointerCaptureMode.aidl
+new file mode 100644
+index 000000000000..99f20da0e880
+--- /dev/null
++++ b/core/java/android/os/PointerCaptureMode.aidl
+@@ -0,0 +1,6 @@
++/*
++ * Copyright (C) 2024 The Android Open Source Project
++ */
++package android.os;
++
++parcelable PointerCaptureMode;
+diff --git a/core/java/android/os/VibrationEffect.aidl b/core/java/android/os/VibrationEffect.aidl
+index 6311760a4bfc..61e974f62243 100644
+--- a/core/java/android/os/VibrationEffect.aidl
++++ b/core/java/android/os/VibrationEffect.aidl
+@@ -17,3 +17,18 @@
+ package android.os;
+ 
+ parcelable VibrationEffect;
++
++@JavaOnlyStableParcelable parcelable android.os.VibrationEffect.Composed;
++@JavaOnlyStableParcelable parcelable android.os.VibrationEffect.VendorEffect;
++
++@JavaOnlyStableParcelable parcelable android.os.VibrationEffect.Composed;
++@JavaOnlyStableParcelable parcelable android.os.VibrationEffect.VendorEffect;
++
++@JavaOnlyStableParcelable parcelable android.os.VibrationEffect.Composed;
++@JavaOnlyStableParcelable parcelable android.os.VibrationEffect.VendorEffect;
++
++@JavaOnlyStableParcelable parcelable android.os.VibrationEffect.Composed;
++@JavaOnlyStableParcelable parcelable android.os.VibrationEffect.VendorEffect;
++
++parcelable Composed;
++parcelable VendorEffect;
+diff --git a/core/java/android/os/WorkSource.aidl b/core/java/android/os/WorkSource.aidl
+index 97e4de0f0bad..6252d37cfefb 100644
+--- a/core/java/android/os/WorkSource.aidl
++++ b/core/java/android/os/WorkSource.aidl
+@@ -16,3 +16,13 @@
+ package android.os;
+ 
+ parcelable WorkSource cpp_header "android/WorkSource.h";
++
++@JavaOnlyStableParcelable parcelable android.os.WorkSource.WorkChain;
++
++@JavaOnlyStableParcelable parcelable android.os.WorkSource.WorkChain;
++
++@JavaOnlyStableParcelable parcelable android.os.WorkSource.WorkChain;
++
++@JavaOnlyStableParcelable parcelable android.os.WorkSource.WorkChain;
++
++parcelable WorkChain;
+diff --git a/core/java/android/service/autofill/Dataset.aidl b/core/java/android/service/autofill/Dataset.aidl
+index 6fe7dd6119e7..ede0989cc649 100644
+--- a/core/java/android/service/autofill/Dataset.aidl
++++ b/core/java/android/service/autofill/Dataset.aidl
+@@ -17,3 +17,13 @@
+ package android.service.autofill;
+ 
+ parcelable Dataset;
++
++@JavaOnlyStableParcelable parcelable android.service.autofill.Dataset.DatasetFieldFilter;
++
++@JavaOnlyStableParcelable parcelable android.service.autofill.Dataset.DatasetFieldFilter;
++
++@JavaOnlyStableParcelable parcelable android.service.autofill.Dataset.DatasetFieldFilter;
++
++@JavaOnlyStableParcelable parcelable android.service.autofill.Dataset.DatasetFieldFilter;
++
++parcelable DatasetFieldFilter;
+diff --git a/core/java/android/text/FontConfig.aidl b/core/java/android/text/FontConfig.aidl
+index 17a5ca2d7830..9ddfc9c7fdc9 100644
+--- a/core/java/android/text/FontConfig.aidl
++++ b/core/java/android/text/FontConfig.aidl
+@@ -18,3 +18,28 @@ package android.text;
+ 
+ /** @hide */
+ parcelable FontConfig;
++
++@JavaOnlyStableParcelable parcelable android.text.FontConfig.Alias;
++@JavaOnlyStableParcelable parcelable android.text.FontConfig.Font;
++@JavaOnlyStableParcelable parcelable android.text.FontConfig.FontFamily;
++@JavaOnlyStableParcelable parcelable android.text.FontConfig.NamedFamilyList;
++
++@JavaOnlyStableParcelable parcelable android.text.FontConfig.Alias;
++@JavaOnlyStableParcelable parcelable android.text.FontConfig.Font;
++@JavaOnlyStableParcelable parcelable android.text.FontConfig.FontFamily;
++@JavaOnlyStableParcelable parcelable android.text.FontConfig.NamedFamilyList;
++
++@JavaOnlyStableParcelable parcelable android.text.FontConfig.Alias;
++@JavaOnlyStableParcelable parcelable android.text.FontConfig.Font;
++@JavaOnlyStableParcelable parcelable android.text.FontConfig.FontFamily;
++@JavaOnlyStableParcelable parcelable android.text.FontConfig.NamedFamilyList;
++
++@JavaOnlyStableParcelable parcelable android.text.FontConfig.Alias;
++@JavaOnlyStableParcelable parcelable android.text.FontConfig.Font;
++@JavaOnlyStableParcelable parcelable android.text.FontConfig.FontFamily;
++@JavaOnlyStableParcelable parcelable android.text.FontConfig.NamedFamilyList;
++
++parcelable Alias;
++parcelable Font;
++parcelable FontFamily;
++parcelable NamedFamilyList;
+diff --git a/core/java/android/view/accessibility/AccessibilityNodeInfo.aidl b/core/java/android/view/accessibility/AccessibilityNodeInfo.aidl
+index dbc9903f6630..f8d8b40c9794 100644
+--- a/core/java/android/view/accessibility/AccessibilityNodeInfo.aidl
++++ b/core/java/android/view/accessibility/AccessibilityNodeInfo.aidl
+@@ -18,3 +18,23 @@ package android.view.accessibility;
+ 
+ parcelable AccessibilityNodeInfo;
+ parcelable AccessibilityNodeInfo.AccessibilityAction;
++
++@JavaOnlyStableParcelable parcelable android.view.accessibility.AccessibilityNodeInfo.Selection;
++@JavaOnlyStableParcelable parcelable android.view.accessibility.AccessibilityNodeInfo.SelectionPosition;
++@JavaOnlyStableParcelable parcelable android.view.accessibility.AccessibilityNodeInfo.TouchDelegateInfo;
++
++@JavaOnlyStableParcelable parcelable android.view.accessibility.AccessibilityNodeInfo.Selection;
++@JavaOnlyStableParcelable parcelable android.view.accessibility.AccessibilityNodeInfo.SelectionPosition;
++@JavaOnlyStableParcelable parcelable android.view.accessibility.AccessibilityNodeInfo.TouchDelegateInfo;
++
++@JavaOnlyStableParcelable parcelable android.view.accessibility.AccessibilityNodeInfo.Selection;
++@JavaOnlyStableParcelable parcelable android.view.accessibility.AccessibilityNodeInfo.SelectionPosition;
++@JavaOnlyStableParcelable parcelable android.view.accessibility.AccessibilityNodeInfo.TouchDelegateInfo;
++
++@JavaOnlyStableParcelable parcelable android.view.accessibility.AccessibilityNodeInfo.Selection;
++@JavaOnlyStableParcelable parcelable android.view.accessibility.AccessibilityNodeInfo.SelectionPosition;
++@JavaOnlyStableParcelable parcelable android.view.accessibility.AccessibilityNodeInfo.TouchDelegateInfo;
++
++parcelable Selection;
++parcelable SelectionPosition;
++parcelable TouchDelegateInfo;
+diff --git a/core/java/android/view/accessibility/AccessibilityWindowInfo.aidl b/core/java/android/view/accessibility/AccessibilityWindowInfo.aidl
+deleted file mode 100644
+index c36c4aa5b00a..000000000000
+--- a/core/java/android/view/accessibility/AccessibilityWindowInfo.aidl
++++ /dev/null
+@@ -1,20 +0,0 @@
+-/**
+- * Copyright (c) 2014, The Android Open Source Project
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *     http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-
+-package android.view.accessibility;
+-
+-parcelable AccessibilityWindowInfo;
+-parcelable AccessibilityWindowInfo.WindowListSparseArray;
+diff --git a/core/java/android/view/textclassifier/ConversationActions.aidl b/core/java/android/view/textclassifier/ConversationActions.aidl
+index fece939455e0..61c425cfa09c 100644
+--- a/core/java/android/view/textclassifier/ConversationActions.aidl
++++ b/core/java/android/view/textclassifier/ConversationActions.aidl
+@@ -17,4 +17,14 @@
+ package android.view.textclassifier;
+ 
+ parcelable ConversationActions;
+-parcelable ConversationActions.Request;
+\ No newline at end of file
++parcelable ConversationActions.Request;
++
++@JavaOnlyStableParcelable parcelable android.view.textclassifier.ConversationActions.Message;
++
++@JavaOnlyStableParcelable parcelable android.view.textclassifier.ConversationActions.Message;
++
++@JavaOnlyStableParcelable parcelable android.view.textclassifier.ConversationActions.Message;
++
++@JavaOnlyStableParcelable parcelable android.view.textclassifier.ConversationActions.Message;
++
++parcelable Message;
+diff --git a/core/java/android/view/textclassifier/TextClassifierEvent.aidl b/core/java/android/view/textclassifier/TextClassifierEvent.aidl
+index 86fa4f887de4..914add912f86 100644
+--- a/core/java/android/view/textclassifier/TextClassifierEvent.aidl
++++ b/core/java/android/view/textclassifier/TextClassifierEvent.aidl
+@@ -17,3 +17,28 @@
+ package android.view.textclassifier;
+ 
+ parcelable TextClassifierEvent;
++
++@JavaOnlyStableParcelable parcelable android.view.textclassifier.TextClassifierEvent.ConversationActionsEvent;
++@JavaOnlyStableParcelable parcelable android.view.textclassifier.TextClassifierEvent.LanguageDetectionEvent;
++@JavaOnlyStableParcelable parcelable android.view.textclassifier.TextClassifierEvent.TextLinkifyEvent;
++@JavaOnlyStableParcelable parcelable android.view.textclassifier.TextClassifierEvent.TextSelectionEvent;
++
++@JavaOnlyStableParcelable parcelable android.view.textclassifier.TextClassifierEvent.ConversationActionsEvent;
++@JavaOnlyStableParcelable parcelable android.view.textclassifier.TextClassifierEvent.LanguageDetectionEvent;
++@JavaOnlyStableParcelable parcelable android.view.textclassifier.TextClassifierEvent.TextLinkifyEvent;
++@JavaOnlyStableParcelable parcelable android.view.textclassifier.TextClassifierEvent.TextSelectionEvent;
++
++@JavaOnlyStableParcelable parcelable android.view.textclassifier.TextClassifierEvent.ConversationActionsEvent;
++@JavaOnlyStableParcelable parcelable android.view.textclassifier.TextClassifierEvent.LanguageDetectionEvent;
++@JavaOnlyStableParcelable parcelable android.view.textclassifier.TextClassifierEvent.TextLinkifyEvent;
++@JavaOnlyStableParcelable parcelable android.view.textclassifier.TextClassifierEvent.TextSelectionEvent;
++
++@JavaOnlyStableParcelable parcelable android.view.textclassifier.TextClassifierEvent.ConversationActionsEvent;
++@JavaOnlyStableParcelable parcelable android.view.textclassifier.TextClassifierEvent.LanguageDetectionEvent;
++@JavaOnlyStableParcelable parcelable android.view.textclassifier.TextClassifierEvent.TextLinkifyEvent;
++@JavaOnlyStableParcelable parcelable android.view.textclassifier.TextClassifierEvent.TextSelectionEvent;
++
++parcelable ConversationActionsEvent;
++parcelable LanguageDetectionEvent;
++parcelable TextLinkifyEvent;
++parcelable TextSelectionEvent;
+diff --git a/core/java/android/view/textclassifier/TextLinks.aidl b/core/java/android/view/textclassifier/TextLinks.aidl
+index 5de2c77758c2..013b54aa7a81 100644
+--- a/core/java/android/view/textclassifier/TextLinks.aidl
++++ b/core/java/android/view/textclassifier/TextLinks.aidl
+@@ -17,4 +17,14 @@
+ package android.view.textclassifier;
+ 
+ parcelable TextLinks;
+-parcelable TextLinks.Request;
+\ No newline at end of file
++parcelable TextLinks.Request;
++
++@JavaOnlyStableParcelable parcelable android.view.textclassifier.TextLinks.TextLink;
++
++@JavaOnlyStableParcelable parcelable android.view.textclassifier.TextLinks.TextLink;
++
++@JavaOnlyStableParcelable parcelable android.view.textclassifier.TextLinks.TextLink;
++
++@JavaOnlyStableParcelable parcelable android.view.textclassifier.TextLinks.TextLink;
++
++parcelable TextLink;
+diff --git a/core/java/android/window/ScreenCaptureInternal.aidl b/core/java/android/window/ScreenCaptureInternal.aidl
+deleted file mode 100644
+index c542ce83f137..000000000000
+--- a/core/java/android/window/ScreenCaptureInternal.aidl
++++ /dev/null
+@@ -1,26 +0,0 @@
+-/*
+- * Copyright (C) 2022 The Android Open Source Project
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *      http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-
+-package android.window;
+-
+-/** @hide */
+-parcelable ScreenCaptureInternal.CaptureArgs;
+-
+-/** @hide */
+-parcelable ScreenCaptureInternal.ScreenshotHardwareBuffer;
+-
+-/** @hide */
+-parcelable ScreenCaptureInternal.ScreenCaptureListener;
+diff --git a/core/res/AndroidManifest.xml b/core/res/AndroidManifest.xml
+index 3a5dbd08dba5..235958960335 100644
+--- a/core/res/AndroidManifest.xml
++++ b/core/res/AndroidManifest.xml
+@@ -916,8 +916,7 @@
+                 android:permissionGroup="android.permission-group.UNDEFINED"
+                 android:label="@string/permlab_writeVerificationStateE2eeContactKeys"
+                 android:description="@string/permdesc_writeVerificationStateE2eeContactKeys"
+-                android:protectionLevel="signature|privileged"
+-                android:featureFlag="android.provider.user_keys" />
++                android:protectionLevel="signature|privileged" />
+ 
+     <!-- Allows an application to set default account for new contacts.
+         <p>This permission is only granted to system applications fulfilling the Contacts app role.
+@@ -926,8 +925,7 @@
+         @hide
+     -->
+     <permission android:name="android.permission.SET_DEFAULT_ACCOUNT_FOR_CONTACTS"
+-        android:protectionLevel="internal|role"
+-        android:featureFlag="!android.provider.new_default_account_api_enabled"/>
++        android:protectionLevel="internal|role"/>
+ 
+     <!-- Allows an application to set default account for new contacts.
+         <p>This permission is only granted to system applications fulfilling the Contacts app role
+@@ -938,8 +936,7 @@
+     -->
+     <permission android:name="android.permission.SET_DEFAULT_ACCOUNT_FOR_CONTACTS"
+         android:protectionLevel="internal|role|knownSigner"
+-        android:knownCerts="@array/config_setContactsDefaultAccountKnownSigners"
+-        android:featureFlag="android.provider.new_default_account_api_enabled"/>
++        android:knownCerts="@array/config_setContactsDefaultAccountKnownSigners"/>
+ 
+     <!-- ====================================================================== -->
+     <!-- Permissions for accessing user's calendar                              -->
+@@ -1110,8 +1107,7 @@
+          {@link SurfaceControl.Transaction#setPictureProfileHandle}.
+          -->
+     <permission android:name="android.permission.APPLY_PICTURE_PROFILE"
+-        android:protectionLevel="normal"
+-        android:featureFlag="android.media.tv.flags.apply_picture_profiles"/>
++        android:protectionLevel="normal"/>
+ 
+     <!-- @hide
+          Allows MediaQualityService to observe any {@link MediaQualityManager.PictureProfile}
+@@ -1120,8 +1116,7 @@
+          {@link SurfaceControl.Transaction#setPictureProfileHandle}.
+          -->
+     <permission android:name="android.permission.OBSERVE_PICTURE_PROFILES"
+-        android:protectionLevel="signature|privileged"
+-        android:featureFlag="android.media.tv.flags.apply_picture_profiles"/>
++        android:protectionLevel="signature|privileged"/>
+ 
+     <!--
+         @SystemApi
+@@ -1131,8 +1126,7 @@
+         @hide
+     -->
+     <permission android:name="android.permission.MANAGE_GLOBAL_PICTURE_QUALITY_SERVICE"
+-                android:protectionLevel="signature|privileged|vendorPrivileged"
+-                android:featureFlag="android.media.tv.flags.media_quality_fw"/>
++                android:protectionLevel="signature|privileged|vendorPrivileged"/>
+ 
+     <!--
+         @SystemApi
+@@ -1142,8 +1136,7 @@
+         @hide
+     -->
+     <permission android:name="android.permission.MANAGE_GLOBAL_SOUND_QUALITY_SERVICE"
+-                android:protectionLevel="signature|privileged|vendorPrivileged"
+-                android:featureFlag="android.media.tv.flags.media_quality_fw"/>
++                android:protectionLevel="signature|privileged|vendorPrivileged"/>
+ 
+     <!--
+         @FlaggedApi(android.media.tv.flags.Flags.FLAG_MEDIA_QUALITY_FW)
+@@ -1152,8 +1145,7 @@
+         <p> Protection level: normal
+     -->
+     <permission android:name="android.permission.READ_COLOR_ZONES"
+-                android:protectionLevel="normal"
+-                android:featureFlag="android.media.tv.flags.media_quality_fw"/>
++                android:protectionLevel="normal"/>
+ 
+     <!-- ====================================================================== -->
+     <!-- Permissions for accessing external storage                             -->
+@@ -1822,8 +1814,7 @@
+         android:permissionGroup="android.permission-group.UNDEFINED"
+         android:label="@string/permlab_cameraHeadlessSystemUser"
+         android:description="@string/permdesc_cameraHeadlessSystemUser"
+-        android:protectionLevel="signature"
+-        android:featureFlag="com.android.internal.camera.flags.camera_hsum_permission" />
++        android:protectionLevel="signature" />
+ 
+ 
+     <!-- @SystemApi Allows camera access of allowlisted driver assistance apps
+@@ -1863,8 +1854,7 @@
+     -->
+     <permission android:name="android.permission.READ_MOISTURE_INTRUSION"
+                 android:permissionGroup="android.permission-group.SENSORS"
+-                android:protectionLevel="signature|privileged"
+-                android:featureFlag="com.android.tradeinmode.flags.trade_in_mode_2025q4"/>
++                android:protectionLevel="signature|privileged"/>
+ 
+     <!-- Allows an application to access data from sensors that the user uses to
+          measure what is happening inside their body, such as heart rate.
+@@ -2182,7 +2172,6 @@
+          <p>Protection level: signature
+     -->
+     <permission android:name="android.permission.BIND_POPULATION_DENSITY_PROVIDER_SERVICE"
+-        android:featureFlag="android.location.flags.population_density_provider"
+         android:protectionLevel="signature" />
+ 
+     <!-- @SystemApi @hide Allows an application to read location bypass allowlist.
+@@ -2190,8 +2179,7 @@
+          @FlaggedApi(android.location.flags.Flags.FLAG_CHANGE_GET_ADAS_ALLOWLIST_FROM_HIDDEN_TO_SYSTEM)
+     -->
+     <permission android:name="android.permission.READ_LOCATION_BYPASS_ALLOWLIST"
+-        android:protectionLevel="signature|privileged"
+-        android:featureFlag="android.location.flags.change_get_adas_allowlist_from_hidden_to_system" />
++        android:protectionLevel="signature|privileged" />
+ 
+     <!-- ======================================= -->
+     <!-- Permissions for accessing networks -->
+@@ -2333,12 +2321,10 @@
+ 
+     <!-- @SystemApi @hide Allows applications to register network factory or agent -->
+     <permission android:name="android.permission.NETWORK_FACTORY"
+-                android:featureFlag="!android.permission.flags.bluetooth_permission_use_module_protection_level"
+                 android:protectionLevel="signature|role" />
+ 
+     <!-- @SystemApi @hide Allows applications to register network factory or agent -->
+     <permission android:name="android.permission.NETWORK_FACTORY"
+-                android:featureFlag="android.permission.flags.bluetooth_permission_use_module_protection_level"
+                 android:protectionLevel="signature|role|module" />
+ 
+     <!-- @hide Allows applications to register a NetworkAgent for its own use.
+@@ -2346,8 +2332,7 @@
+          the CONNECTIVITY_USE_RESTRICTED_NETWORKS permission.
+     -->
+     <permission android:name="android.permission.CREATE_APP_SPECIFIC_NETWORK"
+-                android:protectionLevel="signature|privileged"
+-                android:featureFlag="android.net.platform.flags.create_app_specific_network_permission" />
++                android:protectionLevel="signature|privileged" />
+ 
+     <!-- @SystemApi @hide Allows applications to access network stats provider -->
+     <permission android:name="android.permission.NETWORK_STATS_PROVIDER"
+@@ -2477,8 +2462,7 @@
+         @hide This should only be used by system apps.
+     -->
+     <permission android:name="android.permission.REGISTER_NSD_OFFLOAD_ENGINE"
+-        android:protectionLevel="signature"
+-        android:featureFlag="android.net.platform.flags.register_nsd_offload_engine" />
++        android:protectionLevel="signature" />
+ 
+     <!-- ======================================= -->
+     <!-- Permissions for short range, peripheral networks -->
+@@ -2540,8 +2524,7 @@
+         android:permissionGroup="android.permission-group.UNDEFINED"
+         android:description="@string/permdesc_access_local_network"
+         android:label="@string/permlab_access_local_network"
+-        android:protectionLevel="dangerous"
+-        android:featureFlag="android.permission.flags.access_local_network_permission_enabled" />
++        android:protectionLevel="dangerous" />
+ 
+     <!-- Required to be able to range to devices using generic ranging module.
+          @FlaggedApi("android.permission.flags.ranging_permission_enabled")
+@@ -2550,8 +2533,7 @@
+         android:permissionGroup="android.permission-group.UNDEFINED"
+         android:description="@string/permdesc_ranging"
+         android:label="@string/permlab_ranging"
+-        android:protectionLevel="dangerous"
+-        android:featureFlag="android.permission.flags.ranging_permission_enabled"/>
++        android:protectionLevel="dangerous"/>
+ 
+     <!-- @SystemApi Allows an application to suspend other apps, which will prevent the
+          user from using them until they are unsuspended.
+@@ -2567,8 +2549,7 @@
+          them from running without explicit user action.
+     -->
+     <permission android:name="android.permission.QUARANTINE_APPS"
+-        android:protectionLevel="signature|verifier"
+-        android:featureFlag="android.content.pm.quarantined_enabled" />
++        android:protectionLevel="signature|verifier" />
+ 
+     <!-- Allows applications to discover and pair bluetooth devices.
+          <p>Protection level: normal
+@@ -2588,13 +2569,11 @@
+          @hide
+     -->
+     <permission android:name="android.permission.BLUETOOTH_MAP"
+-        android:featureFlag="!android.permission.flags.bluetooth_permission_use_module_protection_level"
+         android:protectionLevel="signature|role" />
+     <!-- @SystemApi Control access to email providers exclusively for Bluetooth
+          @hide
+     -->
+     <permission android:name="android.permission.BLUETOOTH_MAP"
+-        android:featureFlag="android.permission.flags.bluetooth_permission_use_module_protection_level"
+         android:protectionLevel="signature|role|module" />
+ 
+ 
+@@ -2603,14 +2582,12 @@
+          @hide @SystemApi(client=android.annotation.SystemApi.Client.MODULE_LIBRARIES)
+     -->
+     <permission android:name="android.permission.BLUETOOTH_STACK"
+-        android:featureFlag="!android.permission.flags.bluetooth_permission_use_module_protection_level"
+         android:protectionLevel="signature|role" />
+     <!-- Allows bluetooth stack to access files
+          This should only be granted to the Bluetooth apk.
+          @hide @SystemApi(client=android.annotation.SystemApi.Client.MODULE_LIBRARIES)
+     -->
+     <permission android:name="android.permission.BLUETOOTH_STACK"
+-        android:featureFlag="android.permission.flags.bluetooth_permission_use_module_protection_level"
+         android:protectionLevel="signature|role|module" />
+ 
+     <!-- Allows uhid write access for creating virtual input devices
+@@ -2742,16 +2719,14 @@
+          <p>Not for use by third-party applications.
+          @hide -->
+     <permission android:name="android.permission.REMOVE_ACCOUNTS"
+-        android:protectionLevel="signature|role"
+-        android:featureFlag="android.app.admin.flags.split_create_managed_profile_enabled" />
++        android:protectionLevel="signature|role" />
+ 
+     <!-- @SystemApi Allows access to copy an account to another user.
+          @FlaggedApi(android.app.admin.flags.Flags.FLAG_SPLIT_CREATE_MANAGED_PROFILE_ENABLED)
+          <p>Not for use by third-party applications.
+          @hide -->
+     <permission android:name="android.permission.COPY_ACCOUNTS"
+-        android:protectionLevel="signature|role"
+-        android:featureFlag="android.app.admin.flags.split_create_managed_profile_enabled" />
++        android:protectionLevel="signature|role" />
+ 
+     <!-- Allows applications to call into AccountAuthenticators.
+     <p>Not for use by third-party applications. -->
+@@ -2799,8 +2774,7 @@
+          @hide
+     -->
+     <permission android:name="android.permission.VIBRATE_VENDOR_EFFECTS"
+-        android:protectionLevel="signature|privileged"
+-        android:featureFlag="android.os.vibrator.vendor_vibration_effects" />
++        android:protectionLevel="signature|privileged" />
+ 
+     <!-- @SystemApi Allows access to start a vendor vibration session.
+          <p>Protection level: signature
+@@ -2808,8 +2782,7 @@
+         @hide
+     -->
+     <permission android:name="android.permission.START_VIBRATION_SESSIONS"
+-        android:protectionLevel="signature|privileged"
+-        android:featureFlag="android.os.vibrator.vendor_vibration_effects" />
++        android:protectionLevel="signature|privileged" />
+ 
+     <!-- @SystemApi Allows access to the vibrator state.
+          <p>Protection level: signature
+@@ -2838,8 +2811,7 @@
+     @hide
+     -->
+     <permission android:name="android.permission.ACQUIRE_SLEEP_LOCK"
+-        android:protectionLevel="signature"
+-        android:featureFlag="com.android.server.power.feature.flags.partial_sleep_wakelocks"/>
++        android:protectionLevel="signature"/>
+ 
+     <!-- Allows using the device's IR transmitter, if available.
+          <p>Protection level: normal
+@@ -2897,8 +2869,7 @@
+          @FlaggedApi("com.android.window.flags.screen_recording_callbacks")
+     -->
+     <permission android:name="android.permission.DETECT_SCREEN_RECORDING"
+-                android:protectionLevel="normal"
+-                android:featureFlag="com.android.window.flags.screen_recording_callbacks" />
++                android:protectionLevel="normal" />
+ 
+     <!-- ======================================== -->
+     <!-- Permissions for factory reset protection -->
+@@ -2975,12 +2946,10 @@
+     <!-- Allows access to configure network interfaces, configure/use IPSec, etc.
+          @hide -->
+     <permission android:name="android.permission.NET_ADMIN"
+-        android:featureFlag="!android.permission.flags.bluetooth_permission_use_module_protection_level"
+         android:protectionLevel="signature|role" />
+     <!-- Allows access to configure network interfaces, configure/use IPSec, etc.
+          @hide -->
+     <permission android:name="android.permission.NET_ADMIN"
+-        android:featureFlag="android.permission.flags.bluetooth_permission_use_module_protection_level"
+         android:protectionLevel="signature|role|module" />
+ 
+     <!-- Allows registration for remote audio playback. @hide -->
+@@ -3111,12 +3080,10 @@
+     <!-- Allows listen permission to always reported system signal strength.
+          @hide Used internally. -->
+     <permission android:name="android.permission.LISTEN_ALWAYS_REPORTED_SIGNAL_STRENGTH"
+-        android:featureFlag="!android.permission.flags.bluetooth_permission_use_module_protection_level"
+         android:protectionLevel="signature|role" />
+     <!-- Allows listen permission to always reported system signal strength.
+          @hide Used internally. -->
+     <permission android:name="android.permission.LISTEN_ALWAYS_REPORTED_SIGNAL_STRENGTH"
+-        android:featureFlag="android.permission.flags.bluetooth_permission_use_module_protection_level"
+         android:protectionLevel="signature|role|module" />
+ 
+     <!-- @SystemApi Protects the ability to register any PhoneAccount with
+@@ -4241,7 +4208,6 @@
+         @FlaggedApi(android.app.appfunctions.flags.Flags.FLAG_ENABLE_APP_FUNCTION_MANAGER)
+     -->
+     <permission android:name="android.permission.MANAGE_DEVICE_POLICY_APP_FUNCTIONS"
+-        android:featureFlag="android.app.appfunctions.flags.enable_app_function_manager"
+         android:protectionLevel="internal|role" />
+ 
+     <!-- Allows an application to set policy related to subscriptions downloaded by an admin.
+@@ -4327,38 +4293,30 @@
+         @SystemApi
+         @hide -->
+     <permission android:name="android.permission.MANAGE_ADVANCED_PROTECTION_MODE"
+-        android:protectionLevel="signature|privileged"
+-        android:featureFlag="android.security.aapm_api"/>
+-    <uses-permission android:name="android.permission.MANAGE_ADVANCED_PROTECTION_MODE"
+-        android:featureFlag="android.security.aapm_api"/>
++        android:protectionLevel="signature|privileged"/>
++    <uses-permission android:name="android.permission.MANAGE_ADVANCED_PROTECTION_MODE"/>
+ 
+     <!-- Allows an application to query the device's advanced protection mode status.
+         @FlaggedApi(android.security.Flags.FLAG_AAPM_API) -->
+     <permission android:name="android.permission.QUERY_ADVANCED_PROTECTION_MODE"
+-        android:protectionLevel="normal"
+-        android:featureFlag="android.security.aapm_api"/>
+-    <uses-permission android:name="android.permission.QUERY_ADVANCED_PROTECTION_MODE"
+-        android:featureFlag="android.security.aapm_api"/>
++        android:protectionLevel="normal"/>
++    <uses-permission android:name="android.permission.QUERY_ADVANCED_PROTECTION_MODE"/>
+ 
+     <!-- Allows an application to read the state of the IntrusionDetectionService
+          @FlaggedApi(android.security.Flags.FLAG_AFL_API)
+          @SystemApi
+          @hide -->
+     <permission android:name="android.permission.READ_INTRUSION_DETECTION_STATE"
+-        android:featureFlag="android.security.afl_api"
+         android:protectionLevel="signature|privileged" />
+-    <uses-permission android:name="android.permission.READ_INTRUSION_DETECTION_STATE"
+-        android:featureFlag="android.security.afl_api"/>
++    <uses-permission android:name="android.permission.READ_INTRUSION_DETECTION_STATE"/>
+ 
+     <!-- Allows an application to change the state of the IntrusionDetectionService
+          @FlaggedApi(android.security.Flags.FLAG_AFL_API)
+          @SystemApi
+          @hide -->
+     <permission android:name="android.permission.MANAGE_INTRUSION_DETECTION_STATE"
+-        android:featureFlag="android.security.afl_api"
+         android:protectionLevel="signature|privileged" />
+-    <uses-permission android:name="android.permission.MANAGE_INTRUSION_DETECTION_STATE"
+-        android:featureFlag="android.security.afl_api"/>
++    <uses-permission android:name="android.permission.MANAGE_INTRUSION_DETECTION_STATE"/>
+ 
+     <!-- Must be required by any IntrusionDetectionEventTransportService to ensure that
+          only the system can bind to it.
+@@ -4366,10 +4324,8 @@
+          @SystemApi
+          @hide -->
+     <permission android:name="android.permission.BIND_INTRUSION_DETECTION_EVENT_TRANSPORT_SERVICE"
+-        android:featureFlag="android.security.afl_api"
+         android:protectionLevel="signature" />
+-    <uses-permission android:name="android.permission.BIND_INTRUSION_DETECTION_EVENT_TRANSPORT_SERVICE"
+-        android:featureFlag="android.security.afl_api"/>
++    <uses-permission android:name="android.permission.BIND_INTRUSION_DETECTION_EVENT_TRANSPORT_SERVICE"/>
+ 
+     <!-- @SystemApi @hide Allows an application to set a device owner on retail demo devices.-->
+     <permission android:name="android.permission.PROVISION_DEMO_DEVICE"
+@@ -4433,8 +4389,7 @@
+          configurations related to select multitasking features like Bubbles.
+          @hide -->
+     <permission android:name="android.permission.REQUEST_SYSTEM_MULTITASKING_CONTROLS"
+-        android:protectionLevel="signature|privileged"
+-        android:featureFlag="com.android.window.flags.enable_experimental_bubbles_controller" />
++        android:protectionLevel="signature|privileged" />
+ 
+     <!-- Allows an application to start any activity, regardless of permission
+          protection or exported state.
+@@ -4556,8 +4511,7 @@
+ 
+          <p>Not for use by third-party applications. -->
+     <permission android:name="android.permission.SYSTEM_APPLICATION_OVERLAY"
+-        android:protectionLevel="signature|recents|role|installer|appop"
+-        android:featureFlag="com.android.media.projection.flags.recording_overlay" />
++        android:protectionLevel="signature|recents|role|installer|appop" />
+ 
+     <!-- @SystemApi @hide Allows an application to create windows using the type
+          {@link android.view.WindowManager.LayoutParams#TYPE_APPLICATION_OVERLAY},
+@@ -4570,8 +4524,7 @@
+ 
+          <p>Not for use by third-party applications. -->
+     <permission android:name="android.permission.SYSTEM_APPLICATION_OVERLAY"
+-        android:protectionLevel="signature|recents|role|installer"
+-        android:featureFlag="!com.android.media.projection.flags.recording_overlay" />
++        android:protectionLevel="signature|recents|role|installer" />
+ 
+     <!-- @deprecated Use {@link android.Manifest.permission#REQUEST_COMPANION_RUN_IN_BACKGROUND}
+          @hide
+@@ -4650,8 +4603,7 @@
+          @FlaggedApi(android.companion.Flags.FLAG_ENABLE_MEDICAL_PROFILE)
+     -->
+     <permission android:name="android.permission.REQUEST_COMPANION_PROFILE_MEDICAL"
+-        android:protectionLevel="normal"
+-        android:featureFlag="android.companion.enable_medical_profile" />
++        android:protectionLevel="normal" />
+ 
+     <!-- Allows application to request to be associated with a virtual device capable of streaming
+          Android applications
+@@ -4677,8 +4629,7 @@
+          @FlaggedApi(android.companion.virtualdevice.flags.Flags.FLAG_ENABLE_LIMITED_VDM_ROLE)
+     -->
+     <permission android:name="android.permission.REQUEST_COMPANION_PROFILE_VIRTUAL_DEVICE"
+-        android:protectionLevel="signature|privileged"
+-        android:featureFlag="android.companion.virtualdevice.flags.enable_limited_vdm_role" />
++        android:protectionLevel="signature|privileged" />
+ 
+     <!-- Allows application to request to be associated with a vehicle head unit capable of
+          automotive projection
+@@ -4740,8 +4691,7 @@
+         @FlaggedApi(android.app.Flags.FLAG_ENABLE_TV_IMPLICIT_ENTER_PIP_RESTRICTION)
+      -->
+     <permission android:name="android.permission.TV_IMPLICIT_ENTER_PIP"
+-        android:protectionLevel="normal"
+-        android:featureFlag="android.app.enable_tv_implicit_enter_pip_restriction" />
++        android:protectionLevel="normal" />
+ 
+     <!-- ================================== -->
+     <!-- Permissions affecting the system wallpaper -->
+@@ -5256,8 +5206,7 @@
+          <p>This allows the calling application to read settings values through the host
+          application, agnostic of underlying storage. -->
+     <permission android:name="android.permission.READ_SYSTEM_PREFERENCES"
+-        android:protectionLevel="signature|privileged|role"
+-        android:featureFlag="com.android.settingslib.flags.settings_catalyst" />
++        android:protectionLevel="signature|privileged|role" />
+ 
+     <!-- @FlaggedApi(com.android.settingslib.flags.Flags.FLAG_WRITE_SYSTEM_PREFERENCE_PERMISSION_ENABLED)
+          Allows an application to access the Settings Preference services to write settings
+@@ -5267,8 +5216,7 @@
+          through the host application, agnostic of underlying storage.
+          <p>Protection Level: signature|privileged|appop -->
+     <permission android:name="android.permission.WRITE_SYSTEM_PREFERENCES"
+-        android:protectionLevel="signature|privileged|appop"
+-        android:featureFlag="com.android.settingslib.flags.write_system_preference_permission_enabled" />
++        android:protectionLevel="signature|privileged|appop" />
+ 
+     <!-- ========================================= -->
+     <!-- Permissions for special development tools -->
+@@ -5288,8 +5236,7 @@
+     <!-- This permission protects a content provider within home/launcher applications, enabling management of home screen metadata such as shortcut placement, launch intents, and labels. -->
+     <!-- @FlaggedApi(android.provider.Flags.FLAG_LAUNCHER_DATA_ACCESS) -->
+     <permission android:name="android.permission.ACCESS_LAUNCHER_DATA"
+-      android:protectionLevel="signatureOrSystem"
+-      android:featureFlag="android.provider.launcher_data_access" />
++      android:protectionLevel="signatureOrSystem" />
+ 
+     <!-- Allows an application to start tracing for InputMethod and WindowManager.
+     <p>Not for use by third-party applications.
+@@ -5307,8 +5254,7 @@
+     <p>Not for use by third-party applications.
+     @FlaggedApi("com.android.update_engine.minor_changes_2025q4") -->
+     <permission android:name="android.permission.READ_UPDATE_ENGINE_LOGS"
+-        android:protectionLevel="signature|privileged|development"
+-        android:featureFlag="com.android.update_engine.minor_changes_2025q4" />
++        android:protectionLevel="signature|privileged|development" />
+ 
+     <!-- Configure an application for debugging.
+     <p>Not for use by third-party applications. -->
+@@ -5373,8 +5319,7 @@
+                       android:icon="@drawable/perm_group_xr_tracking"
+                       android:label="@string/permgrouplab_xr_tracking"
+                       android:description="@string/permgroupdesc_xr_tracking"
+-                      android:priority="100"
+-                      android:featureFlag="android.xr.xr_manifest_entries" />
++                      android:priority="100" />
+ 
+     <!-- Allows an application to get approximate eye gaze.
+ 
+@@ -5385,8 +5330,7 @@
+                 android:protectionLevel="dangerous"
+                 android:permissionGroup="android.permission-group.UNDEFINED"
+                 android:label="@string/permlab_eye_tracking_coarse"
+-                android:description="@string/permdesc_eye_tracking_coarse"
+-                android:featureFlag="android.xr.xr_manifest_entries" />
++                android:description="@string/permdesc_eye_tracking_coarse" />
+ 
+     <!-- Allows an application to get face tracking data.
+ 
+@@ -5397,8 +5341,7 @@
+                 android:protectionLevel="dangerous"
+                 android:permissionGroup="android.permission-group.UNDEFINED"
+                 android:label="@string/permlab_face_tracking"
+-                android:description="@string/permdesc_face_tracking"
+-                android:featureFlag="android.xr.xr_manifest_entries" />
++                android:description="@string/permdesc_face_tracking" />
+ 
+     <!-- Allows an application to get hand tracking data.
+ 
+@@ -5409,8 +5352,7 @@
+                 android:protectionLevel="dangerous"
+                 android:permissionGroup="android.permission-group.UNDEFINED"
+                 android:label="@string/permlab_hand_tracking"
+-                android:description="@string/permdesc_hand_tracking"
+-                android:featureFlag="android.xr.xr_manifest_entries" />
++                android:description="@string/permdesc_hand_tracking" />
+ 
+     <!-- Allows an application to get data derived by sensing the
+          user's environment.
+@@ -5422,8 +5364,7 @@
+                 android:protectionLevel="dangerous"
+                 android:permissionGroup="android.permission-group.UNDEFINED"
+                 android:description="@string/permdesc_scene_understanding_coarse"
+-                android:label="@string/permlab_scene_understanding_coarse"
+-                android:featureFlag="android.xr.xr_manifest_entries" />
++                android:label="@string/permlab_scene_understanding_coarse" />
+ 
+     <!-- Used for permissions that are associated with accessing
+          sensitive XR eye tracking data.
+@@ -5433,8 +5374,7 @@
+                       android:icon="@drawable/perm_group_xr_eye_sensitive"
+                       android:label="@string/permgrouplab_xr_eye_sensitive"
+                       android:description="@string/permgroupdesc_xr_eye_sensitive"
+-                      android:priority="100"
+-                      android:featureFlag="android.xr.xr_manifest_entries" />
++                      android:priority="100" />
+ 
+     <!-- Allows an application to get precise eye gaze data.
+ 
+@@ -5445,8 +5385,7 @@
+                 android:protectionLevel="dangerous"
+                 android:permissionGroup="android.permission-group.UNDEFINED"
+                 android:label="@string/permlab_eye_tracking_fine"
+-                android:description="@string/permdesc_eye_tracking_fine"
+-                android:featureFlag="android.xr.xr_manifest_entries" />
++                android:description="@string/permdesc_eye_tracking_fine" />
+ 
+     <!-- Used for permissions that are associated with accessing
+          sensitive XR tracking data.
+@@ -5456,8 +5395,7 @@
+                       android:icon="@drawable/perm_group_xr_tracking_sensitive"
+                       android:label="@string/permgrouplab_xr_tracking_sensitive"
+                       android:description="@string/permgroupdesc_xr_tracking_sensitive"
+-                      android:priority="100"
+-                      android:featureFlag="android.xr.xr_manifest_entries" />
++                      android:priority="100" />
+ 
+     <!-- Allows an application to get head tracking data.  Unmanaged
+          activities (OpenXR activities with the manifest property
+@@ -5474,8 +5412,7 @@
+                 android:protectionLevel="dangerous"
+                 android:permissionGroup="android.permission-group.UNDEFINED"
+                 android:label="@string/permlab_head_tracking"
+-                android:description="@string/permdesc_head_tracking"
+-                android:featureFlag="android.xr.xr_manifest_entries" />
++                android:description="@string/permdesc_head_tracking" />
+ 
+     <!-- Allows an application to get highly precise data derived by sensing the
+          user's environment, such as a depth map.
+@@ -5487,8 +5424,7 @@
+                 android:protectionLevel="dangerous"
+                 android:permissionGroup="android.permission-group.UNDEFINED"
+                 android:description="@string/permdesc_scene_understanding_fine"
+-                android:label="@string/permlab_scene_understanding_fine"
+-                android:featureFlag="android.xr.xr_manifest_entries" />
++                android:label="@string/permlab_scene_understanding_fine" />
+ 
+     <!-- Allows an application to trigger Eye Calibration, which
+          calibrates for IPD (inter-pupillary distance) adjustment and
+@@ -5500,8 +5436,7 @@
+          @FlaggedApi(android.xr.Flags.FLAG_XR_MANIFEST_ENTRIES)
+          @hide -->
+     <permission android:name="android.permission.EYE_CALIBRATION"
+-                android:protectionLevel="signature|privileged"
+-                android:featureFlag="android.xr.xr_manifest_entries" />
++                android:protectionLevel="signature|privileged" />
+ 
+     <!-- Allows an application to trigger Face Tracking Calibration.
+ 
+@@ -5511,8 +5446,7 @@
+          @FlaggedApi(android.xr.Flags.FLAG_XR_MANIFEST_ENTRIES)
+          @hide -->
+     <permission android:name="android.permission.FACE_TRACKING_CALIBRATION"
+-                android:protectionLevel="signature|privileged"
+-                android:featureFlag="android.xr.xr_manifest_entries" />
++                android:protectionLevel="signature|privileged" />
+ 
+     <!-- Allows an application to import an anchor created and
+          exported by another application.
+@@ -5523,8 +5457,7 @@
+          @FlaggedApi(android.xr.Flags.FLAG_XR_MANIFEST_ENTRIES)
+          @hide -->
+     <permission android:name="android.permission.IMPORT_XR_ANCHOR"
+-                android:protectionLevel="signature|privileged"
+-                android:featureFlag="android.xr.xr_manifest_entries" />
++                android:protectionLevel="signature|privileged" />
+ 
+     <!-- Allows an application to access XR tracking data while in the
+          background. Without this permission, XR tracking data such as
+@@ -5545,8 +5478,7 @@
+     <permission android:name="android.permission.XR_TRACKING_IN_BACKGROUND"
+                 android:protectionLevel="signature|privileged"
+                 android:description="@string/permdesc_xr_tracking_in_background"
+-                android:label="@string/permlab_xr_tracking_in_background"
+-                android:featureFlag="android.xr.xr_manifest_entries" />
++                android:label="@string/permlab_xr_tracking_in_background" />
+ 
+     <!-- ==================================== -->
+     <!-- Private permissions                  -->
+@@ -5648,13 +5580,11 @@
+          Not for use by third party apps.
+          @hide -->
+     <permission android:name="android.permission.MANAGE_APP_OPS_MODES"
+-        android:featureFlag="!android.permission.flags.bluetooth_permission_use_module_protection_level"
+         android:protectionLevel="signature|installer|verifier|role" />
+     <!-- @TestApi Allows an application to update the user app op modes.
+          Not for use by third party apps.
+          @hide -->
+     <permission android:name="android.permission.MANAGE_APP_OPS_MODES"
+-        android:featureFlag="android.permission.flags.bluetooth_permission_use_module_protection_level"
+         android:protectionLevel="signature|installer|verifier|role|module" />
+ 
+     <!-- @SystemApi Allows an application to open windows that are for use by parts
+@@ -5719,8 +5649,7 @@
+          @FlaggedApi(com.android.hardware.input.Flags.FLAG_CREATE_VIRTUAL_KEYBOARD_API)
+     -->
+     <permission android:name="android.permission.INJECT_KEY_EVENTS"
+-        android:protectionLevel="signature|privileged"
+-        android:featureFlag="com.android.hardware.input.create_virtual_keyboard_api" />
++        android:protectionLevel="signature|privileged" />
+ 
+     <!-- @hide Allows an application to register an input filter which filters the stream
+          of user events (keys, touch, trackball) before they are dispatched to any window. -->
+@@ -5991,8 +5920,7 @@
+          <p>Intended for use by ROLE_ASSISTANT, VDM, and signature apps only.
+     -->
+     <permission android:name="android.permission.SUBSCRIBE_TO_KEYGUARD_LOCKED_STATE"
+-                android:protectionLevel="signature|module|role"
+-                android:featureFlag="!android.security.subscribe_to_keyguard_locked_state_perm_priv_flag"/>
++                android:protectionLevel="signature|module|role"/>
+ 
+     <!-- Allows an application to subscribe to device locked and keyguard locked (i.e., showing)
+         state.
+@@ -6000,8 +5928,7 @@
+          <p>Intended for use by ROLE_ASSISTANT, VDM, and signature / privileged apps only.
+     -->
+     <permission android:name="android.permission.SUBSCRIBE_TO_KEYGUARD_LOCKED_STATE"
+-                android:protectionLevel="signature|privileged|module|role"
+-                android:featureFlag="android.security.subscribe_to_keyguard_locked_state_perm_priv_flag"/>
++                android:protectionLevel="signature|privileged|module|role"/>
+ 
+     <!-- Must be required by a {@link android.service.autofill.AutofillService},
+          to ensure that only the system can bind to it.
+@@ -6183,8 +6110,7 @@
+          @hide
+     -->
+     <permission android:name="android.permission.ALWAYS_BOUND_TV_INPUT"
+-        android:protectionLevel="signature|privileged|vendorPrivileged"
+-        android:featureFlag="android.media.tv.flags.tif_unbind_inactive_tis"/>
++        android:protectionLevel="signature|privileged|vendorPrivileged"/>
+ 
+     <!-- Must be required by a {@link android.media.tv.interactive.TvInteractiveAppService}
+          to ensure that only the system can bind to it.
+@@ -6633,8 +6559,7 @@
+         @FlaggedApi(android.permission.flags.Flags.FLAG_SUPERVISION_ROLE_ENABLED)
+         @hide -->
+     <permission android:name="android.permission.GET_ROLE_HOLDERS"
+-                android:protectionLevel="signature|privileged"
+-                android:featureFlag="android.permission.flags.supervision_role_enabled"/>
++                android:protectionLevel="signature|privileged"/>
+ 
+     <!-- @SystemApi Allows an application to manage the holders of a role.
+          @hide -->
+@@ -6660,14 +6585,12 @@
+     <!-- @SystemApi Allows an application to observe role holder changes.
+          @hide -->
+     <permission android:name="android.permission.OBSERVE_ROLE_HOLDERS"
+-                android:protectionLevel="signature|installer|module"
+-                android:featureFlag="!android.permission.flags.supervision_role_enabled" />
++                android:protectionLevel="signature|installer|module" />
+ 
+     <!-- @SystemApi Allows an application to observe role holder changes.
+          @hide -->
+     <permission android:name="android.permission.OBSERVE_ROLE_HOLDERS"
+-                android:protectionLevel="signature|privileged|installer|module"
+-                android:featureFlag="android.permission.flags.supervision_role_enabled" />
++                android:protectionLevel="signature|privileged|installer|module" />
+ 
+     <!-- Allows an application to manage the companion devices.
+          @hide -->
+@@ -6698,7 +6621,6 @@
+          @hide
+     -->
+     <permission android:name="android.permission.ACCESS_COMPANION_INFO"
+-        android:featureFlag="android.companion.association_verification"
+         android:protectionLevel="signature|privileged" />
+ 
+     <!-- Allows an application to deliver companion messages to system
+@@ -6749,8 +6671,7 @@
+           @hide
+           @removed -->
+     <permission android:name="android.permission.READ_FRAME_BUFFER"
+-        android:protectionLevel="signature|recents"
+-        android:featureFlag="!com.android.graphics.surfaceflinger.flags.readback_screenshot" />
++        android:protectionLevel="signature|recents" />
+ 
+     <!-- Allows an application to take screen shots and more generally
+          get access to the frame buffer data. This permission does not grant
+@@ -6761,8 +6682,7 @@
+           @SystemApi
+           @hide -->
+     <permission android:name="android.permission.READ_FRAME_BUFFER"
+-        android:protectionLevel="signature|recents|role"
+-        android:featureFlag="com.android.graphics.surfaceflinger.flags.readback_screenshot" />
++        android:protectionLevel="signature|recents|role" />
+ 
+       <!-- Allows an application to change the touch mode state.
+            Without this permission, an app can only change the touch mode
+@@ -6942,7 +6862,6 @@
+      @FlaggedApi(android.media.audio.Flags.FLAG_CONCURRENT_AUDIO_RECORD_BYPASS_PERMISSION)
+      @hide -->
+     <permission android:name="android.permission.BYPASS_CONCURRENT_RECORD_AUDIO_RESTRICTION"
+-        android:featureFlag="android.media.audio.concurrent_audio_record_bypass_permission"
+         android:protectionLevel="signature|privileged" />
+ 
+     <!-- @SystemApi Allows an application to capture audio for hotword detection.
+@@ -6990,12 +6909,10 @@
+     <!-- @TestApi Allows an application to query audio related state.
+          @hide -->
+     <permission android:name="android.permission.QUERY_AUDIO_STATE"
+-                android:featureFlag="!android.permission.flags.bluetooth_permission_use_module_protection_level"
+                 android:protectionLevel="signature|role" />
+     <!-- @TestApi Allows an application to query audio related state.
+          @hide -->
+     <permission android:name="android.permission.QUERY_AUDIO_STATE"
+-                android:featureFlag="android.permission.flags.bluetooth_permission_use_module_protection_level"
+                 android:protectionLevel="signature|role|module" />
+ 
+     <!-- Allows an application to modify what effects are applied to all audio
+@@ -7076,14 +6993,12 @@
+         @hide
+     -->
+    <permission android:name="android.permission.DEVICE_POWER"
+-        android:featureFlag="!android.permission.flags.bluetooth_permission_use_module_protection_level"
+         android:protectionLevel="signature|role" />
+    <!-- @SystemApi Allows low-level access to power management.
+         <p>Not for use by third-party applications.
+         @hide
+     -->
+    <permission android:name="android.permission.DEVICE_POWER"
+-        android:featureFlag="android.permission.flags.bluetooth_permission_use_module_protection_level"
+         android:protectionLevel="signature|role|module" />
+ 
+     <!-- Allows toggling battery saver on the system.
+@@ -7116,11 +7031,9 @@
+ 
+    <!-- @hide Allows low-level access to tun tap driver -->
+     <permission android:name="android.permission.NET_TUNNELING"
+-        android:featureFlag="!android.permission.flags.bluetooth_permission_use_module_protection_level"
+         android:protectionLevel="signature|role" />
+    <!-- @hide Allows low-level access to tun tap driver -->
+     <permission android:name="android.permission.NET_TUNNELING"
+-        android:featureFlag="android.permission.flags.bluetooth_permission_use_module_protection_level"
+         android:protectionLevel="signature|role|module" />
+ 
+     <!-- Run as a manufacturer test application, running as the root user.
+@@ -7269,8 +7182,7 @@
+          <p>Protection level: signature|privileged|development
+          @FlaggedApi(android.permission.flags.Flags.FLAG_FINE_POWER_MONITOR_PERMISSION) -->
+     <permission android:name="android.permission.ACCESS_FINE_POWER_MONITORS"
+-        android:protectionLevel="signature|privileged|development"
+-        android:featureFlag="android.permission.flags.fine_power_monitor_permission" />
++        android:protectionLevel="signature|privileged|development" />
+ 
+     <!--Allows an application to manage statscompanion.
+     <p>Not for use by third-party applications.
+@@ -7465,8 +7377,7 @@
+          @FlaggedApi(com.android.internal.telephony.flags.Flags.FLAG_SUBSCRIPTION_PLAN_ALLOW_STATUS_AND_END_DATE)
+     -->
+     <permission android:name="android.permission.READ_SUBSCRIPTION_PLANS"
+-        android:protectionLevel="signature|privileged"
+-        android:featureFlag="com.android.internal.telephony.flags.subscription_plan_allow_status_and_end_date" />
++        android:protectionLevel="signature|privileged" />
+ 
+     <!-- C2DM permission.
+          @hide Used internally.
+@@ -7585,15 +7496,13 @@
+         processes.
+         @hide -->
+     <permission android:name="android.permission.MANAGE_NOTIFICATIONS"
+-        android:protectionLevel="signature"
+-        android:featureFlag="!android.companion.enable_medical_profile" />
++        android:protectionLevel="signature" />
+ 
+     <!-- @SystemApi Allows modification of do not disturb rules and policies.
+         @FlaggedApi(android.companion.Flags.FLAG_ENABLE_MEDICAL_PROFILE)
+         @hide -->
+     <permission android:name="android.permission.MANAGE_NOTIFICATIONS"
+-                android:protectionLevel="signature|installer"
+-                android:featureFlag="android.companion.enable_medical_profile"/>
++                android:protectionLevel="signature|installer"/>
+ 
+     <!-- @SystemApi Allows adding/removing enabled notification listener components.
+         @hide -->
+@@ -7611,8 +7520,7 @@
+     <p>Not for use by third-party applications.
+     @FlaggedApi(android.app.Flags.FLAG_HIDE_STATUS_BAR_NOTIFICATION)-->
+     <permission android:name="android.permission.HIDE_STATUS_BAR_NOTIFICATION"
+-        android:protectionLevel="signature|privileged"
+-        android:featureFlag="android.app.hide_status_bar_notification"/>
++        android:protectionLevel="signature|privileged"/>
+ 
+     <!-- Allows access to keyguard secure storage.  Only allowed for system processes.
+         @hide -->
+@@ -7811,8 +7719,7 @@
+          projection. This is intended for on device screen recording system app.
+          @FlaggedApi("android.permission.flags.sensitive_notification_app_protection") -->
+     <permission android:name="android.permission.RECORD_SENSITIVE_CONTENT"
+-        android:protectionLevel="signature"
+-        android:featureFlag="android.permission.flags.sensitive_notification_app_protection"/>
++        android:protectionLevel="signature"/>
+ 
+     <!-- @SystemApi Allows an application to read install sessions
+          @hide This is not a third-party API (intended for system apps). -->
+@@ -7994,8 +7901,7 @@
+          @FlaggedApi("com.android.server.telecom.flags.telecom_resolve_hidden_dependencies")
+          @hide -->
+     <permission android:name="android.permission.READ_BLOCKED_NUMBERS"
+-                android:protectionLevel="signature"
+-                android:featureFlag="!android.permission.flags.grant_read_blocked_numbers_to_system_ui_intelligence" />
++                android:protectionLevel="signature" />
+ 
+     <!-- Allows the holder to read blocked numbers. See
+          {@link android.provider.BlockedNumberContract}.
+@@ -8003,8 +7909,7 @@
+          @FlaggedApi("com.android.server.telecom.flags.telecom_resolve_hidden_dependencies")
+          @hide -->
+     <permission android:name="android.permission.READ_BLOCKED_NUMBERS"
+-                android:protectionLevel="signature|role"
+-                android:featureFlag="android.permission.flags.grant_read_blocked_numbers_to_system_ui_intelligence" />
++                android:protectionLevel="signature|role" />
+ 
+     <!-- Allows the holder to write blocked numbers. See
+          {@link android.provider.BlockedNumberContract}.
+@@ -8132,7 +8037,6 @@
+          @FlaggedApi(android.server.Flags.FLAG_ENABLE_THEME_SERVICE)
+          @hide  <p>Not for use by third-party applications.</p> -->
+     <permission android:name="android.permission.UPDATE_THEME_SETTINGS"
+-        android:featureFlag="android.server.enable_theme_service"
+         android:protectionLevel="signature" />
+ 
+     <!-- Allows an instant app to create foreground services.
+@@ -8413,8 +8317,7 @@
+     <permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS"
+         android:label="@string/permlab_postPromotedNotifications"
+         android:description="@string/permdesc_postPromotedNotifications"
+-        android:protectionLevel="normal|appop"
+-        android:featureFlag="android.app.ui_rich_ongoing"/>
++        android:protectionLevel="normal|appop"/>
+ 
+     <!-- @SystemApi Required for the privileged assistant apps targeting
+          {@link android.os.Build.VERSION_CODES#VANILLA_ICE_CREAM}
+@@ -8467,22 +8370,19 @@
+     <!-- @SystemApi Allows an application to access shared libraries.
+          @hide -->
+     <permission android:name="android.permission.ACCESS_SHARED_LIBRARIES"
+-        android:protectionLevel="signature|installer"
+-        android:featureFlag="!android.content.pm.sdk_dependency_installer" />
++        android:protectionLevel="signature|installer" />
+ 
+     <!-- @SystemApi Allows an application to access shared libraries.
+          @hide -->
+     <permission android:name="android.permission.ACCESS_SHARED_LIBRARIES"
+-                android:protectionLevel="signature|installer|role"
+-        android:featureFlag="android.content.pm.sdk_dependency_installer" />
++                android:protectionLevel="signature|installer|role" />
+ 
+     <!-- @SystemApi Permission held by the system to allow binding to the dependency installer role
+          holder.
+          @FlaggedApi(android.content.pm.Flags.FLAG_SDK_DEPENDENCY_INSTALLER)
+          @hide -->
+     <permission android:name="android.permission.BIND_DEPENDENCY_INSTALLER"
+-        android:protectionLevel="signature"
+-        android:featureFlag="android.content.pm.sdk_dependency_installer" />
++        android:protectionLevel="signature" />
+ 
+     <!-- @SystemApi Allows an application to install shared libraries of types
+          {@link android.content.pm.SharedLibraryInfo#TYPE_STATIC} or
+@@ -8490,8 +8390,7 @@
+          @FlaggedApi(android.content.pm.Flags.FLAG_SDK_DEPENDENCY_INSTALLER)
+          @hide -->
+     <permission android:name="android.permission.INSTALL_DEPENDENCY_SHARED_LIBRARIES"
+-        android:protectionLevel="signature|role"
+-        android:featureFlag="android.content.pm.sdk_dependency_installer" />
++        android:protectionLevel="signature|role" />
+ 
+     <!-- Allows an app to log compat change usage.
+          @hide  <p>Not for use by third-party applications.</p> -->
+@@ -8570,8 +8469,7 @@
+          @FlaggedApi(android.companion.virtualdevice.flags.Flags.FLAG_VDM_MIRROR_DISPLAY_PERMISSION)
+          @hide @SystemApi -->
+     <permission android:name="android.permission.ADD_MIRROR_DISPLAY"
+-        android:protectionLevel="internal|role"
+-        android:featureFlag="android.companion.virtualdevice.flags.vdm_mirror_display_permission" />
++        android:protectionLevel="internal|role" />
+ 
+     <!-- @hide @SystemApi Allows an application to access locusId events in the usage stats. -->
+     <permission android:name="android.permission.ACCESS_LOCUS_ID_USAGE_STATS"
+@@ -8753,7 +8651,6 @@
+          <p>Protection level: signature
+          @FlaggedApi("android.app.appfunctions.flags.enable_app_function_manager")  -->
+     <permission android:name="android.permission.BIND_APP_FUNCTION_SERVICE"
+-        android:featureFlag="android.app.appfunctions.flags.enable_app_function_manager"
+         android:protectionLevel="signature" />
+ 
+     <!-- Allows an application to perform actions on behalf of users inside of
+@@ -8764,7 +8661,6 @@
+         disapproval.
+      <p>Protection level: normal -->
+     <permission android:name="android.permission.EXECUTE_APP_FUNCTIONS"
+-        android:featureFlag="android.permission.flags.app_function_access_api_enabled"
+         android:protectionLevel="normal" />
+ 
+     <!-- Allows an application to perform actions on behalf of users inside of
+@@ -8772,7 +8668,6 @@
+          <p>This permission is currently only granted to privileged system apps.
+          <p>Protection level: internal|privileged -->
+     <permission android:name="android.permission.EXECUTE_APP_FUNCTIONS"
+-        android:featureFlag="!android.permission.flags.app_function_access_api_enabled"
+         android:protectionLevel="internal|privileged" />
+ 
+     <!-- Allows an application to display its suggestions using the autofill framework.
+@@ -8791,8 +8686,7 @@
+      @hide -->
+     <permission android:name="android.permission.ACCESS_COMPUTER_CONTROL"
+         android:protectionLevel="internal|knownSigner"
+-        android:knownCerts="@array/config_accessComputerControlKnownSigners"
+-        android:featureFlag="android.companion.virtualdevice.flags.computer_control_access"/>
++        android:knownCerts="@array/config_accessComputerControlKnownSigners"/>
+ 
+     <!-- @SystemApi Must be required by a safety source to send an update using the
+              {@link android.safetycenter.SafetyCenterManager}.
+@@ -8828,8 +8722,7 @@
+              @hide
+         -->
+     <permission android:name="android.permission.MANAGE_SAFETY_CENTER"
+-                android:protectionLevel="internal|installer|role"
+-                android:featureFlag="!android.permission.flags.open_safety_center_apis" />
++                android:protectionLevel="internal|installer|role" />
+ 
+     <!-- @SystemApi Required to access the safety center internal APIs using the
+              {@link android.safetycenter.SafetyCenterManager}.
+@@ -8837,8 +8730,7 @@
+              @hide
+         -->
+     <permission android:name="android.permission.MANAGE_SAFETY_CENTER"
+-                android:protectionLevel="signature|privileged"
+-                android:featureFlag="android.permission.flags.open_safety_center_apis" />
++                android:protectionLevel="signature|privileged" />
+ 
+     <!-- @SystemApi Allows an application to access the AmbientContextEvent service.
+          @hide
+@@ -8936,22 +8828,19 @@
+     <permission android:name="android.permission.CAPTURE_KEYBOARD"
+         android:protectionLevel="normal"
+         android:label="@string/permlab_capture_keyboard"
+-        android:description="@string/permdesc_capture_keyboard"
+-        android:featureFlag="com.android.hardware.input.request_key_capture_api"/>
++        android:description="@string/permdesc_capture_keyboard"/>
+ 
+     <!-- Allows low-level access to manage key gestures.
+          <p>Not for use by third-party applications.
+          @hide -->
+     <permission android:name="android.permission.MANAGE_KEY_GESTURES"
+-                android:protectionLevel="signature"
+-                android:featureFlag="!com.android.window.flags.grant_manage_key_gestures_to_recents" />
++                android:protectionLevel="signature" />
+ 
+     <!-- Allows low-level access to manage key gestures.
+          <p>Not for use by third-party applications.
+          @hide -->
+     <permission android:name="android.permission.MANAGE_KEY_GESTURES"
+-                android:protectionLevel="signature|recents"
+-                android:featureFlag="com.android.window.flags.grant_manage_key_gestures_to_recents" />
++                android:protectionLevel="signature|recents" />
+ 
+     <!-- Allows applications to register listeners for key activeness through
+          InputManagerService.
+@@ -8959,8 +8848,7 @@
+          @hide
+          @FlaggedApi("com.android.hardware.input.key_event_activity_detection") -->
+     <permission android:name="android.permission.LISTEN_FOR_KEY_ACTIVITY"
+-                android:protectionLevel="signature"
+-                android:featureFlag="com.android.hardware.input.key_event_activity_detection" />
++                android:protectionLevel="signature" />
+ 
+     <uses-permission android:name="android.permission.HANDLE_QUERY_PACKAGE_RESTART" />
+ 
+@@ -8979,8 +8867,7 @@
+         @hide
+     -->
+     <permission android:name="android.permission.GET_DEVICE_LOCK_ENROLLMENT_TYPE"
+-        android:protectionLevel="signature|privileged"
+-        android:featureFlag="com.android.devicelock.flags.get_enrollment_type" />
++        android:protectionLevel="signature|privileged" />
+ 
+     <!-- @SystemApi Required by a WearableSensingService to
+           ensure that only the caller with this permission can bind to it.
+@@ -9063,8 +8950,7 @@
+     <permission
+         android:name="android.permission.BACKUP_HEALTH_CONNECT_DATA_AND_SETTINGS"
+         android:protectionLevel="signature|knownSigner"
+-        android:knownCerts="@array/config_backupHealthConnectDataAndSettingsKnownSigners"
+-        android:featureFlag="android.permission.flags.health_connect_backup_restore_permission_enabled" />
++        android:knownCerts="@array/config_backupHealthConnectDataAndSettingsKnownSigners" />
+ 
+     <!-- @hide @SystemApi Allows permitted apps to restore Health Connect data and settings.
+              <p>Protection level: signature|knownSigner
+@@ -9073,8 +8959,7 @@
+     <permission
+         android:name="android.permission.RESTORE_HEALTH_CONNECT_DATA_AND_SETTINGS"
+         android:protectionLevel="signature|knownSigner"
+-        android:knownCerts="@array/config_restoreHealthConnectDataAndSettingsKnownSigners"
+-        android:featureFlag="android.permission.flags.health_connect_backup_restore_permission_enabled" />
++        android:knownCerts="@array/config_restoreHealthConnectDataAndSettingsKnownSigners" />
+ 
+     <!-- @SystemApi Allows an app to query apps in clone profile. The permission is
+          bidirectional in nature, i.e. cloned apps would be able to query apps in root user.
+@@ -9109,8 +8994,7 @@
+          <p>Not for use by third-party applications. -->
+     <permission
+         android:name="android.permission.CAPTURE_CONSENTLESS_BUGREPORT_DELEGATED_CONSENT"
+-        android:protectionLevel="signature|privileged"
+-        android:featureFlag="android.os.allow_consentless_bugreport_delegated_consent" />
++        android:protectionLevel="signature|privileged" />
+ 
+     <!-- @SystemApi Allows to call APIs that log process lifecycle events
+          @hide -->
+@@ -9267,8 +9151,7 @@
+         @hide
+     -->
+     <permission android:name="android.permission.MANAGE_SECURE_LOCK_DEVICE"
+-        android:protectionLevel="signature|privileged"
+-        android:featureFlag="android.security.secure_lockdown" />
++        android:protectionLevel="signature|privileged" />
+ 
+     <!-- Allows app to enter trade-in-mode and fetch hardware diagnostics info.
+         The permission name was initially introduced to be used for the tradeinmode evaluate
+@@ -9279,8 +9162,7 @@
+         @hide
+     -->
+     <permission android:name="android.permission.ENTER_TRADE_IN_MODE"
+-                android:protectionLevel="signature|privileged"
+-                android:featureFlag="com.android.tradeinmode.flags.enable_trade_in_mode" />
++                android:protectionLevel="signature|privileged" />
+ 
+     <!-- @SystemApi
+         @FlaggedApi(com.android.art.flags.Flags.FLAG_EXECUTABLE_METHOD_FILE_OFFSETS)
+@@ -9289,8 +9171,7 @@
+         @hide
+     -->
+     <permission android:name="android.permission.DYNAMIC_INSTRUMENTATION"
+-                android:protectionLevel="signature"
+-                android:featureFlag="com.android.art.flags.executable_method_file_offsets" />
++                android:protectionLevel="signature" />
+ 
+     <!--
+         @SystemApi
+@@ -9302,8 +9183,7 @@
+    -->
+     <permission
+         android:name="android.permission.RESOLVE_COMPONENT_FOR_UID"
+-        android:protectionLevel="signature|privileged"
+-        android:featureFlag="android.content.pm.uid_based_provider_lookup" />
++        android:protectionLevel="signature|privileged" />
+     <uses-permission android:name="android.permission.RESOLVE_COMPONENT_FOR_UID" />
+ 
+     <!--
+@@ -9326,8 +9206,7 @@
+         @hide
+     -->
+     <permission android:name="android.permission.SINGLE_USER_TIS_ACCESS"
+-        android:protectionLevel="signature|privileged|vendorPrivileged"
+-        android:featureFlag="android.media.tv.flags.kids_mode_tvdb_sharing"/>
++        android:protectionLevel="signature|privileged|vendorPrivileged"/>
+ 
+     <!-- @SystemApi
+         @FlaggedApi("android.permission.flags.text_classifier_choice_api_enabled")
+@@ -9337,8 +9216,7 @@
+     @hide
+     -->
+     <permission android:name="android.permission.ACCESS_TEXT_CLASSIFIER_BY_TYPE"
+-        android:protectionLevel="signature|role|privileged"
+-        android:featureFlag="android.permission.flags.text_classifier_choice_api_enabled"/>
++        android:protectionLevel="signature|role|privileged"/>
+ 
+     <!--
+         @SystemApi
+@@ -9349,8 +9227,7 @@
+         @hide
+     -->
+     <permission android:name="android.permission.BIND_SUPERVISION_APP_SERVICE"
+-        android:protectionLevel="signature"
+-        android:featureFlag="android.permission.flags.supervision_role_enabled" />
++        android:protectionLevel="signature" />
+ 
+     <!-- @SystemApi
+         @FlaggedApi(android.permission.flags.Flags.FLAG_APP_FUNCTION_ACCESS_API_ENABLED)
+@@ -9360,8 +9237,7 @@
+         @hide
+     -->
+     <permission android:name="android.permission.MANAGE_APP_FUNCTION_ACCESS"
+-        android:protectionLevel="signature|installer"
+-        android:featureFlag="android.permission.flags.app_function_access_api_enabled"/>
++        android:protectionLevel="signature|installer"/>
+ 
+     <!-- Allows an application to programmatically move and resize its tasks when the system is in
+         a state that allows such operations, e.g. in a desktop-like environment. It is only
+@@ -9370,8 +9246,7 @@
+         <p>Protection level: signature|role
+         @FlaggedApi(com.android.window.flags.Flags.FLAG_ENABLE_WINDOW_REPOSITIONING_API) -->
+     <permission android:name="android.permission.REPOSITION_SELF_WINDOWS"
+-        android:protectionLevel="signature|role"
+-        android:featureFlag="com.android.window.flags.enable_window_repositioning_api" />
++        android:protectionLevel="signature|role" />
+ 
+     <!-- @SystemApi
+         @FlaggedApi(android.content.pm.Flags.FLAG_VERIFICATION_SERVICE)
+@@ -9380,8 +9255,7 @@
+         @hide
+     -->
+     <permission android:name="android.permission.DEVELOPER_VERIFICATION_AGENT"
+-        android:protectionLevel="signature|privileged"
+-        android:featureFlag="android.content.pm.verification_service" />
++        android:protectionLevel="signature|privileged" />
+ 
+     <!-- @SystemApi
+         @FlaggedApi(android.content.pm.Flags.FLAG_VERIFICATION_SERVICE)
+@@ -9393,8 +9267,7 @@
+         @hide
+     -->
+     <permission android:name="android.permission.BIND_DEVELOPER_VERIFICATION_AGENT"
+-        android:protectionLevel="internal"
+-        android:featureFlag="android.content.pm.verification_service" />
++        android:protectionLevel="internal" />
+ 
+      <!-- @SystemApi
+         @FlaggedApi(android.content.pm.Flags.FLAG_VERIFICATION_SERVICE)
+@@ -9404,8 +9277,7 @@
+         @hide
+     -->
+     <permission android:name="android.permission.SET_DEVELOPER_VERIFICATION_USER_RESPONSE"
+-        android:protectionLevel="internal|installer"
+-        android:featureFlag="android.content.pm.verification_service" />
++        android:protectionLevel="internal|installer" />
+ 
+     <!-- Allows an application to read tasks on a remote device.
+          <p>Protection level: signature|privileged|recents
+@@ -9415,8 +9287,7 @@
+     -->
+     <permission
+         android:name="android.permission.READ_REMOTE_TASKS"
+-        android:protectionLevel="signature|privileged|recents"
+-        android:featureFlag="android.companion.enable_task_continuity" />
++        android:protectionLevel="signature|privileged|recents" />
+ 
+     <!-- Allows an application to request a task be handed off to the current device.
+          <p>Protection level: signature|privileged|recents
+@@ -9426,22 +9297,19 @@
+     -->
+     <permission
+         android:name="android.permission.REQUEST_TASK_HANDOFF"
+-        android:protectionLevel="signature|privileged|recents"
+-        android:featureFlag="android.companion.enable_task_continuity" />
++        android:protectionLevel="signature|privileged|recents" />
+ 
+     <!-- Permission required to access TV Watchdog Metrics
+      <p>Not for use by third-party applications.</p>
+      @hide -->
+     <permission android:name="android.permission.COLLECT_TV_WATCHDOG_METRICS"
+-        android:protectionLevel="signature|privileged"
+-        android:featureFlag="android.media.tv.flags.enable_tv_watchdog_emmc_protection" />
++        android:protectionLevel="signature|privileged" />
+ 
+     <!-- Permission required to control configuration for TV Watchdog Metrics
+      <p>Not for use by third-party applications.</p>
+      @hide -->
+     <permission android:name="android.permission.CONTROL_TV_WATCHDOG_CONFIG"
+-        android:protectionLevel="signature|privileged"
+-        android:featureFlag="android.media.tv.flags.enable_tv_watchdog_emmc_protection" />
++        android:protectionLevel="signature|privileged" />
+ 
+     <!-- @FlaggedApi(android.media.audio.Flags.FLAG_GUARD_STREAM_VOLUME_APIS)
+     Purpose guarded permission to query volume-related APIs.
+@@ -9450,10 +9318,9 @@
+     -->
+     <permission android:name="android.permission.QUERY_AUDIO_VOLUME"
+             android:protectionLevel="normal"
+-            android:featureFlag="android.media.audio.guard_stream_volume_apis"
+             android:requiresPurpose="true"
+             android:requiresPurposeTargetSdkVersion="37">
+-            <valid-purpose android:name="notForIdentification" />
++            
+     </permission>
+ 
+     <!-- Permission required to bind content restriction service
+@@ -9461,8 +9328,7 @@
+          @FlaggedApi(android.permission.flags.Flags.FLAG_CONTENT_RESTRICTION_ROLE_ENABLED)
+     -->
+     <permission android:name="android.permission.BIND_CONTENT_RESTRICTION_SERVICE"
+-        android:protectionLevel="signature"
+-        android:featureFlag="android.permission.flags.content_restriction_role_enabled" />
++        android:protectionLevel="signature" />
+ 
+     <!-- Attribution for Geofencing service. -->
+     <attribution android:tag="GeofencingService" android:label="@string/geofencing_service"/>
+@@ -10080,7 +9946,6 @@
+ 
+         <service android:name="com.android.ecm.EnhancedConfirmationCallTrackerService"
+             android:permission="android.permission.BIND_INCALL_SERVICE"
+-            android:featureFlag="android.permission.flags.enhanced_confirmation_in_call_apis_enabled"
+             android:exported="true">
+             <meta-data android:name="android.telecom.INCLUDE_SELF_MANAGED_CALLS"
+                 android:value="true" />
+@@ -10118,7 +9983,6 @@
+ 
+         <provider
+             android:name="com.android.server.appfunctions.AppFunctionAccessHistoryProvider"
+-            android:featureFlag="android.permission.flags.app_function_access_api_enabled"
+             android:authorities="com.android.appfunction.accesshistory"
+             android:singleUser="true"
+             android:exported="true">
+diff --git a/core/res/res/values/dimens.xml b/core/res/res/values/dimens.xml
+index b85e158a6cd9..b6b2a9edbcf4 100644
+--- a/core/res/res/values/dimens.xml
++++ b/core/res/res/values/dimens.xml
+@@ -1239,12 +1239,10 @@
+     <dimen name="controls_thumbnail_image_max_width">280dp</dimen>
+ 
+     <!-- System-provided radius for the background view of app widgets. The resolved value of this resource may change at runtime. -->
+-    <dimen name="system_app_widget_background_radius" android:featureFlag="!android.appwidget.flags.use_smaller_app_widget_system_radius">28dp</dimen>
+-    <dimen name="system_app_widget_background_radius" android:featureFlag="android.appwidget.flags.use_smaller_app_widget_system_radius">24dp</dimen>
++    <dimen name="system_app_widget_background_radius">28dp</dimen>
+     <!-- System-provided radius for inner views on app widgets that are positioned 8dp within the widget background view. The resolved value of this resource may change at runtime. -->
+-    <dimen name="system_app_widget_inner_radius" android:featureFlag="!android.appwidget.flags.use_smaller_app_widget_system_radius">20dp</dimen>
++    <dimen name="system_app_widget_inner_radius">20dp</dimen>
+     <!-- System-provided radius for inner views on app widgets that are positioned 8dp within the widget background view. The resolved value of this resource may change at runtime. -->
+-    <dimen name="system_app_widget_inner_radius" android:featureFlag="android.appwidget.flags.use_smaller_app_widget_system_radius">16dp</dimen>
+     <!-- System-provided padding for inner views on app widgets. The resolved value of this resource may change at runtime. @removed -->
+     <dimen name="__removed_system_app_widget_internal_padding">16dp</dimen>
+ 
+diff --git a/core/res/res/values/styles.xml b/core/res/res/values/styles.xml
+index 7f720ade62f1..4276017d66cf 100644
+--- a/core/res/res/values/styles.xml
++++ b/core/res/res/values/styles.xml
+@@ -990,8 +990,8 @@ please see styles_device_defaults.xml.
+     </style>
+ 
+     <style name="TextAppearance.Toast">
+-        <item name="fontFamily" android:featureFlag="android.app.notifications_redesign_fonts">variable-body-medium</item>
+-        <item name="fontFamily" android:featureFlag="!android.app.notifications_redesign_fonts">@*android:string/config_bodyFontFamily</item>
++        <item name="fontFamily">variable-body-medium</item>
++        <item name="fontFamily">@*android:string/config_bodyFontFamily</item>
+ 
+         <item name="textSize">14sp</item>
+         <item name="lineHeight">20sp</item>
+@@ -1640,17 +1640,17 @@ please see styles_device_defaults.xml.
+ 
+     <!-- The style for normal action button on notification -->
+     <style name="NotificationAction" parent="Widget.Material.Light.Button.Borderless.Small">
+-        <item name="fontFamily" android:featureFlag="android.app.notifications_redesign_fonts">variable-title-small-emphasized</item>
++        <item name="fontFamily">variable-title-small-emphasized</item>
+ 
+-        <item name="textColor" android:featureFlag="android.app.notifications_redesign_fonts">@color/materialColorPrimary</item>
+-        <item name="textColor" android:featureFlag="!android.app.notifications_redesign_fonts">@color/notification_action_button_text_color</item>
++        <item name="textColor">@color/materialColorPrimary</item>
++        <item name="textColor">@color/notification_action_button_text_color</item>
+ 
+         <item name="background">@drawable/notification_material_action_background</item>
+     </style>
+ 
+     <!-- The style for emphasized action button on notification (used e.g. for calls): Colored bordered ink button -->
+     <style name="NotificationEmphasizedAction" parent="Widget.Material.Button">
+-        <item name="fontFamily" android:featureFlag="android.app.notifications_redesign_fonts">variable-title-medium-emphasized</item>
++        <item name="fontFamily">variable-title-medium-emphasized</item>
+         <item name="background">@drawable/btn_notification_emphasized</item>
+         <item name="stateListAnimator">@anim/flat_button_state_list_anim_material</item>
+     </style>
+@@ -1665,7 +1665,7 @@ please see styles_device_defaults.xml.
+         <item name="ellipsize">end</item>
+         <item name="maxLines">1</item>
+         <item name="textSize">14sp</item>
+-        <item name="fontFamily" android:featureFlag="android.app.notifications_redesign_fonts">variable-body-medium</item>
++        <item name="fontFamily">variable-body-medium</item>
+     </style>
+ 
+     <!-- @hide -->
+@@ -1673,14 +1673,14 @@ please see styles_device_defaults.xml.
+         <item name="ellipsize">end</item>
+         <item name="maxLines">1</item>
+         <item name="textSize">14sp</item>
+-        <item name="fontFamily" android:featureFlag="android.app.notifications_redesign_fonts">variable-body-medium</item>
++        <item name="fontFamily">variable-body-medium</item>
+     </style>
+ 
+     <!-- @hide -->
+     <style name="NotificationMetricUnit" parent="Widget.DeviceDefault.Notification.Text">
+         <item name="ellipsize">end</item>
+         <item name="maxLines">1</item>
+-        <item name="fontFamily" android:featureFlag="android.app.notifications_redesign_fonts">variable-body-medium</item>
++        <item name="fontFamily">variable-body-medium</item>
+     </style>
+ 
+     <!-- @hide -->
+@@ -1689,7 +1689,7 @@ please see styles_device_defaults.xml.
+     <!-- @hide -->
+     <style name="NotificationExpandedMetricValue" parent="NotificationMetricValue">
+         <item name="textSize">28sp</item>
+-        <item name="fontFamily" android:featureFlag="android.app.notifications_redesign_fonts">variable-headline-medium-emphasized</item>
++        <item name="fontFamily">variable-headline-medium-emphasized</item>
+     </style>
+ 
+     <style name="AccessibilityDialog">
+diff --git a/core/res/res/values/styles_device_defaults.xml b/core/res/res/values/styles_device_defaults.xml
+index a046f7d60cac..8a9d25894eca 100644
+--- a/core/res/res/values/styles_device_defaults.xml
++++ b/core/res/res/values/styles_device_defaults.xml
+@@ -285,25 +285,25 @@ easier.
+         <item name="fontFamily">@string/config_bodyFontFamily</item>
+     </style>
+     <style name="TextAppearance.DeviceDefault.Notification" parent="TextAppearance.Material.Notification">
+-        <item name="fontFamily" android:featureFlag="android.app.notifications_redesign_fonts">variable-body-medium</item>
+-        <item name="fontFamily" android:featureFlag="!android.app.notifications_redesign_fonts">@string/config_bodyFontFamily</item>
++        <item name="fontFamily">variable-body-medium</item>
++        <item name="fontFamily">@string/config_bodyFontFamily</item>
+     </style>
+     <style name="TextAppearance.DeviceDefault.Notification.Title" parent="TextAppearance.Material.Notification.Title">
+-        <item name="fontFamily" android:featureFlag="android.app.notifications_redesign_fonts">variable-title-small-emphasized</item>
+-        <item name="fontFamily" android:featureFlag="!android.app.notifications_redesign_fonts">@string/config_headlineFontFamilyMedium</item>
++        <item name="fontFamily">variable-title-small-emphasized</item>
++        <item name="fontFamily">@string/config_headlineFontFamilyMedium</item>
+     </style>
+     <!-- unused as of the 2025 redesign -->
+     <style name="TextAppearance.DeviceDefault.Notification.BigTitle" parent="TextAppearance.Material.Notification.BigTitle">
+-        <item name="fontFamily" android:featureFlag="android.app.notifications_redesign_fonts">variable-title-small-emphasized</item>
+-        <item name="fontFamily" android:featureFlag="!android.app.notifications_redesign_fonts">@string/config_headlineFontFamilyMedium</item>
++        <item name="fontFamily">variable-title-small-emphasized</item>
++        <item name="fontFamily">@string/config_headlineFontFamilyMedium</item>
+     </style>
+     <style name="TextAppearance.DeviceDefault.Notification.Reply" parent="TextAppearance.Material.Notification.Reply">
+-        <item name="fontFamily" android:featureFlag="android.app.notifications_redesign_fonts">variable-body-medium</item>
+-        <item name="fontFamily" android:featureFlag="!android.app.notifications_redesign_fonts">@string/config_bodyFontFamily</item>
++        <item name="fontFamily">variable-body-medium</item>
++        <item name="fontFamily">@string/config_bodyFontFamily</item>
+     </style>
+     <style name="TextAppearance.DeviceDefault.Notification.Info" parent="TextAppearance.Material.Notification.Info">
+-        <item name="fontFamily" android:featureFlag="android.app.notifications_redesign_fonts">variable-body-small</item>
+-        <item name="fontFamily" android:featureFlag="!android.app.notifications_redesign_fonts">@string/config_bodyFontFamily</item>
++        <item name="fontFamily">variable-body-small</item>
++        <item name="fontFamily">@string/config_bodyFontFamily</item>
+     </style>
+     <style name="TextAppearance.DeviceDefault.Notification.Label">
+         <item name="fontFamily">variable-label-small-emphasized</item>
+@@ -311,8 +311,8 @@ easier.
+         <item name="lineHeight">16sp</item>
+     </style>
+     <style name="TextAppearance.DeviceDefault.Notification.Time" parent="TextAppearance.Material.Notification.Time">
+-        <item name="fontFamily" android:featureFlag="android.app.notifications_redesign_fonts">variable-body-small</item>
+-        <item name="fontFamily" android:featureFlag="!android.app.notifications_redesign_fonts">@string/config_bodyFontFamily</item>
++        <item name="fontFamily">variable-body-small</item>
++        <item name="fontFamily">@string/config_bodyFontFamily</item>
+     </style>
+     <style name="TextAppearance.DeviceDefault.Widget" parent="TextAppearance.Material.Widget">
+         <item name="fontFamily">@string/config_bodyFontFamily</item>
+diff --git a/core/res/res/values/styles_material.xml b/core/res/res/values/styles_material.xml
+index 4f714af08e2a..22fe1ef20953 100644
+--- a/core/res/res/values/styles_material.xml
++++ b/core/res/res/values/styles_material.xml
+@@ -474,14 +474,14 @@ please see styles_device_defaults.xml.
+ 
+     <style name="TextAppearance.Material.Notification.Title">
+         <item name="textColor">@color/notification_primary_text_color_current</item>
+-        <item name="fontFamily" android:featureFlag="!android.app.notifications_redesign_fonts">sans-serif-medium</item>
++        <item name="fontFamily">sans-serif-medium</item>
+         <item name="textSize">@dimen/notification_title_text_size</item>
+     </style>
+ 
+     <!-- unused as of the 2025 redesign -->
+     <style name="TextAppearance.Material.Notification.BigTitle">
+         <item name="textColor">@color/notification_primary_text_color_current</item>
+-        <item name="fontFamily" android:featureFlag="!android.app.notifications_redesign_fonts">sans-serif-medium</item>
++        <item name="fontFamily">sans-serif-medium</item>
+         <item name="textSize">@dimen/notification_big_title_text_size</item>
+     </style>
+ 
+diff --git a/graphics/java/Android.bp b/graphics/java/Android.bp
+index f4abd0ab582c..43e43897944b 100644
+--- a/graphics/java/Android.bp
++++ b/graphics/java/Android.bp
+@@ -23,3 +23,51 @@ filegroup {
+     ],
+     visibility: ["//frameworks/base"],
+ }
++
++// NOVA_HYBRID_FILEGROUP_BEGIN
++// GENERATED by vendor/nova/nova-framework/tools/sync-hybrid-framework.py
++// Filegroups must live under frameworks/base so Soong globs resolve to real .java files.
++
++filegroup {
++    name: "nova-hybrid-graphics-sources",
++    visibility: ["//vendor:__subpackages__"],
++    srcs: ["**/*.java"],
++    exclude_srcs: [
++        "android/graphics/BaseCanvas.java",
++        "android/graphics/Bitmap.java",
++        "android/graphics/BitmapFactory.java",
++        "android/graphics/Canvas.java",
++        "android/graphics/HardwareRenderer.java",
++        "android/graphics/Paint.java",
++        "android/graphics/Rect.java",
++        "android/graphics/animation/FallbackLUTInterpolator.java",
++        "android/graphics/animation/RenderNodeAnimator.java",
++        "android/graphics/drawable/ColorDrawable.java",
++        "android/graphics/drawable/Drawable.java",
++        "android/graphics/drawable/GradientDrawable.java",
++    ],
++}
++
++// GENERATED by vendor/nova/nova-framework/tools/sync-hybrid-framework.py
++// Filegroups must live under frameworks/base so Soong globs resolve to real .java files.
++
++filegroup {
++    name: "nova-hybrid-graphics-lite-sources",
++    visibility: ["//vendor:__subpackages__"],
++    srcs: [
++        "android/graphics/Point.java",
++        "android/graphics/PointF.java",
++        "android/graphics/Matrix.java",
++        "android/graphics/Outline.java",
++        "android/graphics/PorterDuff.java",
++        "android/graphics/Xfermode.java",
++        "android/graphics/PixelFormat.java",
++        "android/graphics/animation/HasNativeInterpolator.java",
++        "android/graphics/animation/NativeInterpolator.java",
++        "android/graphics/animation/NativeInterpolatorFactory.java",
++    ],
++    exclude_srcs: [
++    ],
++}
++
++// NOVA_HYBRID_FILEGROUP_END
+diff --git a/graphics/java/android/view/Surface.aidl b/graphics/java/android/view/Surface.aidl
+new file mode 100644
+index 000000000000..115a9b61973d
+--- /dev/null
++++ b/graphics/java/android/view/Surface.aidl
+@@ -0,0 +1,6 @@
++/*
++ * Copyright (C) 2024 The Android Open Source Project
++ */
++package android.view;
++
++parcelable Surface;
+diff --git a/location/java/android/location/GnssAntennaInfo.aidl b/location/java/android/location/GnssAntennaInfo.aidl
+index 2b956afda01f..ba561096bd09 100644
+--- a/location/java/android/location/GnssAntennaInfo.aidl
++++ b/location/java/android/location/GnssAntennaInfo.aidl
+@@ -16,4 +16,19 @@
+ 
+ package android.location;
+ 
+-parcelable GnssAntennaInfo;
+\ No newline at end of file
++parcelable GnssAntennaInfo;
++
++@JavaOnlyStableParcelable parcelable android.location.GnssAntennaInfo.PhaseCenterOffset;
++@JavaOnlyStableParcelable parcelable android.location.GnssAntennaInfo.SphericalCorrections;
++
++@JavaOnlyStableParcelable parcelable android.location.GnssAntennaInfo.PhaseCenterOffset;
++@JavaOnlyStableParcelable parcelable android.location.GnssAntennaInfo.SphericalCorrections;
++
++@JavaOnlyStableParcelable parcelable android.location.GnssAntennaInfo.PhaseCenterOffset;
++@JavaOnlyStableParcelable parcelable android.location.GnssAntennaInfo.SphericalCorrections;
++
++@JavaOnlyStableParcelable parcelable android.location.GnssAntennaInfo.PhaseCenterOffset;
++@JavaOnlyStableParcelable parcelable android.location.GnssAntennaInfo.SphericalCorrections;
++
++parcelable PhaseCenterOffset;
++parcelable SphericalCorrections;
+diff --git a/location/java/android/location/GnssAssistance.aidl b/location/java/android/location/GnssAssistance.aidl
+index 2745683ec330..6d0aa028b181 100644
+--- a/location/java/android/location/GnssAssistance.aidl
++++ b/location/java/android/location/GnssAssistance.aidl
+@@ -15,4 +15,14 @@
+  */
+ package android.location;
+ 
+-parcelable GnssAssistance;
+\ No newline at end of file
++parcelable GnssAssistance;
++
++@JavaOnlyStableParcelable parcelable android.location.GnssAssistance.GnssSatelliteCorrections;
++
++@JavaOnlyStableParcelable parcelable android.location.GnssAssistance.GnssSatelliteCorrections;
++
++@JavaOnlyStableParcelable parcelable android.location.GnssAssistance.GnssSatelliteCorrections;
++
++@JavaOnlyStableParcelable parcelable android.location.GnssAssistance.GnssSatelliteCorrections;
++
++parcelable GnssSatelliteCorrections;
+diff --git a/media/aidl/android/media/soundtrigger/Phrase.aidl b/media/aidl/android/media/soundtrigger/Phrase.aidl
+new file mode 100644
+index 000000000000..077db21586c0
+--- /dev/null
++++ b/media/aidl/android/media/soundtrigger/Phrase.aidl
+@@ -0,0 +1,36 @@
++/*
++ * Copyright (C) 2019 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++package android.media.soundtrigger;
++
++/**
++ * Key phrase descriptor.
++ *
++ * {@hide}
++ */
++@JavaDerive(equals = true, toString = true)
++@VintfStability
++parcelable Phrase {
++    /** Unique keyphrase ID assigned at enrollment time. */
++    int id;
++    /** Recognition modes supported by this key phrase (bitfield of RecognitionMode enum). */
++    int recognitionModes;
++    /** List of users IDs associated with this key phrase. */
++    int[] users;
++    /** Locale - Java Locale style (e.g. en_US). */
++    String locale;
++    /** Phrase text. */
++    String text;
++}
+diff --git a/media/aidl/android/media/soundtrigger/PhraseRecognitionExtra.aidl b/media/aidl/android/media/soundtrigger/PhraseRecognitionExtra.aidl
+new file mode 100644
+index 000000000000..eb523eb0d396
+--- /dev/null
++++ b/media/aidl/android/media/soundtrigger/PhraseRecognitionExtra.aidl
+@@ -0,0 +1,35 @@
++/*
++ * Copyright (C) 2019 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++package android.media.soundtrigger;
++
++import android.media.soundtrigger.ConfidenceLevel;
++
++/**
++ * Specialized recognition event for key phrase detection.
++ * {@hide}
++ */
++@JavaDerive(equals = true, toString = true)
++@VintfStability
++parcelable PhraseRecognitionExtra {
++    /** Keyphrase ID */
++    int id;
++    /** Bitfield, indexed by RecognitionMode. */
++    int recognitionModes;
++    /** Confidence level for mode RECOGNITION_MODE_VOICE_TRIGGER. Value is between 0-100. */
++    int confidenceLevel;
++    /** Number of user confidence levels */
++    ConfidenceLevel[] levels;
++}
+diff --git a/media/aidl/android/media/soundtrigger/RecognitionConfig.aidl b/media/aidl/android/media/soundtrigger/RecognitionConfig.aidl
+new file mode 100644
+index 000000000000..a00f0e58e293
+--- /dev/null
++++ b/media/aidl/android/media/soundtrigger/RecognitionConfig.aidl
+@@ -0,0 +1,41 @@
++/*
++ * Copyright (C) 2019 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++package android.media.soundtrigger;
++
++import android.media.soundtrigger.PhraseRecognitionExtra;
++
++/**
++ * Configuration for tuning behavior of an active recognition process.
++ * {@hide}
++ */
++@JavaDerive(equals = true, toString = true)
++@VintfStability
++parcelable RecognitionConfig {
++    /* Capture and buffer audio for this recognition instance. */
++    boolean captureRequested;
++
++    /* Configuration for each key phrase. */
++    PhraseRecognitionExtra[] phraseRecognitionExtras;
++
++    /**
++     * Bit field encoding of the AudioCapabilities
++     * supported by the firmware.
++     */
++    int audioCapabilities;
++
++    /** Capture configuration data. Content is implementation-defined. */
++    byte[] data;
++}
+diff --git a/media/aidl/android/media/soundtrigger/SoundModel.aidl b/media/aidl/android/media/soundtrigger/SoundModel.aidl
+new file mode 100644
+index 000000000000..94244d0ba0ff
+--- /dev/null
++++ b/media/aidl/android/media/soundtrigger/SoundModel.aidl
+@@ -0,0 +1,41 @@
++/*
++ * Copyright (C) 2019 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++package android.media.soundtrigger;
++
++import android.media.soundtrigger.SoundModelType;
++import android.os.ParcelFileDescriptor;
++
++/**
++ * Base sound model descriptor. This struct can be extended for various specific types by way of
++ * aggregation.
++ * {@hide}
++ */
++@JavaDerive(equals = true, toString = true)
++@VintfStability
++parcelable SoundModel {
++    /** Model type. */
++    SoundModelType type = SoundModelType.INVALID;
++    /** Unique sound model ID. */
++    String uuid;
++    /**
++     * Unique vendor ID. Identifies the engine the sound model
++     * was build for */
++    String vendorUuid;
++    /** Opaque data transparent to Android framework. May be null if dataSize is 0. */
++    @nullable ParcelFileDescriptor data;
++    /** Size of the above data, in bytes. */
++    int dataSize;
++}
+diff --git a/media/aidl/android/media/soundtrigger/SoundModelType.aidl b/media/aidl/android/media/soundtrigger/SoundModelType.aidl
+new file mode 100644
+index 000000000000..905a46985674
+--- /dev/null
++++ b/media/aidl/android/media/soundtrigger/SoundModelType.aidl
+@@ -0,0 +1,28 @@
++/*
++ * Copyright (C) 2024 The Android Open Source Project
++ */
++package android.media.soundtrigger;
++
++@Backing(type="int")
++enum SoundModelType {
++    INVALID = -1,
++    /**
++     * General sound model type.
++     */
++    GENERAL = 0,
++
++    /**
++     * Voice-based sound model type, used in pre-26.2 for keyphrase recognition.
++     */
++    KEYPHRASE_OLD = 1,
++
++    /**
++     * Voice-based sound model type, used for keyphrase recognition.
++     */
++    KEYPHRASE = 2,
++
++    /**
++     * Voice-based sound model type, used for voiceprint (speaker verification) recognition.
++     */
++    VOICEPRINT = 3,
++}
+diff --git a/media/java/android/media/AudioFormat.aidl b/media/java/android/media/AudioFormat.aidl
+index 8613f550e3c8..ab0e68fc5fd1 100644
+--- a/media/java/android/media/AudioFormat.aidl
++++ b/media/java/android/media/AudioFormat.aidl
+@@ -1,19 +1,6 @@
+ /*
+- * Copyright (C) 2016 The Android Open Source Project
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *      http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
++ * Copyright (C) 2024 The Android Open Source Project
+  */
+-
+ package android.media;
+ 
+ parcelable AudioFormat;
+diff --git a/media/java/android/media/AudioPlaybackConfiguration.aidl b/media/java/android/media/AudioPlaybackConfiguration.aidl
+index 122fad059abe..393f656f22db 100644
+--- a/media/java/android/media/AudioPlaybackConfiguration.aidl
++++ b/media/java/android/media/AudioPlaybackConfiguration.aidl
+@@ -1,18 +1,6 @@
+-/* Copyright 2016, The Android Open Source Project
+-**
+-** Licensed under the Apache License, Version 2.0 (the "License");
+-** you may not use this file except in compliance with the License.
+-** You may obtain a copy of the License at
+-**
+-**     http://www.apache.org/licenses/LICENSE-2.0
+-**
+-** Unless required by applicable law or agreed to in writing, software
+-** distributed under the License is distributed on an "AS IS" BASIS,
+-** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-** See the License for the specific language governing permissions and
+-** limitations under the License.
+-*/
+-
++/*
++ * Copyright (C) 2024 The Android Open Source Project
++ */
+ package android.media;
+ 
+ parcelable AudioPlaybackConfiguration;
+diff --git a/media/java/android/media/AudioRecordingConfiguration.aidl b/media/java/android/media/AudioRecordingConfiguration.aidl
+index c63d30b0a3d6..c1117060842f 100644
+--- a/media/java/android/media/AudioRecordingConfiguration.aidl
++++ b/media/java/android/media/AudioRecordingConfiguration.aidl
+@@ -1,18 +1,6 @@
+-/* Copyright 2016, The Android Open Source Project
+-**
+-** Licensed under the Apache License, Version 2.0 (the "License");
+-** you may not use this file except in compliance with the License.
+-** You may obtain a copy of the License at
+-**
+-**     http://www.apache.org/licenses/LICENSE-2.0
+-**
+-** Unless required by applicable law or agreed to in writing, software
+-** distributed under the License is distributed on an "AS IS" BASIS,
+-** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-** See the License for the specific language governing permissions and
+-** limitations under the License.
+-*/
+-
++/*
++ * Copyright (C) 2024 The Android Open Source Project
++ */
+ package android.media;
+ 
+ parcelable AudioRecordingConfiguration;
+diff --git a/media/java/android/media/RouteListingPreference.aidl b/media/java/android/media/RouteListingPreference.aidl
+index 844dc8f7920d..a2139ba760d2 100644
+--- a/media/java/android/media/RouteListingPreference.aidl
++++ b/media/java/android/media/RouteListingPreference.aidl
+@@ -17,3 +17,13 @@
+ package android.media;
+ 
+ parcelable RouteListingPreference;
++
++@JavaOnlyStableParcelable parcelable android.media.RouteListingPreference.Item;
++
++@JavaOnlyStableParcelable parcelable android.media.RouteListingPreference.Item;
++
++@JavaOnlyStableParcelable parcelable android.media.RouteListingPreference.Item;
++
++@JavaOnlyStableParcelable parcelable android.media.RouteListingPreference.Item;
++
++parcelable Item;
+diff --git a/media/java/android/media/VolumeShaper.aidl b/media/java/android/media/VolumeShaper.aidl
+index e99c13f8a6f3..fde5dd43829b 100644
+--- a/media/java/android/media/VolumeShaper.aidl
++++ b/media/java/android/media/VolumeShaper.aidl
+@@ -17,3 +17,13 @@ package android.media;
+ 
+ parcelable VolumeShaper;
+ parcelable VolumeShaper.Configuration;
++
++@JavaOnlyStableParcelable parcelable android.media.VolumeShaper.Operation;
++
++@JavaOnlyStableParcelable parcelable android.media.VolumeShaper.Operation;
++
++@JavaOnlyStableParcelable parcelable android.media.VolumeShaper.Operation;
++
++@JavaOnlyStableParcelable parcelable android.media.VolumeShaper.Operation;
++
++parcelable Operation;
+diff --git a/media/java/android/media/session/PlaybackState.aidl b/media/java/android/media/session/PlaybackState.aidl
+index 0876ebd2d4d2..f8cb388f4a09 100644
+--- a/media/java/android/media/session/PlaybackState.aidl
++++ b/media/java/android/media/session/PlaybackState.aidl
+@@ -16,3 +16,13 @@
+ package android.media.session;
+ 
+ parcelable PlaybackState;
++
++@JavaOnlyStableParcelable parcelable android.media.session.PlaybackState.CustomAction;
++
++@JavaOnlyStableParcelable parcelable android.media.session.PlaybackState.CustomAction;
++
++@JavaOnlyStableParcelable parcelable android.media.session.PlaybackState.CustomAction;
++
++@JavaOnlyStableParcelable parcelable android.media.session.PlaybackState.CustomAction;
++
++parcelable CustomAction;
+diff --git a/telecomm/framework/java/android/telecom/TelecomAnalytics.aidl b/telecomm/framework/java/android/telecom/TelecomAnalytics.aidl
+index b524ff9a6952..7424eab31b19 100644
+--- a/telecomm/framework/java/android/telecom/TelecomAnalytics.aidl
++++ b/telecomm/framework/java/android/telecom/TelecomAnalytics.aidl
+@@ -20,3 +20,13 @@ package android.telecom;
+  * @hide
+  */
+ parcelable TelecomAnalytics;
++
++@JavaOnlyStableParcelable parcelable android.telecom.TelecomAnalytics.SessionTiming;
++
++@JavaOnlyStableParcelable parcelable android.telecom.TelecomAnalytics.SessionTiming;
++
++@JavaOnlyStableParcelable parcelable android.telecom.TelecomAnalytics.SessionTiming;
++
++@JavaOnlyStableParcelable parcelable android.telecom.TelecomAnalytics.SessionTiming;
++
++parcelable SessionTiming;
+diff --git a/telephony/java/android/telephony/BarringInfo.aidl b/telephony/java/android/telephony/BarringInfo.aidl
+index 50ddf6b31919..f2dc0dc48ed4 100644
+--- a/telephony/java/android/telephony/BarringInfo.aidl
++++ b/telephony/java/android/telephony/BarringInfo.aidl
+@@ -18,3 +18,13 @@
+ package android.telephony;
+ 
+ parcelable BarringInfo;
++
++@JavaOnlyStableParcelable parcelable android.telephony.BarringInfo.BarringServiceInfo;
++
++@JavaOnlyStableParcelable parcelable android.telephony.BarringInfo.BarringServiceInfo;
++
++@JavaOnlyStableParcelable parcelable android.telephony.BarringInfo.BarringServiceInfo;
++
++@JavaOnlyStableParcelable parcelable android.telephony.BarringInfo.BarringServiceInfo;
++
++parcelable BarringServiceInfo;
+diff --git a/telephony/java/android/telephony/ModemActivityInfo.aidl b/telephony/java/android/telephony/ModemActivityInfo.aidl
+index b85ef7a2c9d0..8d83d4e47445 100644
+--- a/telephony/java/android/telephony/ModemActivityInfo.aidl
++++ b/telephony/java/android/telephony/ModemActivityInfo.aidl
+@@ -1,20 +1,6 @@
+ /*
+-**
+-** Copyright 2015, The Android Open Source Project
+-**
+-** Licensed under the Apache License, Version 2.0 (the "License");
+-** you may not use this file except in compliance with the License.
+-** You may obtain a copy of the License at
+-**
+-**     http://www.apache.org/licenses/LICENSE-2.0
+-**
+-** Unless required by applicable law or agreed to in writing, software
+-** distributed under the License is distributed on an "AS IS" BASIS,
+-** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-** See the License for the specific language governing permissions and
+-** limitations under the License.
+-*/
+-
++ * Copyright (C) 2024 The Android Open Source Project
++ */
+ package android.telephony;
+ 
+ parcelable ModemActivityInfo;
+diff --git a/telephony/java/android/telephony/SignalStrength.aidl b/telephony/java/android/telephony/SignalStrength.aidl
+index e988c5fb8c4d..9314e8f6b614 100644
+--- a/telephony/java/android/telephony/SignalStrength.aidl
++++ b/telephony/java/android/telephony/SignalStrength.aidl
+@@ -1,22 +1,6 @@
+ /*
+-**
+-** Copyright (C) 2009 Qualcomm Innovation Center, Inc.  All Rights Reserved.
+-** Copyright (C) 2009 The Android Open Source Project
+-**
+-** Licensed under the Apache License, Version 2.0 (the "License");
+-** you may not use this file except in compliance with the License.
+-** You may obtain a copy of the License at
+-**
+-**     http://www.apache.org/licenses/LICENSE-2.0
+-**
+-** Unless required by applicable law or agreed to in writing, software
+-** distributed under the License is distributed on an "AS IS" BASIS,
+-** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-** See the License for the specific language governing permissions and
+-** limitations under the License.
+-*/
+-
++ * Copyright (C) 2024 The Android Open Source Project
++ */
+ package android.telephony;
+ 
+ parcelable SignalStrength;
+-
+diff --git a/telephony/java/android/telephony/ims/RcsContactPresenceTuple.aidl b/telephony/java/android/telephony/ims/RcsContactPresenceTuple.aidl
+index a70470294794..8e76c5912d0b 100644
+--- a/telephony/java/android/telephony/ims/RcsContactPresenceTuple.aidl
++++ b/telephony/java/android/telephony/ims/RcsContactPresenceTuple.aidl
+@@ -18,3 +18,13 @@
+ package android.telephony.ims;
+ 
+ parcelable RcsContactPresenceTuple;
++
++@JavaOnlyStableParcelable parcelable android.telephony.ims.RcsContactPresenceTuple.ServiceCapabilities;
++
++@JavaOnlyStableParcelable parcelable android.telephony.ims.RcsContactPresenceTuple.ServiceCapabilities;
++
++@JavaOnlyStableParcelable parcelable android.telephony.ims.RcsContactPresenceTuple.ServiceCapabilities;
++
++@JavaOnlyStableParcelable parcelable android.telephony.ims.RcsContactPresenceTuple.ServiceCapabilities;
++
++parcelable ServiceCapabilities;
+-- 
+2.53.0
+
