@@ -14,6 +14,11 @@ int RegisterMethodsOrDie(JNIEnv *env, const char *className,
     jclass clazz = (*env)->FindClass(env, className);
     if (!clazz) {
         fprintf(stderr, "[NovaART] Failed to find class: %s\n", className);
+        /* FindClass may have thrown ClassNotFoundException — clear it to
+         * avoid ART aborting with "No pending exception expected" later. */
+        if ((*env)->ExceptionCheck(env)) {
+            (*env)->ExceptionClear(env);
+        }
         return -1;
     }
     int ret = (*env)->RegisterNatives(env, clazz, methods, numMethods);
