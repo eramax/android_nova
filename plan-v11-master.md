@@ -1,9 +1,21 @@
 # Nova v11 — Master Plan: Run Any APK Natively on Linux
 
-> Date: 2026-06-04
+> Date: 2026-06-04 (updated post-Phase-A)
 > Supersedes: plan-v7, v8, v9, v10, hybrid-fork-plan, shim-vs-fork
-> Status: APPROVED — execution starts with Phase A
-> Baseline image: **AOSP `aosp_x86_64` GSI, Android 16 (API 36)** (downloading)
+> Status: **Phase A COMPLETE** — Phase B starting (see INSPECTION.md)
+> Baseline image: **AOSP `aosp_x86_64` GSI, Android 16 (API 36)** — extracted
+
+## Phase progress
+
+| Phase | Status | Evidence |
+|-------|--------|----------|
+| A — Extract real Android framework | **DONE** | `vendor/nova/INSPECTION.md`: 47 MB framework.jar, 37180 classes, 0 Stub! throws, full APEX layout reconstructed under `vendor/nova/aosp-prebuilt/` |
+| B — Load real framework.jar in ART | **STARTING** | See decision below on libhybris vs stub-natives |
+| C — Wayland-backed Surface | not started | |
+| D — Binder + ServiceManager | not started | |
+| E — Input + Audio | not started | |
+| F — Conformance suite | not started | |
+| G — Distribution | not started | |
 
 This document is the single source of truth for what Nova is, what we're
 building, why every previous plan stalled, and the exact phases + proof gates
@@ -300,28 +312,64 @@ We get 7000 real classes in 30 minutes vs 6 months of compilation.
 
 ---
 
-### Phase B — Load real framework.jar in ART (3–5 days)
+### Phase B — Load real framework.jar in ART (3–7 days)
 
 **Goal**: `nova hello.apk` boots ART, loads the real `framework.jar`, and
 reaches `Activity.onCreate()` of a no-op APK without `ClassNotFoundException`.
 
-**Steps**:
-1. Update `art.c` classpath to `vendor/nova/aosp-prebuilt/framework/*.jar`
-   (in correct boot-classpath order; AOSP order is in
-   `etc/init/hw/init.environ.rc` and `etc/public.libraries.txt`).
-2. Skip the existing nova `framework-hostdex.jar` for now; load it later as
-   an *overlay*, not a replacement.
-3. Identify the minimum set of native libs that `framework.jar` `<clinit>`
-   chain calls via JNI: probably `libandroid_runtime.so`, `libnativehelper.so`,
-   `libicu.so`. Get these from the extracted `lib64/`.
-4. Native libs are **bionic ELFs**. Use **libhybris** to load them in our
-   glibc process. (Install `libhybris` from Ubuntu/Debian package, or build
-   from `https://github.com/libhybris/libhybris`.)
-5. Stub the OS classes that will crash on first call (`ServiceManager.getService`,
-   `WindowManagerGlobal.getInstance`) with Nova-side bridges that return
-   sensible no-ops. These are the **only** Java files we maintain in v11.
+**B.0 — Bionic loading decision (do this FIRST)**
 
-**Proof gate**:
+The 4693 native methods in `framework.jar` are implemented in bionic-linked
+`.so` files (`libandroid_runtime.so`, `libhwui.so`, etc.). glibc cannot
+`dlopen` bionic ELFs directly. Three escalating options:
+
+| Option | Effort | Capability | Risk |
+|--------|--------|------------|------|
+| **B.0.a libhybris** (preferred) | 1 day build + integrate | All 4693 natives work | Build may fail in our env |
+| **B.0.b custom bionic ELF loader** | 3–5 days | All natives work | Hand-rolled, debugging burden |
+| **B.0.c stub-natives Java-side** | 1–2 days, ~30 stubs | Only stubbed natives "work" (return null/0) | Whack-a-mole; same failure mode as v7–v10 |
+
+**Decision tree**:
+1. Attempt `git clone https://github.com/libhybris/libhybris && cd libhybris && ./autogen.sh && ./configure --prefix=$PWD/install && make -j` first. Time-box: 4 hours.
+2. If libhybris fails to build, attempt minimal bionic loader (Option b).
+   Time-box: 3 days. Reference: Anbox's `anbox/anbox/anbox-bridge`.
+3. **Stub-natives is forbidden as a permanent strategy.** It may be used
+   *only* to unblock the immediate `PHASE_B_OK` proof gate while libhybris
+   integration is pending, and every stub must carry a
+   `// TODO(B.0.a): replace once libhybris loads libandroid_runtime` comment.
+
+**B.1 — Wire the real boot classpath**
+
+(Tasks unchanged from inspection's Day 1 plan.)
+
+1. Update `vendor/nova/nova/src/art.c`:
+   - `ANDROID_ROOT` → `vendor/nova/aosp-prebuilt/`
+   - Bootclasspath = the minimal 9-jar list from INSPECTION.md (core-oj,
+     core-libart, okhttp, bouncycastle, apache-xml, core-icu4j, conscrypt,
+     framework, ext)
+   - Remove `nova-framework-hostdex.jar` from classpath (framework.jar
+     supersedes it; archive the 1094-class build per §7)
+2. Build `out/host/linux-x86/bin/nova`.
+3. Build `HelloActivity.apk` via the existing aapt2/d8 pipeline.
+
+**B.2 — First boot attempt**
+
+Run `nova --standalone /tmp/HelloActivity.apk` and capture all output
+including any abort/SIGSEGV. Classify the failure:
+- ClassNotFoundException → missing jar in classpath, add it
+- UnsatisfiedLinkError → native method that needs libhybris-loaded .so
+- Stub! exception → wrong jar version (shouldn't happen if Phase A clean)
+- SIGSEGV in libart → ART expecting bionic-isms (TLS slot, libc symbol)
+
+**B.3 — Iterate to PHASE_B_OK**
+
+Each iteration must record in `STATUS.md`:
+- What failed (full log line)
+- Why (1-sentence root cause)
+- What was added/changed
+- New gate output
+
+**Proof gate** (unchanged):
 ```bash
 cat > /tmp/HelloActivity.java <<EOF
 package nova.test;
@@ -332,11 +380,17 @@ public class HelloActivity extends android.app.Activity {
     }
 }
 EOF
-# build apk, run:
-nova /tmp/hello.apk 2>&1 | grep "PHASE_B_OK"
+nova /tmp/HelloActivity.apk 2>&1 | grep -F "PHASE_B_OK"
 ```
-**Pass criterion**: the exact string `PHASE_B_OK` is emitted. The real
-`Activity.onCreate` from `framework.jar` runs.
+**Pass criterion**: the exact string `PHASE_B_OK` appears, and the call
+that produces it is from the **real** `framework.jar`'s `android.util.Log`,
+verified by `gdb` breakpoint or `LD_DEBUG=symbols` output showing the
+symbol resolved through `libandroid_runtime.so` (not a stub).
+
+**Bonus criterion** (proves we're really running real framework, not just
+calling our stubs): drop a `Bitmap.createBitmap(64, 64, Config.ARGB_8888)`
+into HelloActivity. If that returns a non-null Bitmap with the correct
+allocated pixel buffer, the `libandroid_runtime.so` JNI path is live.
 
 ---
 
@@ -542,40 +596,45 @@ patch lineage that complicates debugging without adding capability we need.
 
 ---
 
-## 9. First concrete actions (in flight)
+## 9. Current concrete actions (Phase A done, Phase B starting)
 
-User is downloading the AOSP `aosp_x86_64` GSI now. While that happens,
-work proceeds in parallel on the host setup:
+Phase A is complete — see `INSPECTION.md` for full inventory of
+`vendor/nova/aosp-prebuilt/` (1.4 GB, 38 framework jars, 200+ bionic .so,
+APEX layout reconstructed).
 
-1. **Verify host tooling for extraction:**
+**Immediate next steps for Phase B:**
+
+1. **Time-boxed libhybris build attempt** (4 hours):
    ```bash
-   which simg2img       || sudo apt install -y android-sdk-libsparse-utils
-   which unsquashfs     || sudo apt install -y squashfs-tools
-   which 7z             || sudo apt install -y p7zip-full
-   df -h /mnt/mydata | awk 'NR==2 {print $4}'   # need ≥ 10 GB free
+   cd /tmp
+   git clone --depth 1 https://github.com/libhybris/libhybris
+   cd libhybris/hybris && ./autogen.sh
+   ./configure --prefix=$PWD/install --disable-arch=arm \
+               --enable-arch=x86_64 --enable-wayland
+   make -j$(nproc) 2>&1 | tee /tmp/hybris-build.log
    ```
-2. **Check libhybris availability** (needed for Phase B native loading):
+   Pass = `install/lib/libhybris-common.so` exists and exports
+   `hybris_dlopen`.
+2. **Smoke-test bionic loader**:
    ```bash
-   apt-cache search libhybris
-   ldconfig -p | grep hybris
+   cat > /tmp/hybris-test.c <<EOF
+   #include <hybris/dlfcn.h>
+   int main() {
+       void *h = hybris_dlopen("vendor/nova/aosp-prebuilt/lib64/libandroid_runtime.so", RTLD_LAZY);
+       return h ? 0 : 1;
+   }
+   EOF
+   gcc /tmp/hybris-test.c -L/tmp/libhybris/hybris/install/lib -lhybris-common \
+       -o /tmp/hybris-test && /tmp/hybris-test
    ```
-   If absent in distro: clone `https://github.com/libhybris/libhybris`,
-   build later in Phase B.
-3. **Pre-create directory layout:**
-   ```bash
-   mkdir -p vendor/nova/aosp-prebuilt/{framework,lib64,apex,etc,bin}
-   mkdir -p vendor/nova/scripts vendor/nova/archive
-   ```
-4. **Write `vendor/nova/scripts/extract-gsi.sh`** (idempotent, takes the
-   GSI zip path as argument, produces the layout in §Phase A).
-5. **Archive obsolete artifacts** per §7 to `vendor/nova/archive/` and mark
-   plans v7–v10 as `SUPERSEDED: see plan-v11-master.md` in their headers.
-
-When the GSI download finishes:
-
-6. Run `scripts/extract-gsi.sh ~/Downloads/aosp_x86_64-*.zip`.
-7. Run the Phase A proof gate. Paste output into `STATUS.md`.
-8. If green, move to Phase B immediately.
+   Pass = exit code 0. This is the gate for "libhybris approach works."
+3. If (1) or (2) fail: stop, write `vendor/nova/blocker-B.0.md`, switch to
+   minimal bionic loader spike (Option B.0.b).
+4. Once libhybris loads `libandroid_runtime.so`: proceed with INSPECTION.md
+   §"Phase B plan" Day 1 tasks (update art.c, build HelloActivity, run gate).
+5. **In parallel**: archive obsolete artifacts per §7 to
+   `vendor/nova/archive/` and mark plans v7–v10 as `SUPERSEDED: see
+   plan-v11-master.md` in their headers.
 
 ---
 

@@ -1,0 +1,22 @@
+package {
+    default_applicable_licenses: ["vendor_nova_license"],
+}
+
+cc_library_host_static {
+    name: "libnova_bionic_loader",
+    compile_multilib: "64",
+    srcs: [
+        "bionic_loader.c",
+    ],
+    export_include_dirs: ["."],
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Wno-unused-parameter",
+        "-D_GNU_SOURCE",
+    ],
+    host_ldlibs: [
+        "-ldl",
+    ],
+    stl: "none",
+}

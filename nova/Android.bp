@@ -17,6 +17,10 @@ cc_binary_host {
     ],
     static_libs: [
         "libnova_ipc",
+        "libnova_bionic_loader",
+    ],
+    include_dirs: [
+        "vendor/nova/bionic-loader",
     ],
     cflags: [
         "-Wall",

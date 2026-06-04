@@ -1,0 +1,4 @@
+*.o
+*.so
+bionic_dlopen_test
+bionic_lib_path.env

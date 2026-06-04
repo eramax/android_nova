@@ -5,7 +5,7 @@ PRODUCT ?= nova-trunk_staging-eng
 SOONG_ALLOW_MISSING_DEPENDENCIES ?= true
 APK ?=
 LOG ?= /tmp/nova.log
-APK_GOALS := $(filter-out help framework native all run run-log test-ipc daemon,$(MAKECMDGOALS))
+APK_GOALS := $(filter-out help framework native all run run-log test-ipc daemon bionic bionic-force gen-lib-path,$(MAKECMDGOALS))
 APK_INPUT := $(strip $(if $(APK),$(APK),$(APK_GOALS)))
 
 HOST_OUT := $(ROOT)/out/host/linux-x86
@@ -35,7 +35,7 @@ RUN_ENV = export LD_LIBRARY_PATH=$(LD_PATH) && export LD_PRELOAD=$(LD_PRELOAD_LI
 DAEMON_BIN := $(HOST_OUT)/bin/nova-daemon
 IPCTEST_BIN := $(HOST_OUT)/bin/nova_ipc_test
 
-.PHONY: help framework native all run run-log test-ipc daemon
+.PHONY: help framework native all run run-log test-ipc daemon bionic bionic-force gen-lib-path
 
 %:
 	@:
@@ -50,6 +50,9 @@ help:
 	'  make -f vendor/nova/Makefile all' \
 	'  make -f vendor/nova/Makefile run APK=/abs/path/app.apk' \
 	'  make -f vendor/nova/Makefile run-log APK=/abs/path/app.apk LOG=/tmp/nova.log' \
+	'  make -f vendor/nova/Makefile bionic (gen header + build bionic-loader + nova)' \
+	'  make -f vendor/nova/Makefile bionic-force (touch art.c + bionic)' \
+	'  make -f vendor/nova/Makefile gen-lib-path (regenerate lib_path.h)' \
 	'' \
 	'Variables:' \
 	'  PRODUCT=<lunch target> default: $(PRODUCT)' \
@@ -80,6 +83,16 @@ test-ipc:
 daemon:
 	@test -x "$(DAEMON_BIN)" || { echo 'Missing nova-daemon binary: $(DAEMON_BIN)'; exit 2; }
 	cd $(ROOT) && $(RUN_ENV) && "$(DAEMON_BIN)"
+
+bionic: gen-lib-path
+	cd $(ROOT) && $(ENVSETUP) >/tmp/nova-lunch.log && $(BUILD_ENV) && m --soong-only libnova_bionic_loader nova
+
+bionic-force: gen-lib-path
+	touch $(ROOT)/vendor/nova/nova/src/art.c
+	cd $(ROOT) && $(ENVSETUP) >/tmp/nova-lunch.log && $(BUILD_ENV) && m --soong-only libnova_bionic_loader nova
+
+gen-lib-path:
+	$(ROOT)/vendor/nova/bionic-loader/gen_lib_path.sh
 
 run-log:
 	@test -n "$(APK_INPUT)" || { echo 'Usage: make run-log APK=/abs/path/app.apk or make run-log path/to/app.apk'; exit 2; }

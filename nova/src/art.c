@@ -10,6 +10,8 @@
 #include <unistd.h>
 #include <dlfcn.h>
 #include "nova_internal.h"
+#include "bionic_loader.h"
+#include "bionic_lib_path.h"
 
 typedef jint (*JNI_CreateJavaVM_t)(JavaVM **pvm, void **penv, JavaVMInitArgs *args);
 
@@ -339,7 +341,26 @@ int nova_art_init(struct nova_state *state, int argc, char *argv[]) {
      * android_root:    out/host/linux-x86 (APEX layout: apex/com.android.art, etc.) */
     build_host_out_dir(host_out, sizeof(host_out));
 
-    snprintf(android_root, sizeof(android_root), "%s", host_out);
+    /* B.0.b.3: if aosp-prebuilt exists in the source tree, prefer it for
+     * ANDROID_ROOT so ART can find the real AOSP framework layout. The
+     * extracted GSI at aosp-prebuilt/ has the same /apex/, /system/, /lib64/
+     * structure as a real device. Compute source root relative to binary:
+     * <source>/out/host/linux-x86/bin/nova -> <source>/vendor/nova/aosp-prebuilt */
+    char src_root[PATH_MAX];
+    snprintf(src_root, sizeof(src_root), "%s", host_out);
+    dirname_inplace(src_root); /* up from out/host/linux-x86 to out/host */
+    dirname_inplace(src_root); /* up from out/host to out */
+    dirname_inplace(src_root); /* up from out to source root */
+
+    char aosp_prebuilt[PATH_MAX];
+    snprintf(aosp_prebuilt, sizeof(aosp_prebuilt),
+             "%s/vendor/nova/aosp-prebuilt", src_root);
+    const char *root = host_out;
+    if (file_exists(aosp_prebuilt)) {
+        root = aosp_prebuilt;
+    }
+
+    snprintf(android_root, sizeof(android_root), "%s", root);
     snprintf(android_art_root, sizeof(android_art_root), "%s/apex/com.android.art", host_out);
     /* i18n and tzdata are NOT under apex/ in the ART host build output */
     snprintf(android_i18n_root, sizeof(android_i18n_root), "%s/com.android.i18n", host_out);
@@ -354,6 +375,12 @@ int nova_art_init(struct nova_state *state, int argc, char *argv[]) {
     set_env_default("ANDROID_I18N_ROOT", android_i18n_root);
     set_env_default("ANDROID_TZDATA_ROOT", android_tzdata_root);
     set_env_default("ANDROID_DATA", android_data);
+
+    /* B.0.b.3: initialize the bionic loader so it can resolve bionic .so files
+     * loaded later (libandroid_runtime.so, etc.). The lib_path is compiled in
+     * as a static const string generated from the GSI layout at vendor/nova
+     * build time. */
+    bionic_loader_set_lib_path(NOVA_BIONIC_LIB_PATH);
 
     if (mkdir_p(android_data) != 0) {
         fprintf(stderr, "[Nova] Failed to create ANDROID_DATA at %s\n", android_data);
@@ -490,6 +517,28 @@ int nova_art_init(struct nova_state *state, int argc, char *argv[]) {
 
     if (state->env) {
         register_all_jni_stubs(state->env);
+    }
+
+    /* B.0.b.3: pre-load libandroid_runtime.so via bionic loader. This makes
+     * its JNI natives available to ART-loaded code. Failures are non-fatal —
+     * nova's bridge libraries (libnova_android) still provide the JNI surface
+     * needed for gles3jni and the existing smoke tests. */
+    if (root == aosp_prebuilt) {
+        char lib_path[PATH_MAX];
+        snprintf(lib_path, sizeof(lib_path),
+                 "%s/lib64/libandroid_runtime.so", root);
+        if (file_exists(lib_path)) {
+            fprintf(stderr, "[Nova] bionic_dlopen(%s)\n", lib_path);
+            void *h = bionic_dlopen(lib_path, 0);
+            if (h) {
+                fprintf(stderr, "[Nova] bionic_dlopen returned %p\n", h);
+            } else {
+                fprintf(stderr, "[Nova] bionic_dlopen failed: %s\n",
+                        bionic_dlerror());
+            }
+        } else {
+            fprintf(stderr, "[Nova] libandroid_runtime.so not found at %s\n", lib_path);
+        }
     }
 
     return 0;
