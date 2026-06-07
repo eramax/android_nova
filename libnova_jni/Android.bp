@@ -26,6 +26,7 @@ cc_library_host_shared {
         "com_google_android_gles_jni_EGLImpl.c",
         "com_google_android_gles_jni_GLImpl.c",
         "nova_canvas_render.c",
+        "nova_final_setter.c",
         "softgfx.c",
         "canvas_render.c",
     ],

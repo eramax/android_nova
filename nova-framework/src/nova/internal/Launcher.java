@@ -265,13 +265,9 @@ public final class Launcher {
             invokeLifecycle(sCurrentActivity.getClass(), sCurrentActivity, "onStop", new Class<?>[0], new Object[0]);
         }
 
-        // B.3: Set Activity fields needed by real AOSP Activity.onCreate().
-        // attach() requires PhoneWindow, FragmentController, Context chain
-        // infrastructure from services.jar (Phase D scope).  Direct field
-        // init avoids the attach() complexity and prevents NPE from
-        // uninitialized state.  mFragments is final and initialized by
-        // the Activity constructor, but attachHost() can't be called
-        // without a valid Window — this is a Phase D bridge gap.
+        // B.3: Initialize Activity fields for real AOSP Activity.onCreate().
+        // Field-by-field init (instead of the 19-param attach()) plus JNI
+        // access to the final mFragments field so we can call attachHost.
         try {
             String pkg = sPackageName != null ? sPackageName : "";
             Object appInfo = Class.forName("android.content.pm.ApplicationInfo")
@@ -281,12 +277,14 @@ public final class Launcher {
             setField(appInfo.getClass(), appInfo, "uid", 1000);
             setField(appInfo.getClass(), appInfo, "processName", pkg);
 
+            // mBase = NovaContext (returns ApplicationInfo from getApplicationInfo)
             Object novaCtx = Class.forName("android.content.NovaContext")
                 .getConstructor(Class.forName("android.content.pm.ApplicationInfo"))
                 .newInstance(appInfo);
             java.lang.reflect.Field f = findField(activityType, "mBase");
             if (f != null) { f.setAccessible(true); f.set(instance, novaCtx); }
 
+            // mActivityInfo
             Object activityInfo = Class.forName("android.content.pm.ActivityInfo")
                 .getDeclaredConstructor().newInstance();
             setField(activityInfo.getClass(), activityInfo, "packageName", pkg);
@@ -299,12 +297,26 @@ public final class Launcher {
             f = findField(activityType, "mActivityInfo");
             if (f != null) { f.setAccessible(true); f.set(instance, activityInfo); }
 
+            // mUiThread
             f = findField(activityType, "mUiThread");
             if (f != null) { f.setAccessible(true); f.set(instance, Thread.currentThread()); }
 
-            System.out.println("[NovaLauncher] Activity fields initialized");
+            // mFragments.attachHost(null) — JNI reads final mFragments field
+            try {
+                System.loadLibrary("nova_jni");
+            } catch (UnsatisfiedLinkError e_link) {
+                System.out.println("[NovaLauncher] nova_jni not loadable: " + e_link);
+            }
+            Object fragCtrl = getObjectField(instance, "mFragments");
+            if (fragCtrl != null) {
+                fragCtrl.getClass().getMethod("attachHost", Class.forName("android.app.Fragment"))
+                    .invoke(fragCtrl, (Object)null);
+                System.out.println("[NovaLauncher] Fragments attachHost OK");
+            }
+
+            System.out.println("[NovaLauncher] Activity init OK");
         } catch (Exception e) {
-            System.out.println("[NovaLauncher] Field init failed: " + e);
+            System.out.println("[NovaLauncher] Activity init error: " + e);
         }
 
         invokeLifecycle(activityType, instance, "onCreate",
@@ -866,6 +878,8 @@ public final class Launcher {
             f.set(obj, value);
         }
     }
+
+    private static native Object getObjectField(Object obj, String fieldName);
 
     private static void copyOrLink(Path source, Path dest, String messagePrefix) throws IOException {
         Files.deleteIfExists(dest);

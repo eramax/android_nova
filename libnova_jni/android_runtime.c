@@ -25,6 +25,7 @@ int register_android_opengl_GLES20(JNIEnv *env);
 int register_android_opengl_GLUtils(JNIEnv *env);
 int register_com_google_android_gles_jni_EGLImpl(JNIEnv *env);
 int register_com_google_android_gles_jni_GLImpl(JNIEnv *env);
+int register_nova_launcher(JNIEnv *env);
 int register_nova_canvas_render(JNIEnv *env);
 
 /*
@@ -62,6 +63,9 @@ static const RegJNIProc gRegJNI[] = {
 
     /* Canvas render & input dispatch */
     register_nova_canvas_render,
+
+    /* JNI bridge for final field access */
+    register_nova_launcher,
 };
 
 int register_all_jni_stubs(JNIEnv *env) {
