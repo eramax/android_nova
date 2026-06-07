@@ -424,6 +424,11 @@ int nova_art_init(struct nova_state *state, int argc, char *argv[]) {
              "%s/framework/framework.jar", root);
     snprintf(ext_jar_bcp, sizeof(ext_jar_bcp),
              "%s/framework/ext.jar", root);
+    /* services.jar has AIDL-generated interfaces (IVoiceInteractor etc.)
+     * that Activity.attach() needs.  Added per runtime evidence. */
+    char services_jar_bcp[PATH_MAX];
+    snprintf(services_jar_bcp, sizeof(services_jar_bcp),
+             "%s/framework/services.jar", root);
     snprintf(bootclasspath, sizeof(bootclasspath),
              "%s/apex/com.android.art/javalib/core-oj.jar:"
              "%s/apex/com.android.art/javalib/core-libart.jar:"
@@ -432,9 +437,9 @@ int nova_art_init(struct nova_state *state, int argc, char *argv[]) {
              "%s/apex/com.android.art/javalib/apache-xml.jar:"
              "%s/apex/com.android.i18n/javalib/core-icu4j.jar:"
              "%s/apex/com.android.conscrypt/javalib/conscrypt.jar:"
-             "%s:%s",
+             "%s:%s:%s",
              host_out, host_out, host_out, host_out, host_out, host_out, host_out,
-             framework_jar_bcp, ext_jar_bcp);
+             framework_jar_bcp, ext_jar_bcp, services_jar_bcp);
     snprintf(bootclasspath_locations, sizeof(bootclasspath_locations),
              "%s/apex/com.android.art/javalib/core-oj.jar:"
              "%s/apex/com.android.art/javalib/core-libart.jar:"
@@ -443,9 +448,9 @@ int nova_art_init(struct nova_state *state, int argc, char *argv[]) {
              "%s/apex/com.android.art/javalib/apache-xml.jar:"
              "%s/apex/com.android.i18n/javalib/core-icu4j.jar:"
              "%s/apex/com.android.conscrypt/javalib/conscrypt.jar:"
-             "%s:%s",
+             "%s:%s:%s",
              host_out, host_out, host_out, host_out, host_out, host_out, host_out,
-             framework_jar_bcp, ext_jar_bcp);
+             framework_jar_bcp, ext_jar_bcp, services_jar_bcp);
 
     snprintf(image_path, sizeof(image_path), "%s/apex/com.android.art/framework/boot.art",
              host_out);
