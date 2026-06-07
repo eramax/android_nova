@@ -301,6 +301,15 @@ public final class Launcher {
             f = findField(activityType, "mUiThread");
             if (f != null) { f.setAccessible(true); f.set(instance, Thread.currentThread()); }
 
+            // mResources — ContextThemeWrapper.getResources() checks this first.
+            // Set to Resources.getSystem() so views don't NPE on getResources().
+            f = findField(activityType, "mResources");
+            if (f != null) {
+                f.setAccessible(true);
+                f.set(instance, Class.forName("android.content.res.Resources")
+                    .getMethod("getSystem").invoke(null));
+            }
+
             // mFragments.attachHost(null) — JNI reads final mFragments field
             try {
                 System.loadLibrary("nova_jni");
