@@ -73,6 +73,6 @@ static const JNINativeMethod gMethods[] = {
 };
 
 int register_android_util_Log(JNIEnv* env) {
-    return RegisterMethodsOrDie(env, "android/util/Log",
+    return RegisterMethodsSoft(env, "android/util/Log",
                                 gMethods, NELEM(gMethods));
 }

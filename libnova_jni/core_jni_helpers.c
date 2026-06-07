@@ -33,6 +33,36 @@ int RegisterMethodsOrDie(JNIEnv *env, const char *className,
     return ret;
 }
 
+/* Soft registration: tries each method individually, logs failures,
+ * but continues.  Returns count of successful registrations
+ * (negative if class not found). */
+int RegisterMethodsSoft(JNIEnv *env, const char *className,
+                         const JNINativeMethod *methods, int numMethods) {
+    jclass clazz = (*env)->FindClass(env, className);
+    if (!clazz) {
+        fprintf(stderr, "[NovaART] Failed to find class: %s\n", className);
+        if ((*env)->ExceptionCheck(env)) {
+            (*env)->ExceptionClear(env);
+        }
+        return -1;
+    }
+    int ok = 0;
+    for (int i = 0; i < numMethods; i++) {
+        int r = (*env)->RegisterNatives(env, clazz, &methods[i], 1);
+        if (r == 0) {
+            ok++;
+        } else {
+            fprintf(stderr, "[NovaART] Skipped native %s.%s (signature mismatch)\n",
+                    className, methods[i].name);
+            if ((*env)->ExceptionCheck(env)) {
+                (*env)->ExceptionClear(env);
+            }
+        }
+    }
+    (*env)->DeleteLocalRef(env, clazz);
+    return ok;
+}
+
 /* FindClass helper */
 jclass FindClassOrDie(JNIEnv *env, const char *className) {
     jclass clazz = (*env)->FindClass(env, className);

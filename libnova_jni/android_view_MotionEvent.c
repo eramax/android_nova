@@ -11,6 +11,6 @@ static const JNINativeMethod gMethods[] = {
 };
 
 int register_android_view_MotionEvent(JNIEnv *env) {
-    return RegisterMethodsOrDie(env, "android/view/MotionEvent",
+    return RegisterMethodsSoft(env, "android/view/MotionEvent",
                                  gMethods, sizeof(gMethods) / sizeof(gMethods[0]));
 }

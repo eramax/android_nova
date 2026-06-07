@@ -59,6 +59,6 @@ static const JNINativeMethod gMethods[] = {
 };
 
 int register_android_graphics_Paint(JNIEnv *env) {
-    return RegisterMethodsOrDie(env, "android/graphics/Paint",
+    return RegisterMethodsSoft(env, "android/graphics/Paint",
                                  gMethods, sizeof(gMethods) / sizeof(gMethods[0]));
 }

@@ -10,6 +10,6 @@ static const JNINativeMethod gMethods[] = {
 };
 
 int register_com_android_internal_graphics_NativeUtils(JNIEnv *env) {
-    return RegisterMethodsOrDie(env, "com/android/internal/graphics/NativeUtils",
+    return RegisterMethodsSoft(env, "com/android/internal/graphics/NativeUtils",
                                  gMethods, sizeof(gMethods) / sizeof(gMethods[0]));
 }

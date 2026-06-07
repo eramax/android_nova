@@ -10,21 +10,11 @@
 
 int register_android_os_SystemClock(JNIEnv *env);
 int register_android_os_SystemProperties(JNIEnv *env);
+int register_android_content_AssetManager(JNIEnv *env);
+int register_android_content_res_ApkAssets(JNIEnv *env);
 int register_android_os_MessageQueue(JNIEnv *env);
 int register_android_util_Log(JNIEnv *env);
-int register_android_os_Binder(JNIEnv *env);
-int register_android_os_Process(JNIEnv *env);
-int register_android_view_MotionEvent(JNIEnv *env);
-int register_android_view_KeyEvent(JNIEnv *env);
-int register_android_graphics_Canvas(JNIEnv *env);
-int register_android_graphics_Paint(JNIEnv *env);
-int register_android_graphics_Bitmap(JNIEnv *env);
-int register_android_graphics_BitmapFactory(JNIEnv *env);
-int register_com_android_internal_graphics_NativeUtils(JNIEnv *env);
-int register_android_opengl_GLES20(JNIEnv *env);
-int register_android_opengl_GLUtils(JNIEnv *env);
-int register_com_google_android_gles_jni_EGLImpl(JNIEnv *env);
-int register_com_google_android_gles_jni_GLImpl(JNIEnv *env);
+int register_android_os_Trace(JNIEnv *env);
 int register_nova_launcher(JNIEnv *env);
 int register_nova_canvas_render(JNIEnv *env);
 
@@ -38,34 +28,37 @@ static const RegJNIProc gRegJNI[] = {
     /* OS-level */
     register_android_os_SystemClock,
     register_android_os_SystemProperties,
+    register_android_content_AssetManager,
+    register_android_content_res_ApkAssets,
     register_android_os_MessageQueue,
     register_android_util_Log,
-    register_android_os_Binder,
-    register_android_os_Process,
+    register_android_os_Trace,
+    // register_android_os_Binder,
+    // register_android_os_Process,
 
     /* View/Input */
-    register_android_view_MotionEvent,
+    // register_android_view_MotionEvent,
 
     /* Graphics */
-    register_android_graphics_Canvas,
-    register_android_graphics_Paint,
-    register_android_graphics_Bitmap,
-    register_android_graphics_BitmapFactory,
-    register_com_android_internal_graphics_NativeUtils,
+    // register_android_graphics_Canvas,
+    // register_android_graphics_Paint,
+    // register_android_graphics_Bitmap,
+    // register_android_graphics_BitmapFactory,
+    // register_com_android_internal_graphics_NativeUtils,
 
     /* OpenGL ES 2.0 */
-    register_android_opengl_GLES20,
-    register_android_opengl_GLUtils,
+    // register_android_opengl_GLES20,
+    // register_android_opengl_GLUtils,
 
     /* EGL/GL bootstrap */
-    register_com_google_android_gles_jni_EGLImpl,
-    register_com_google_android_gles_jni_GLImpl,
+    // register_com_google_android_gles_jni_EGLImpl,
+    // register_com_google_android_gles_jni_GLImpl,
 
     /* Canvas render & input dispatch */
     register_nova_canvas_render,
 
-    /* JNI bridge for final field access */
-    register_nova_launcher,
+    /* JNI bridge for final field access (registers during runtime) */
+    // register_nova_launcher,
 };
 
 int register_all_jni_stubs(JNIEnv *env) {

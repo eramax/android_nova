@@ -217,6 +217,6 @@ static const JNINativeMethod gMethods[] = {
 };
 
 int register_android_graphics_Canvas(JNIEnv *env) {
-    return RegisterMethodsOrDie(env, "android/graphics/Canvas",
+    return RegisterMethodsSoft(env, "android/graphics/Canvas",
                                  gMethods, sizeof(gMethods) / sizeof(gMethods[0]));
 }

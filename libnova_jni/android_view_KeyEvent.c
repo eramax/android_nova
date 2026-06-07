@@ -17,6 +17,6 @@ static const JNINativeMethod gMethods[] = {
 };
 
 int register_android_view_KeyEvent(JNIEnv *env) {
-    return RegisterMethodsOrDie(env, "android/view/KeyEvent",
+    return RegisterMethodsSoft(env, "android/view/KeyEvent",
                                  gMethods, sizeof(gMethods) / sizeof(gMethods[0]));
 }

@@ -502,6 +502,6 @@ static const JNINativeMethod gEglMethods[] = {
 };
 
 int register_com_google_android_gles_jni_EGLImpl(JNIEnv *env) {
-    return RegisterMethodsOrDie(env, "com/google/android/gles_jni/EGLImpl",
+    return RegisterMethodsSoft(env, "com/google/android/gles_jni/EGLImpl",
                                 gEglMethods, sizeof(gEglMethods) / sizeof(gEglMethods[0]));
 }

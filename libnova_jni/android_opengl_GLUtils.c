@@ -116,6 +116,6 @@ static const JNINativeMethod gMethods[] = {
 };
 
 int register_android_opengl_GLUtils(JNIEnv *env) {
-    return RegisterMethodsOrDie(env, "android/opengl/GLUtils",
+    return RegisterMethodsSoft(env, "android/opengl/GLUtils",
                                 gMethods, sizeof(gMethods) / sizeof(gMethods[0]));
 }

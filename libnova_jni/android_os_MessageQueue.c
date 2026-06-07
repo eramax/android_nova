@@ -115,6 +115,6 @@ static const JNINativeMethod gMessageQueueMethods[] = {
 };
 
 int register_android_os_MessageQueue(JNIEnv* env) {
-    return RegisterMethodsOrDie(env, "android/os/MessageQueue",
+    return RegisterMethodsSoft(env, "android/os/MessageQueue",
                                 gMessageQueueMethods, NELEM(gMessageQueueMethods));
 }

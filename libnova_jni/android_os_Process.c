@@ -42,6 +42,6 @@ static const JNINativeMethod gMethods[] = {
 };
 
 int register_android_os_Process(JNIEnv *env) {
-    return RegisterMethodsOrDie(env, "android/os/Process",
+    return RegisterMethodsSoft(env, "android/os/Process",
                                  gMethods, sizeof(gMethods) / sizeof(gMethods[0]));
 }

@@ -31,8 +31,11 @@ static void init_props() {
 } while(0)
 
     SET("ro.build.version.sdk", "36");
+    SET("ro.build.version.sdk_full", "36.0");
     SET("ro.build.version.codename", "REL");
     SET("ro.build.version.release", "16");
+    SET("ro.build.version.release_or_codename", "16");
+    SET("ro.build.version.release_or_preview_display", "16");
     SET("ro.build.version.security_patch", "2026-06-05");
     SET("ro.build.version.base_os", "");
     SET("ro.build.version.preview_sdk", "0");
@@ -205,6 +208,6 @@ static const JNINativeMethod gMethods[] = {
 };
 
 int register_android_os_SystemProperties(JNIEnv *env) {
-    return RegisterMethodsOrDie(env, "android/os/SystemProperties",
+    return RegisterMethodsSoft(env, "android/os/SystemProperties",
                                 gMethods, NELEM(gMethods));
 }

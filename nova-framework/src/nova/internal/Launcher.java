@@ -281,8 +281,10 @@ public final class Launcher {
             Object novaCtx = Class.forName("android.content.NovaContext")
                 .getConstructor(Class.forName("android.content.pm.ApplicationInfo"))
                 .newInstance(appInfo);
-            java.lang.reflect.Field f = findField(activityType, "mBase");
-            if (f != null) { f.setAccessible(true); f.set(instance, novaCtx); }
+            java.lang.reflect.Field f = Class.forName("android.content.ContextWrapper")
+                .getDeclaredField("mBase");
+            f.setAccessible(true);
+            f.set(instance, novaCtx);
 
             // mActivityInfo
             Object activityInfo = Class.forName("android.content.pm.ActivityInfo")
@@ -303,11 +305,20 @@ public final class Launcher {
 
             // mResources — ContextThemeWrapper.getResources() checks this first.
             // Set to Resources.getSystem() so views don't NPE on getResources().
+            // If Resources.getSystem() fails (uninitialized Build props, etc.),
+            // catch and continue — the field stays null and we fall through to
+            // the mBase chain, which returns null from NovaContext.
             f = findField(activityType, "mResources");
             if (f != null) {
-                f.setAccessible(true);
-                f.set(instance, Class.forName("android.content.res.Resources")
-                    .getMethod("getSystem").invoke(null));
+                try {
+                    f.setAccessible(true);
+                    Object sysRes = Class.forName("android.content.res.Resources")
+                        .getMethod("getSystem").invoke(null);
+                    f.set(instance, sysRes);
+                } catch (Exception e_res) {
+                    System.out.println("[NovaLauncher] Resources.getSystem() failed: "
+                        + e_res);
+                }
             }
 
             // mFragments.attachHost(null) — JNI reads final mFragments field

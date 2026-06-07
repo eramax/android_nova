@@ -92,6 +92,6 @@ static const JNINativeMethod gMethods[] = {
 };
 
 int register_android_graphics_Bitmap(JNIEnv *env) {
-    return RegisterMethodsOrDie(env, "android/graphics/Bitmap",
+    return RegisterMethodsSoft(env, "android/graphics/Bitmap",
                                  gMethods, sizeof(gMethods) / sizeof(gMethods[0]));
 }

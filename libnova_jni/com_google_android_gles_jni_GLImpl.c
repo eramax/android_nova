@@ -10,6 +10,6 @@ static const JNINativeMethod gMethods[] = {
 };
 
 int register_com_google_android_gles_jni_GLImpl(JNIEnv *env) {
-    return RegisterMethodsOrDie(env, "com/google/android/gles_jni/GLImpl",
+    return RegisterMethodsSoft(env, "com/google/android/gles_jni/GLImpl",
                                 gMethods, sizeof(gMethods) / sizeof(gMethods[0]));
 }

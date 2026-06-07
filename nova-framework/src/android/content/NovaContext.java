@@ -41,11 +41,6 @@ public class NovaContext extends ContextWrapper {
     }
 
     @Override
-    public Resources getResources() {
-        return null;
-    }
-
-    @Override
     public ContentResolver getContentResolver() {
         return null;
     }
@@ -71,5 +66,16 @@ public class NovaContext extends ContextWrapper {
     @Override
     public Object getSystemService(String name) {
         return null;
+    }
+
+    @Override
+    public Resources getResources() {
+        Resources r = null;
+        try {
+            r = Resources.getSystem();
+        } catch (Exception e) {
+            // System resources not available yet
+        }
+        return r;
     }
 }

@@ -28,6 +28,6 @@ static const JNINativeMethod gMethods[] = {
 };
 
 int register_android_os_Binder(JNIEnv *env) {
-    return RegisterMethodsOrDie(env, "android/os/Binder",
+    return RegisterMethodsSoft(env, "android/os/Binder",
                                  gMethods, sizeof(gMethods) / sizeof(gMethods[0]));
 }

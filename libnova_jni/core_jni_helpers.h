@@ -18,6 +18,10 @@ jlong return_zero_handle(void);
 int RegisterMethodsOrDie(JNIEnv *env, const char *className,
                           const JNINativeMethod *methods, int numMethods);
 
+/* Soft registration — tries each method individually, skips failures */
+int RegisterMethodsSoft(JNIEnv *env, const char *className,
+                         const JNINativeMethod *methods, int numMethods);
+
 /* Find class helper */
 jclass FindClassOrDie(JNIEnv *env, const char *className);
 

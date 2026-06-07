@@ -571,6 +571,6 @@ static const JNINativeMethod gMethods[] = {
 };
 
 int register_android_opengl_GLES20(JNIEnv *env) {
-    return RegisterMethodsOrDie(env, "android/opengl/GLES20",
+    return RegisterMethodsSoft(env, "android/opengl/GLES20",
                                 gMethods, sizeof(gMethods) / sizeof(gMethods[0]));
 }

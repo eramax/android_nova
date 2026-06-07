@@ -84,6 +84,6 @@ static const JNINativeMethod gMethods[] = {
 };
 
 int register_android_os_SystemClock(JNIEnv *env) {
-    return RegisterMethodsOrDie(env, "android/os/SystemClock",
+    return RegisterMethodsSoft(env, "android/os/SystemClock",
                                 gMethods, NELEM(gMethods));
 }
